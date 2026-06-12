@@ -1,0 +1,83 @@
+aid: spendesk
+name: Spendesk
+type: Index
+image: https://kinlane-productions.s3.amazonaws.com/apis-json/apis-json-logo.jpg
+url: https://raw.githubusercontent.com/api-evangelist/spendesk/refs/heads/main/apis.yml
+created: 2026-06-12
+modified: 2026-06-12
+specificationVersion: '0.19'
+description: >
+  Spendesk is an AI-powered spend management and procurement platform serving
+  over 200,000 users across Europe. Its public REST API enables partners and
+  customers to integrate programmatic card issuance, transaction retrieval,
+  expense claims processing, vendor and invoice management, and accounting
+  exports into their own tools and workflows. Authentication is supported via
+  API keys (for customers) and OAuth2 (for partners building native
+  integrations). API access requires a Premium or Enterprise subscription plan,
+  and the developer portal at developer.spendesk.com provides reference
+  documentation, changelogs, a Postman collection, and webhook administration.
+tags:
+  - Spend Management
+  - Corporate Cards
+  - Expense Management
+  - Invoices
+  - Procurement
+  - FinTech
+  - Accounting
+  - Payments
+
+apis:
+  - name: Spendesk Public API
+    description: >
+      REST API for managing corporate cards, expense claims, vendor invoices,
+      wallet summaries, settlements, bank fees, members, suppliers, cost
+      centers, analytical fields, and webhook subscriptions within the Spendesk
+      spend management platform.
+    image: https://kinlane-productions.s3.amazonaws.com/apis-json/apis-json-logo.jpg
+    humanURL: https://developer.spendesk.com/
+    baseURL: https://api.spendesk.com
+    tags:
+      - Spend Management
+      - Corporate Cards
+      - Expense Management
+      - Invoices
+      - Webhooks
+    properties:
+      - type: Documentation
+        url: https://developer.spendesk.com/reference/general
+      - type: Authentication
+        url: https://developer.spendesk.com/reference/how-to-authenticate
+      - type: RateLimits
+        url: https://developer.spendesk.com/public/reference/rate-limiting
+      - type: Changelog
+        url: https://developer.spendesk.com/changelog
+      - type: PostmanCollection
+        url: https://www.postman.com/spendesk-pde-sas/spendesk-public-api/collection/q48314q/spendesk-public-api
+
+common:
+  - type: Website
+    url: https://www.spendesk.com/
+  - type: Documentation
+    url: https://developer.spendesk.com/
+  - type: GitHubOrganization
+    url: https://github.com/Spendesk
+  - type: LinkedIn
+    url: https://www.linkedin.com/company/spendesk
+  - type: X
+    url: https://twitter.com/Spendesk
+  - type: Blog
+    url: https://www.spendesk.com/blog/
+  - type: Pricing
+    url: https://www.spendesk.com/pricing/
+  - type: StatusPage
+    url: https://status.spendesk.com/
+  - type: Plans
+    url: plans/spendesk-plans-pricing.yml
+  - type: RateLimits
+    url: rate-limits/spendesk-rate-limits.yml
+  - type: FinOps
+    url: finops/spendesk-finops.yml
+
+maintainers:
+  - FN: Kin Lane
+    email: kin@apievangelist.com

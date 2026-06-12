@@ -1,0 +1,54 @@
+specificationVersion: '0.1'
+id: spendesk-rate-limits
+name: Spendesk API Rate Limits
+description: >
+  Spendesk enforces rate limits per company entity and per OAuth2 partner
+  to ensure platform stability. When any limit is reached, subsequent requests
+  return HTTP 429 until the x-ratelimit-reset interval (in seconds) has passed.
+provider: Spendesk
+providerId: spendesk
+created: 2026-06-12
+modified: 2026-06-12
+url: https://developer.spendesk.com/public/reference/rate-limiting
+
+headers:
+  retryAfter: x-ratelimit-reset
+  rateLimitRemaining: x-ratelimit-remaining
+  rateLimitLimit: x-ratelimit-limit
+
+throttled:
+  statusCode: 429
+  description: >
+    Returned when any rate limit is exceeded. Retry after the number of seconds
+    indicated in the x-ratelimit-reset response header.
+
+limits:
+  - name: Entity rate limit
+    description: >
+      Maximum number of API requests per minute for each Spendesk company
+      entity. Applies to API key authentication (Premium plan customers).
+    scope: entity
+    metric: requests
+    limit: 50
+    timeFrame: minute
+    appliesTo: API key (customer)
+
+  - name: OAuth2 partner rate limit
+    description: >
+      Higher rate limit for OAuth2 partners building native integrations.
+      Applies per partner application.
+    scope: partner
+    metric: requests
+    limit: 250
+    timeFrame: minute
+    appliesTo: OAuth2 (partner)
+
+  - name: Concurrent request limit
+    description: >
+      Maximum number of in-flight API requests at any given moment for any
+      single API consumer, regardless of authentication method.
+    scope: consumer
+    metric: concurrent-requests
+    limit: 5
+    timeFrame: instant
+    appliesTo: all

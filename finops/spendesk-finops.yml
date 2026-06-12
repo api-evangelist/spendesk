@@ -1,0 +1,110 @@
+specificationVersion: '1.0'
+id: spendesk-finops
+name: Spendesk FinOps Profile
+description: >
+  FinOps Framework FOCUS-aligned profile for Spendesk API consumption costs
+  and the spend management data surfaced by the Spendesk platform. Spendesk
+  itself is a spend management tool with a two-component billing model
+  (fixed subscription + variable transaction fees). API access is included
+  in Premium and Enterprise plans.
+provider: Spendesk
+providerId: spendesk
+created: 2026-06-12
+modified: 2026-06-12
+url: https://www.spendesk.com/pricing/
+
+billingModel:
+  type: hybrid
+  components:
+    - name: Fixed platform subscription
+      description: Monthly fixed fee covering platform access and unlimited users/cards
+      pricingModel: fixed
+      billingPeriod: monthly
+      currency: EUR
+    - name: Variable transaction fees
+      description: Per-transaction charges for card purchases, invoice processing, and expense submissions
+      pricingModel: metered
+      metric: transactions
+      currency: EUR
+
+focusColumns:
+  - ChargeCategory
+  - ChargeDescription
+  - ChargePeriodStart
+  - ChargePeriodEnd
+  - BilledCurrency
+  - BilledCost
+  - EffectiveCost
+  - ServiceName
+  - ServiceCategory
+  - ProviderName
+  - PublisherName
+  - RegionName
+  - ResourceId
+  - ResourceName
+  - UsageQuantity
+  - UsageUnit
+
+meters:
+  - name: Platform Subscription
+    description: Fixed monthly platform fee per Spendesk entity
+    unit: month
+    billingModel: fixed
+    focusServiceName: Spendesk Platform
+    focusServiceCategory: Business Applications
+
+  - name: Card Transaction
+    description: Variable fee per card transaction (virtual or physical)
+    unit: transaction
+    billingModel: metered
+    focusServiceName: Spendesk Cards
+    focusServiceCategory: Business Applications
+
+  - name: Invoice Processing
+    description: Variable fee per invoice processed through Accounts Payable module
+    unit: invoice
+    billingModel: metered
+    focusServiceName: Spendesk Invoices
+    focusServiceCategory: Business Applications
+
+  - name: Expense Submission
+    description: Variable fee per expense claim submitted
+    unit: expense
+    billingModel: metered
+    focusServiceName: Spendesk Expenses
+    focusServiceCategory: Business Applications
+
+  - name: API Requests
+    description: API calls consumed against entity or partner rate limits; included in plan, no additional charge
+    unit: request
+    billingModel: included
+    focusServiceName: Spendesk API
+    focusServiceCategory: Developer Tools
+
+principles:
+  Visibility:
+    description: >
+      Spendesk provides real-time budget monitoring dashboards, detailed
+      transaction-level data via the API, and accounting export capabilities
+      to give finance teams full visibility into company spending. The
+      /wallet-summary, /settlements, /payables, and /bank-fees endpoints
+      expose granular cost data for integration into FinOps tooling.
+    capabilities:
+      - Real-time budget monitoring
+      - Transaction-level API access
+      - Accounting system exports (NetSuite, Xero, QuickBooks, DATEV)
+      - Webhook-based real-time transaction events
+      - Cost center and analytical field tagging
+
+  Optimization:
+    description: >
+      Spendesk enables spend optimization through AI-based automation and
+      fraud detection (Enterprise), enforced approval workflows, policy
+      controls on virtual cards, and multi-entity consolidation for
+      cross-organizational spend governance.
+    capabilities:
+      - AI-based automation and fraud detection
+      - Configurable approval workflows and spending policies
+      - Single-use virtual cards for one-off purchases
+      - Recurring virtual cards with spending limits for subscriptions
+      - Multi-entity management for consolidated reporting

@@ -1,0 +1,100 @@
+specificationVersion: '0.1'
+id: spendesk-plans-pricing
+name: Spendesk Plans and Pricing
+description: >
+  Spendesk uses a two-component pricing model consisting of a fixed monthly
+  platform subscription fee plus variable transaction-based fees. API access
+  requires a Premium or Enterprise plan. Specific per-seat or per-transaction
+  prices are not publicly disclosed and require a quote from Spendesk sales.
+provider: Spendesk
+providerId: spendesk
+created: 2026-06-12
+modified: 2026-06-12
+reconciled: true
+url: https://www.spendesk.com/pricing/
+
+plans:
+  - name: Foundations
+    description: >
+      Base plan with core spend management capabilities including unlimited
+      cards, users, and control settings. Includes physical and virtual cards,
+      receipt OCR, expense reimbursement, SSO/SAML, Slack integration, and
+      40+ pre-built integrations. API access is not included.
+    type: paid
+    pricingModel: metered
+    pricing:
+      - component: Platform fee
+        type: fixed
+        period: monthly
+        price: contact-sales
+        currency: EUR
+      - component: Transaction fee
+        type: metered
+        metric: transaction
+        price: contact-sales
+        currency: EUR
+    apiAccess: false
+    quotas: []
+
+  - name: Premium
+    description: >
+      Extends Foundations with API access enabled. Includes access to the
+      Spendesk Public API for building custom integrations. Users can create
+      API credentials (client ID / client secret) via Settings > Integrations.
+    type: paid
+    pricingModel: metered
+    pricing:
+      - component: Platform fee
+        type: fixed
+        period: monthly
+        price: contact-sales
+        currency: EUR
+      - component: Transaction fee
+        type: metered
+        metric: transaction
+        price: contact-sales
+        currency: EUR
+    apiAccess: true
+    quotas:
+      - name: API Rate Limit (entity)
+        metric: requests
+        limit: 50
+        timeFrame: minute
+        type: quota
+      - name: Concurrent Requests
+        metric: concurrent-requests
+        limit: 5
+        timeFrame: instant
+        type: quota
+
+  - name: Enterprise
+    description: >
+      Full-featured enterprise plan with all add-on modules available,
+      including Procurement (Procure-to-Pay), Accounts Payable, Advanced
+      Workflows & Policies, Multi-Entity Management, HR & ERP Integrations,
+      and AI-based Automation and Fraud Detection. Full API access included.
+    type: enterprise
+    pricingModel: metered
+    pricing:
+      - component: Platform fee
+        type: fixed
+        period: monthly
+        price: contact-sales
+        currency: EUR
+      - component: Transaction fee
+        type: metered
+        metric: transaction
+        price: contact-sales
+        currency: EUR
+    apiAccess: true
+    quotas:
+      - name: API Rate Limit (OAuth2 partner)
+        metric: requests
+        limit: 250
+        timeFrame: minute
+        type: quota
+      - name: Concurrent Requests
+        metric: concurrent-requests
+        limit: 5
+        timeFrame: instant
+        type: quota
