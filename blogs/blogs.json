@@ -1,0 +1,11 @@
+{
+  "blogFeeds": [
+    {
+      "name": "Spendesk API Changelog",
+      "type": "rss",
+      "url": "https://developer.spendesk.com/public/changelog.rss",
+      "lastFetched": null,
+      "posts": []
+    }
+  ]
+}

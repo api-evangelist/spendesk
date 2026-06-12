@@ -1,0 +1,66 @@
+{
+  "@context": {
+    "@vocab": "https://schema.org/",
+    "spendesk": "https://developer.spendesk.com/vocab#",
+    "name": "name",
+    "description": "description",
+    "url": "url",
+    "provider": "provider",
+    "SoftwareApplication": "SoftwareApplication",
+    "WebAPI": "WebAPI",
+    "Organization": "Organization",
+    "documentation": "documentation",
+    "termsOfService": "termsOfService",
+    "card": {
+      "@id": "spendesk:card",
+      "@type": "spendesk:CorporateCard"
+    },
+    "expense": {
+      "@id": "spendesk:expense",
+      "@type": "spendesk:ExpenseClaim"
+    },
+    "invoice": {
+      "@id": "spendesk:invoice",
+      "@type": "spendesk:VendorInvoice"
+    },
+    "wallet": {
+      "@id": "spendesk:wallet",
+      "@type": "spendesk:Wallet"
+    },
+    "settlement": {
+      "@id": "spendesk:settlement",
+      "@type": "spendesk:Settlement"
+    },
+    "supplier": {
+      "@id": "spendesk:supplier",
+      "@type": "spendesk:Supplier"
+    },
+    "costCenter": {
+      "@id": "spendesk:costCenter",
+      "@type": "spendesk:CostCenter"
+    },
+    "webhook": {
+      "@id": "spendesk:webhook",
+      "@type": "spendesk:WebhookSubscription"
+    },
+    "member": {
+      "@id": "spendesk:member",
+      "@type": "spendesk:TeamMember"
+    },
+    "analyticalField": {
+      "@id": "spendesk:analyticalField",
+      "@type": "spendesk:AnalyticalField"
+    }
+  },
+  "@type": "WebAPI",
+  "name": "Spendesk Public API",
+  "description": "REST API for managing corporate cards, expense claims, vendor invoices, wallet summaries, settlements, bank fees, members, suppliers, cost centers, analytical fields, and webhook subscriptions within the Spendesk spend management platform.",
+  "url": "https://api.spendesk.com",
+  "provider": {
+    "@type": "Organization",
+    "name": "Spendesk",
+    "url": "https://www.spendesk.com/"
+  },
+  "documentation": "https://developer.spendesk.com/reference/general",
+  "termsOfService": "https://www.spendesk.com/"
+}

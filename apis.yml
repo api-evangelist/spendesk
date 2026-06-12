@@ -77,6 +77,10 @@ common:
     url: rate-limits/spendesk-rate-limits.yml
   - type: FinOps
     url: finops/spendesk-finops.yml
+  - type: BlogFeeds
+    url: blogs/blogs.json
+  - type: JSONLDContext
+    url: json-ld/spendesk-context.jsonld
 
 maintainers:
   - FN: Kin Lane
