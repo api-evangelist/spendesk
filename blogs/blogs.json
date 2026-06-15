@@ -7,5 +7,17 @@
       "lastFetched": null,
       "posts": []
     }
-  ]
+  ],
+  "repo": "spendesk",
+  "feeds": [
+    {
+      "source": "https://twitter.com/Spendesk",
+      "feed_url": "https://twitter.com/Spendesk",
+      "title": "",
+      "saved": 0,
+      "method": "none"
+    }
+  ],
+  "post_count": 0,
+  "fetched": "2026-06-14T20:42:17Z"
 }
