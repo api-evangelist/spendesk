@@ -11,13 +11,13 @@
   "repo": "spendesk",
   "feeds": [
     {
-      "source": "https://twitter.com/Spendesk",
-      "feed_url": "https://twitter.com/Spendesk",
-      "title": "",
+      "source": "https://www.spendesk.com/blog/",
+      "feed_url": "",
       "saved": 0,
-      "method": "none"
+      "method": "agent-scrape"
     }
   ],
   "post_count": 0,
-  "fetched": "2026-06-14T20:42:17Z"
+  "fetched": "2026-06-27T13:11:56Z",
+  "agent_pulled": "2026-06-27"
 }
