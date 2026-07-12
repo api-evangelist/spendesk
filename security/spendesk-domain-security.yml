@@ -1,0 +1,33 @@
+generated: '2026-07-11'
+method: probed
+source: live DNS/TLS/HTTP probes of apis.yml + OpenAPI hosts
+hosts:
+- host: www.spendesk.com
+  https: true
+  tls_version: TLSv1.3
+  cert_expires: Aug 14 08:53:49 2026 GMT
+  hsts: true
+  hsts_max_age: 31536000
+- host: developer.spendesk.com
+  https: true
+  tls_version: TLSv1.3
+  cert_expires: Oct  6 22:40:30 2026 GMT
+  hsts: null
+- host: api.spendesk.com
+  https: true
+  tls_version: TLSv1.2
+  cert_expires: Dec  2 23:59:59 2026 GMT
+  hsts: null
+domains:
+- domain: spendesk.com
+  dnssec: false
+  caa:
+  - 0 issue "awstrust.com"
+  - 0 issue "letsencrypt.org"
+  - 0 issue "letsencrypt.org;accounturi=https://acme-v02.api.letsencrypt.org/acme/acct/54403714"
+  - 0 issue "pki.goog"
+  - 0 issue "amazon.com"
+  - 0 issue "amazonaws.com"
+  spf: true
+  dmarc: true
+  dmarc_policy: reject
