@@ -4,20 +4,21 @@
       "name": "Spendesk API Changelog",
       "type": "rss",
       "url": "https://developer.spendesk.com/public/changelog.rss",
-      "lastFetched": null,
+      "lastFetched": "2026-07-04T13:18:47Z",
       "posts": []
     }
   ],
   "repo": "spendesk",
   "feeds": [
     {
-      "source": "https://www.spendesk.com/blog/",
-      "feed_url": "",
+      "source": "https://twitter.com/Spendesk",
+      "feed_url": "https://twitter.com/Spendesk",
+      "title": "",
       "saved": 0,
-      "method": "agent-scrape"
+      "method": "none"
     }
   ],
   "post_count": 0,
-  "fetched": "2026-06-27T13:11:56Z",
-  "agent_pulled": "2026-06-27"
+  "fetched": "2026-07-11T11:50:51Z",
+  "agent_pulled": "2026-07-04"
 }
