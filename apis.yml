@@ -17,7 +17,7 @@ image: https://kinlane-images.s3.amazonaws.com/shared/apis-json/icons/spendesk.p
 url: https://raw.githubusercontent.com/api-evangelist/spendesk/refs/heads/main/apis.yml
 created: 2026-06-12
 modified: 2026-06-12
-specificationVersion: '0.19'
+specificationVersion: '0.23'
 description: >
   Spendesk is an AI-powered spend management and procurement platform serving
   over 200,000 users across Europe. Its public REST API enables partners and
