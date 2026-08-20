@@ -34,6 +34,15 @@ tags:
   - Expense Management
   - Invoices
   - Procurement
+  - Fintech
+  - Accounting
+  - Payments
+tags_raw:
+  - Spend Management
+  - Corporate Cards
+  - Expense Management
+  - Invoices
+  - Procurement
   - FinTech
   - Accounting
   - Payments
@@ -49,6 +58,12 @@ apis:
     humanURL: https://developer.spendesk.com/
     baseURL: https://api.spendesk.com
     tags:
+      - Spend Management
+      - Corporate Cards
+      - Expense Management
+      - Invoices
+      - Webhook
+    tags_raw:
       - Spend Management
       - Corporate Cards
       - Expense Management
