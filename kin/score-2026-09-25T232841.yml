@@ -1,22 +1,20 @@
-# Kin Score artifact — spendesk — 2026-08-29T230545
+# Kin Score artifact — spendesk — 2026-09-25T232841
 # The API Evangelist rating (https://github.com/api-evangelist/kin-score). Generated; do not edit.
 ---
 kin_score:
   slug: spendesk
-  schema_version: 0.16.0
-  scored_at: '2026-08-29'
-  run_ts: 2026-08-29T230545
-  composite: 32.1
+  schema_version: 0.23.0
+  scored_at: '2026-09-25'
+  run_ts: 2026-09-25T232841
+  composite: 30.5
   band: thin
   facets:
-    discoverability: 68.5
+    discoverability: 66.1
     contract_quality: 14.7
-    governance: 0.0
-    operational_transparency: 57.9
-    developer_ergonomics: 17.9
-    commercial_clarity: 50.0
     contract_governance: 0.0
-    access_clarity: 50.0
+    operational_transparency: 54.7
+    developer_ergonomics: 17.9
+    access_clarity: 46.8
   agent_readiness:
     score: 5.0
     band: human-only
@@ -44,5 +42,5 @@ kin_score:
     applies: true
     regime: Payments
     regime_id: payments
-    score: 35.9
+    score: 20.5
     matched_via: tags
