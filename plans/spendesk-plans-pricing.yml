@@ -103,3 +103,28 @@ plans:
         limit: 5
         timeFrame: instant
         type: quota
+x-canonical:
+  generated: '2026-10-08'
+  vocabulary: all/0-working/economics/plans-canonical.yml
+  models:
+  - negotiated
+  units: []
+  plans:
+  - name: Foundations
+    access: paid
+    model: negotiated
+    model_how: derived
+    units: []
+    periods: []
+  - name: Premium
+    access: paid
+    model: negotiated
+    model_how: derived
+    units: []
+    periods: []
+  - name: Enterprise
+    access: enterprise
+    model: negotiated
+    model_how: derived
+    units: []
+    periods: []
