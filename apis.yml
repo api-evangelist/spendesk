@@ -1,6 +1,9 @@
 aid: spendesk
+
 name: Spendesk
+
 type: Index
+
 deliveryModel:
   model: saas
   open_source: false
@@ -12,6 +15,7 @@ deliveryModel:
   - pricing
   generated: '2026-08-28'
   method: derived
+
 accessModel:
   pricing: paid
   onboarding: unknown
@@ -24,106 +28,179 @@ accessModel:
   - plans
   generated: '2026-07-22'
   method: derived
+
 image: https://kinlane-images.s3.amazonaws.com/shared/apis-json/icons/spendesk.png
+
 url: https://raw.githubusercontent.com/api-evangelist/spendesk/refs/heads/main/apis.yml
-created: 2026-06-12
-modified: 2026-06-12
+
+created: '2026-06-12'
+
+modified: '2026-06-12'
+
 specificationVersion: '0.23'
-description: >
-  Spendesk is an AI-powered spend management and procurement platform serving
-  over 200,000 users across Europe. Its public REST API enables partners and
-  customers to integrate programmatic card issuance, transaction retrieval,
-  expense claims processing, vendor and invoice management, and accounting
-  exports into their own tools and workflows. Authentication is supported via
-  API keys (for customers) and OAuth2 (for partners building native
-  integrations). API access requires a Premium or Enterprise subscription plan,
-  and the developer portal at developer.spendesk.com provides reference
-  documentation, changelogs, a Postman collection, and webhook administration.
+
+description: 'Spendesk is an AI-powered spend management and procurement platform serving over 200,000 users across Europe. Its public REST API
+  enables partners and customers to integrate programmatic card issuance, transaction retrieval, expense claims processing, vendor and invoice
+  management, and accounting exports into their own tools and workflows. Authentication is supported via API keys (for customers) and OAuth2 (for
+  partners building native integrations). API access requires a Premium or Enterprise subscription plan, and the developer portal at developer.spendesk.com
+  provides reference documentation, changelogs, a Postman collection, and webhook administration.
+
+  '
+
 tags:
-  - Spend Management
-  - Corporate Cards
-  - Expense Management
-  - Invoices
-  - Procurement
-  - Fintech
-  - Accounting
-  - Payments
+- Spend Management
+- Corporate Cards
+- Expense Management
+- Invoices
+- Procurement
+- Fintech
+- Accounting
+- Payments
+
 tags_raw:
-  - Spend Management
-  - Corporate Cards
-  - Expense Management
-  - Invoices
-  - Procurement
-  - FinTech
-  - Accounting
-  - Payments
-
-apis:
-  - name: Spendesk Public API
-    description: >
-      REST API for managing corporate cards, expense claims, vendor invoices,
-      wallet summaries, settlements, bank fees, members, suppliers, cost
-      centers, analytical fields, and webhook subscriptions within the Spendesk
-      spend management platform.
-    image: https://kinlane-images.s3.amazonaws.com/shared/apis-json/apis-json-logo.jpg
-    humanURL: https://developer.spendesk.com/
-    baseURL: https://api.spendesk.com
-    tags:
-      - Spend Management
-      - Corporate Cards
-      - Expense Management
-      - Invoices
-      - Webhook
-    tags_raw:
-      - Spend Management
-      - Corporate Cards
-      - Expense Management
-      - Invoices
-      - Webhooks
-    properties:
-      - type: Documentation
-        url: https://developer.spendesk.com/reference/general
-      - type: Authentication
-        url: https://developer.spendesk.com/reference/how-to-authenticate
-      - type: RateLimits
-        url: https://developer.spendesk.com/public/reference/rate-limiting
-      - type: ChangeLog
-        url: https://developer.spendesk.com/changelog
-      - type: PostmanCollection
-        url: https://www.postman.com/spendesk-pde-sas/spendesk-public-api/collection/q48314q/spendesk-public-api
-
-common:
-  - type: VulnerabilityDisclosure
-    url: security/spendesk-vulnerability-disclosure.yml
-  - type: DomainSecurity
-    url: security/spendesk-domain-security.yml
-  - type: Website
-    url: https://www.spendesk.com/
-  - type: Documentation
-    url: https://developer.spendesk.com/
-  - type: GitHubOrganization
-    url: https://github.com/Spendesk
-  - type: LinkedIn
-    url: https://www.linkedin.com/company/spendesk
-  - type: X
-    url: https://twitter.com/Spendesk
-  - type: Blog
-    url: https://www.spendesk.com/blog/
-  - type: Pricing
-    url: https://www.spendesk.com/pricing/
-  - type: StatusPage
-    url: https://status.spendesk.com/
-  - type: Plans
-    url: plans/spendesk-plans-pricing.yml
-  - type: RateLimits
-    url: rate-limits/spendesk-rate-limits.yml
-  - type: FinOps
-    url: finops/spendesk-finops.yml
-  - type: BlogFeed
-    url: blogs/blogs.json
-  - type: JSONLDContext
-    url: json-ld/spendesk-context.jsonld
+- Spend Management
+- Corporate Cards
+- Expense Management
+- Invoices
+- Procurement
+- FinTech
+- Accounting
+- Payments
 
 maintainers:
-  - FN: Kin Lane
-    email: kin@apievangelist.com
+- FN: Kin Lane
+  email: kin@apievangelist.com
+
+common:
+- type: AgenticAccess
+  url: agentic-access/spendesk-agentic-access.yml
+- type: Spectral
+  url: rules/spendesk-rules.yml
+- type: JSONLD
+  url: json-ld/spendesk-context.jsonld
+- type: Vocabulary
+  url: vocabulary/spendesk-vocabulary.yml
+- type: Webhooks
+  url: asyncapi/spendesk-webhooks.yml
+- type: DataModel
+  url: data-model/spendesk-data-model.yml
+- type: Idempotency
+  url: conventions/spendesk-conventions.yml
+- type: Conventions
+  url: conventions/spendesk-conventions.yml
+- type: ErrorCatalog
+  url: errors/spendesk-problem-types.yml
+- type: Conformance
+  url: conformance/spendesk-conformance.yml
+- type: LLMsTxt
+  url: llms/spendesk-llms.txt
+- type: SecurityTxt
+  url: well-known/spendesk-status-security.txt
+- type: SecurityTxt
+  url: well-known/spendesk-security.txt
+- type: WellKnown
+  url: well-known/spendesk-well-known.yml
+- type: Hosts
+  url: hosts/spendesk-hosts.yml
+- type: Vendors
+  url: vendors/spendesk-vendors.yml
+- type: TrustCenter
+  url: https://trust.spendesk.com/
+- type: TermsOfService
+  url: https://www.spendesk.com/legals/terms/
+- type: Security
+  url: https://www.spendesk.com/sl/security/
+- type: PrivacyPolicy
+  url: https://www.spendesk.com/legals/privacy/
+- type: Newsroom
+  url: https://www.spendesk.com/press/
+- type: Login
+  url: https://app.spendesk.com/auth/login
+- type: OAuthScopes
+  url: scopes/spendesk-scopes.yml
+- type: Authentication
+  url: authentication/spendesk-authentication.yml
+- type: VulnerabilityDisclosure
+  url: security/spendesk-vulnerability-disclosure.yml
+- type: DomainSecurity
+  url: security/spendesk-domain-security.yml
+- type: Website
+  url: https://www.spendesk.com/
+- type: Documentation
+  url: https://developer.spendesk.com/
+- type: GitHubOrganization
+  url: https://github.com/Spendesk
+- type: LinkedIn
+  url: https://www.linkedin.com/company/spendesk
+- type: X
+  url: https://twitter.com/Spendesk
+- type: Blog
+  url: https://www.spendesk.com/blog/
+- type: Pricing
+  url: https://www.spendesk.com/pricing/
+- type: StatusPage
+  url: https://status.spendesk.com/
+- type: Plans
+  url: plans/spendesk-plans-pricing.yml
+- type: RateLimits
+  url: rate-limits/spendesk-rate-limits.yml
+- type: FinOps
+  url: finops/spendesk-finops.yml
+- type: BlogFeed
+  url: blogs/blogs.json
+- type: JSONLDContext
+  url: json-ld/spendesk-context.jsonld
+
+apis:
+- name: Spendesk Public API
+  description: 'REST API for managing corporate cards, expense claims, vendor invoices, wallet summaries, settlements, bank fees, members, suppliers,
+    cost centers, analytical fields, and webhook subscriptions within the Spendesk spend management platform.
+
+    '
+  image: https://kinlane-images.s3.amazonaws.com/shared/apis-json/apis-json-logo.jpg
+  humanURL: https://developer.spendesk.com/
+  baseURL: https://api.spendesk.com
+  tags:
+  - Spend Management
+  - Corporate Cards
+  - Expense Management
+  - Invoices
+  - Webhook
+  tags_raw:
+  - Spend Management
+  - Corporate Cards
+  - Expense Management
+  - Invoices
+  - Webhooks
+  properties:
+  - url: openapi/spendesk-public-api-openapi.yml
+    type: OpenAPI
+  - type: Documentation
+    url: https://developer.spendesk.com/reference/general
+  - type: Authentication
+    url: https://developer.spendesk.com/reference/how-to-authenticate
+  - type: RateLimits
+    url: https://developer.spendesk.com/public/reference/rate-limiting
+  - type: ChangeLog
+    url: https://developer.spendesk.com/changelog
+  - type: PostmanCollection
+    url: https://www.postman.com/spendesk-pde-sas/spendesk-public-api/collection/q48314q/spendesk-public-api
+  - type: JSONSchema
+    url: json-schema/spendesk-search-payable-schema.json
+  - type: JSONSchema
+    url: json-schema/spendesk-invoice-schema.json
+  - type: JSONSchema
+    url: json-schema/spendesk-payable-schema.json
+  - type: JSONSchema
+    url: json-schema/spendesk-intake-schema.json
+  - type: JSONSchema
+    url: json-schema/spendesk-intake-summary-schema.json
+  - type: JSONSchema
+    url: json-schema/spendesk-supplier-schema.json
+  aid: spendesk:spendesk-public-api
+
+x-readme-harvest:
+  date: '2026-10-14'
+  ops: 106
+  tool: harvest-readme-openapi.py
+  portal: https://developer.spendesk.com

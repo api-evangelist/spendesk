@@ -18,8 +18,8 @@ description: >
   in Premium and Enterprise plans.
 provider: Spendesk
 providerId: spendesk
-created: 2026-06-12
-modified: 2026-06-12
+created: '2026-06-12'
+modified: '2026-06-12'
 url: https://www.spendesk.com/pricing/
 
 billingModel:

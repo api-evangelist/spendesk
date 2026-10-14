@@ -1,0 +1,442 @@
+generated: '2026-10-14'
+method: derived
+generator: derive-vocabulary.py
+source: openapi/spendesk-public-api-openapi.yml
+vocabulary:
+  name: Spendesk Domain Vocabulary
+  description: 'Terms declared by Spendesk''s own API contract: its resource groups, objects and enumerations, with the contract''s definitions.
+    Derived, not authored.'
+  version: '2026-10-14'
+  terms:
+  - term: Authentication
+    definition: 'How to get an access token: Public API credentials (API keys) exchanged with HTTP Basic authentication, or OAuth 2.0 for partner
+      apps — authorization code with PKCE, the token endpoint (code exchange and refresh), dynamic client registration and discovery metadata.
+      Part of: [How to Authenticate](/reference/how-to-authenticate).'
+    tags:
+    - Resource Group
+    source: openapi/spendesk-public-api-openapi.yml
+  - term: Companies
+    definition: 'The companies (legal entities) of an organisation. Requires an organisation-level token (experimental). Part of: [Organisation-level
+      access](/reference/organisation-level-access).'
+    tags:
+    - Resource Group
+    source: openapi/spendesk-public-api-openapi.yml
+  - term: Settlements and wallet
+    definition: 'Money movements on the Spendesk wallet: settlements (payments) and their export state, bank fees, wallet loads and the wallet
+      summary. Part of: [What is Spend Data?](/reference/how-to-use-spend-data), [Building an accounting integration](/reference/building-an-accounting-integration).'
+    tags:
+    - Resource Group
+    source: openapi/spendesk-public-api-openapi.yml
+  - term: Payables
+    definition: 'Payables — invoices, credit notes, card purchases and expense claims — with their attachments. Retrieve them in bulk through
+      snapshots, search them, read one by ID; experimental endpoints let accounting integrations update accounting fields, mark payables ready
+      and write their bookkeeping status back. Part of: [Retrieving Spend Data](/reference/retrieving-snapshots-of-payables), [Building an accou'
+    tags:
+    - Resource Group
+    source: openapi/spendesk-public-api-openapi.yml
+  - term: Purchase orders
+    definition: 'Experimental purchase orders: list, retrieve, create, cancel and close them, and download a purchase order''s document.'
+    tags:
+    - Resource Group
+    source: openapi/spendesk-public-api-openapi.yml
+  - term: Accounting exports
+    definition: 'Experimental: generate purchase and bank journals from the company''s templates, download them, and check which entities are
+      exported. Part of: [Exporting accounting data](/reference/exporting-accounting-data).'
+    tags:
+    - Resource Group
+    source: openapi/spendesk-public-api-openapi.yml
+  - term: Chart of accounts
+    definition: 'Experimental chart of accounts: read, create, update, bulk-sync and archive accounts, set their purpose, and assign suppliers
+      and employees to their accounts. Part of: [Building an accounting integration](/reference/building-an-accounting-integration).'
+    tags:
+    - Resource Group
+    source: openapi/spendesk-public-api-openapi.yml
+  - term: External references
+    definition: 'Experimental: store and look up the IDs your ERP gives to Spendesk objects — suppliers, cost centers, expense categories, analytical
+      fields and values, accounts — per provider. Part of: [Building an accounting integration](/reference/building-an-accounting-integration).'
+    tags:
+    - Resource Group
+    source: openapi/spendesk-public-api-openapi.yml
+  - term: Suppliers
+    definition: 'Suppliers of a company: read them with `supplier:read`; create, update, archive and unarchive them with `experimental:supplier:manage`.
+      Part of: [Building an accounting integration](/reference/building-an-accounting-integration).'
+    tags:
+    - Resource Group
+    source: openapi/spendesk-public-api-openapi.yml
+  - term: Users
+    definition: Members of a company (`user:read`).
+    tags:
+    - Resource Group
+    source: openapi/spendesk-public-api-openapi.yml
+  - term: Analytical fields and cost centers
+    definition: 'Cost centers and analytical fields used to categorise spend. The `v1` endpoints read analytical fields and manage cost centers;
+      the experimental `v2` endpoints also create, update and delete analytical fields and their values. Part of: [Building an accounting integration](/reference/building-an-accounting-integration).'
+    tags:
+    - Resource Group
+    source: openapi/spendesk-public-api-openapi.yml
+  - term: Expense categories
+    definition: 'Expense categories. `v1` reads them; the experimental `v2` endpoints manage expense category fields and their categories. Part
+      of: [Building an accounting integration](/reference/building-an-accounting-integration).'
+    tags:
+    - Resource Group
+    source: openapi/spendesk-public-api-openapi.yml
+  - term: Invoices and intakes
+    definition: 'Experimental supplier invoices and invoice intake: send invoices and credit notes to a company''s inbox by uploading their file,
+      track the intakes, then list, summarise and retrieve the invoices.'
+    tags:
+    - Resource Group
+    source: openapi/spendesk-public-api-openapi.yml
+  - term: Cards
+    definition: 'Experimental: cards, their blocking history, and the order of a physical card.'
+    tags:
+    - Resource Group
+    source: openapi/spendesk-public-api-openapi.yml
+  - term: Requests and transactions
+    definition: 'Experimental: spend requests, and successful and failed card transactions.'
+    tags:
+    - Resource Group
+    source: openapi/spendesk-public-api-openapi.yml
+  - term: Webhooks
+    definition: 'Experimental webhook instances: subscribe an endpoint to payable and settlement events, and list, update or delete instances.
+      Part of: [Using webhooks](/reference/using-webhooks), [Building an accounting integration](/reference/building-an-accounting-integration).'
+    tags:
+    - Resource Group
+    source: openapi/spendesk-public-api-openapi.yml
+  - term: MCP
+    definition: The Spendesk MCP server (Streamable HTTP transport), for AI assistants connected through OAuth 2.0.
+    tags:
+    - Resource Group
+    source: openapi/spendesk-public-api-openapi.yml
+  - term: dateTime
+    definition: String containing a UTC datetime expressed in [ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) format like `2023-05-12T14:06:40Z`.
+    tags:
+    - Object
+    source: openapi/spendesk-public-api-openapi.yml#/components/schemas/dateTime
+  - term: token
+    definition: This token allows access the endpoints protected by `scope`.
+    tags:
+    - Object
+    source: openapi/spendesk-public-api-openapi.yml#/components/schemas/token
+  - term: badRequest
+    definition: Bad request
+    tags:
+    - Object
+    source: openapi/spendesk-public-api-openapi.yml#/components/schemas/badRequest
+  - term: unauthorized
+    definition: Unauthorized
+    tags:
+    - Object
+    source: openapi/spendesk-public-api-openapi.yml#/components/schemas/unauthorized
+  - term: forbidden
+    definition: Forbidden
+    tags:
+    - Object
+    source: openapi/spendesk-public-api-openapi.yml#/components/schemas/forbidden
+  - term: tooManyRequests
+    definition: Too Many Requests
+    tags:
+    - Object
+    source: openapi/spendesk-public-api-openapi.yml#/components/schemas/tooManyRequests
+  - term: internalServerError
+    definition: Internal Server Error
+    tags:
+    - Object
+    source: openapi/spendesk-public-api-openapi.yml#/components/schemas/internalServerError
+  - term: serviceUnavailableError
+    definition: Service Unavailable
+    tags:
+    - Object
+    source: openapi/spendesk-public-api-openapi.yml#/components/schemas/serviceUnavailableError
+  - term: webhookEntity
+    definition: 'Enumeration declared by the contract with values: payables, settlements.'
+    tags:
+    - Enumeration
+    source: openapi/spendesk-public-api-openapi.yml#/components/schemas/webhookEntity
+  - term: webhookPayable
+    definition: 'Object declared by the contract with fields: event, data.'
+    tags:
+    - Object
+    source: openapi/spendesk-public-api-openapi.yml#/components/schemas/webhookPayable
+  - term: webhookSettlement
+    definition: 'Object declared by the contract with fields: event, data.'
+    tags:
+    - Object
+    source: openapi/spendesk-public-api-openapi.yml#/components/schemas/webhookSettlement
+  - term: pagination
+    definition: 'Object declared by the contract with fields: page, pageSize, total.'
+    tags:
+    - Object
+    source: openapi/spendesk-public-api-openapi.yml#/components/schemas/pagination
+  - term: meta
+    definition: Meta object describing pagination
+    tags:
+    - Object
+    source: openapi/spendesk-public-api-openapi.yml#/components/schemas/meta
+  - term: date
+    definition: String containing a date expressed in [ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) format like `2023-05-12`.
+    tags:
+    - Object
+    source: openapi/spendesk-public-api-openapi.yml#/components/schemas/date
+  - term: currency
+    definition: If the payment was made in a foreign currency, this amount will be the one in the payment currency. Three-letter [ISO currency
+      codes](https://www.iso.org/iso-4217-currency-codes.html).
+    tags:
+    - Object
+    source: openapi/spendesk-public-api-openapi.yml#/components/schemas/currency
+  - term: priceAmount
+    definition: If the payment was made in a foreign currency, this amount will be the one in the payment currency. Can contain a negative value
+      in case of refunds. Expressed in smallest units of the currency (e.g. cents for EUR and USD, but yen for JPY).
+    tags:
+    - Object
+    source: openapi/spendesk-public-api-openapi.yml#/components/schemas/priceAmount
+  - term: notFound
+    definition: Not Found
+    tags:
+    - Object
+    source: openapi/spendesk-public-api-openapi.yml#/components/schemas/notFound
+  - term: settlement
+    definition: 'Object declared by the contract with fields: id, version, type, medium, paidFrom, transactionDescription, clearedAt, amount,
+      currency, billingAmount, billingCurrency, billingExchangeRate. (4 more)'
+    tags:
+    - Object
+    source: openapi/spendesk-public-api-openapi.yml#/components/schemas/settlement
+  - term: payable
+    definition: A payable is a short-term liability owed by a company to its creditors (suppliers or employees). Several types of payables are
+      supported by Spendesk, e.g. Invoices, Credit Notes, Expense Claims, Physical card purchases, Single Use card purchases, Subscription card
+      purchases, etc.
+    tags:
+    - Object
+    source: openapi/spendesk-public-api-openapi.yml#/components/schemas/payable
+  - term: tooLarge
+    definition: Payload Too Large
+    tags:
+    - Object
+    source: openapi/spendesk-public-api-openapi.yml#/components/schemas/tooLarge
+  - term: unsupportedMediaType
+    definition: Unsupported Media Type
+    tags:
+    - Object
+    source: openapi/spendesk-public-api-openapi.yml#/components/schemas/unsupportedMediaType
+  - term: updateSettlementStateSuccess
+    definition: 'Object declared by the contract with fields: id, outcome.'
+    tags:
+    - Object
+    source: openapi/spendesk-public-api-openapi.yml#/components/schemas/updateSettlementStateSuccess
+  - term: updateSettlementStateFailure
+    definition: 'Object declared by the contract with fields: id, outcome, reason.'
+    tags:
+    - Object
+    source: openapi/spendesk-public-api-openapi.yml#/components/schemas/updateSettlementStateFailure
+  - term: bulkUpdateSettlementsStateFullSuccess
+    definition: 'Object declared by the contract with fields: updatedSettlements.'
+    tags:
+    - Object
+    source: openapi/spendesk-public-api-openapi.yml#/components/schemas/bulkUpdateSettlementsStateFullSuccess
+  - term: bulkUpdateSettlementsStatePartialSuccess
+    definition: 'Object declared by the contract with fields: updatedSettlements.'
+    tags:
+    - Object
+    source: openapi/spendesk-public-api-openapi.yml#/components/schemas/bulkUpdateSettlementsStatePartialSuccess
+  - term: bankFee
+    definition: 'When money moves via a card being charged or with a wire-transfer, a Settlement is be created. If there were any fees for this
+      transaction, such as FX fees, they will be recorded as a Bank fee. Each item is an append-only entry: a correction adds an entry for the
+      difference, which can be zero or negative, so the amount of a fee is the sum of the amounts of its entries.'
+    tags:
+    - Object
+    source: openapi/spendesk-public-api-openapi.yml#/components/schemas/bankFee
+  - term: conflict
+    definition: Conflict
+    tags:
+    - Object
+    source: openapi/spendesk-public-api-openapi.yml#/components/schemas/conflict
+  - term: bookkeepingStatus
+    definition: Status of the payable in the Spendesk flow. | Status | Description | | ---|--- | | `created` | Payable (approved expense) has
+      been created. There is no accounting or supplier information on the payable in this state. | | `prepared` | Payable has been prepared (enriched
+      with accounting and supplier information) by an accountant. | | `exported` | Payable has been exported to accounting | | `failedEx
+    tags:
+    - Enumeration
+    source: openapi/spendesk-public-api-openapi.yml#/components/schemas/bookkeepingStatus
+  - term: payableQuery
+    definition: 'Object declared by the contract with fields: bookkeepingStatus, exportedAfter, ids, sortBy, sortOrder, fromPayableDate, toPayableDate,
+      createdFrom, createdTo, updatedFrom, fromDueDate, toDueDate. (4 more)'
+    tags:
+    - Object
+    source: openapi/spendesk-public-api-openapi.yml#/components/schemas/payableQuery
+  - term: paginationQuery
+    definition: 'Object declared by the contract with fields: page, pageSize.'
+    tags:
+    - Object
+    source: openapi/spendesk-public-api-openapi.yml#/components/schemas/paginationQuery
+  - term: analyticalProperties
+    definition: Analytical fields and values of the payable.
+    tags:
+    - Object
+    source: openapi/spendesk-public-api-openapi.yml#/components/schemas/analyticalProperties
+  - term: payableLineItem
+    definition: 'Object declared by the contract with fields: expenseAccount, vatAccount, reverseChargeAccount, financial, costCenterId, costCenterName,
+      analyticalProperties.'
+    tags:
+    - Object
+    source: openapi/spendesk-public-api-openapi.yml#/components/schemas/payableLineItem
+  - term: forbiddenControllerRoleRequired
+    definition: Forbidden
+    tags:
+    - Object
+    source: openapi/spendesk-public-api-openapi.yml#/components/schemas/forbiddenControllerRoleRequired
+  - term: updatePayableBookkeepingStatusSuccess
+    definition: 'Object declared by the contract with fields: id, outcome.'
+    tags:
+    - Object
+    source: openapi/spendesk-public-api-openapi.yml#/components/schemas/updatePayableBookkeepingStatusSuccess
+  - term: updatePayableBookkeepingStatusFailure
+    definition: 'Object declared by the contract with fields: id, outcome, reason.'
+    tags:
+    - Object
+    source: openapi/spendesk-public-api-openapi.yml#/components/schemas/updatePayableBookkeepingStatusFailure
+  - term: bulkUpdatePayablesBookkeepingStatusFullSuccess
+    definition: 'Object declared by the contract with fields: updatedPayables.'
+    tags:
+    - Object
+    source: openapi/spendesk-public-api-openapi.yml#/components/schemas/bulkUpdatePayablesBookkeepingStatusFullSuccess
+  - term: bulkUpdatePayablesBookkeepingStatusPartialSuccess
+    definition: 'Object declared by the contract with fields: updatedPayables.'
+    tags:
+    - Object
+    source: openapi/spendesk-public-api-openapi.yml#/components/schemas/bulkUpdatePayablesBookkeepingStatusPartialSuccess
+  - term: walletLoad
+    definition: 'Object declared by the contract with fields: id, amount, currency, createdAt, type, bankName.'
+    tags:
+    - Object
+    source: openapi/spendesk-public-api-openapi.yml#/components/schemas/walletLoad
+  - term: walletSummary
+    definition: 'Object declared by the contract with fields: id, name, status, currency, totalAmount, totalAvailableAmount, totalAllocatedAmount,
+      allocatedOnCards, scheduledTransfersAmount.'
+    tags:
+    - Object
+    source: openapi/spendesk-public-api-openapi.yml#/components/schemas/walletSummary
+  - term: searchPayableMoney
+    definition: Amount expressed in the smallest unit of the currency (e.g. cents for EUR, yen for JPY).
+    tags:
+    - Object
+    source: openapi/spendesk-public-api-openapi.yml#/components/schemas/searchPayableMoney
+  - term: searchPayableRate
+    definition: Exchange rate as a decimal number.
+    tags:
+    - Object
+    source: openapi/spendesk-public-api-openapi.yml#/components/schemas/searchPayableRate
+  - term: searchPayableValidity
+    definition: Validation status of documentary evidence. When invalid, might include a reason.
+    tags:
+    - Object
+    source: openapi/spendesk-public-api-openapi.yml#/components/schemas/searchPayableValidity
+  - term: searchPayableCompliances
+    definition: Country-specific compliance information (e.g. Spain e-receipt).
+    tags:
+    - Object
+    source: openapi/spendesk-public-api-openapi.yml#/components/schemas/searchPayableCompliances
+  - term: searchPayableAnalyticalFieldAssociation
+    definition: Association between an item line and an analytical field (cost center or custom field).
+    tags:
+    - Object
+    source: openapi/spendesk-public-api-openapi.yml#/components/schemas/searchPayableAnalyticalFieldAssociation
+  - term: searchPayableItemLine
+    definition: An accounting line item with net/gross/VAT breakdown and analytical field associations.
+    tags:
+    - Object
+    source: openapi/spendesk-public-api-openapi.yml#/components/schemas/searchPayableItemLine
+  - term: searchPayableDocEvidenceCannotBeProvided
+    definition: Explanation for why documentary evidence (receipt/invoice) cannot be provided.
+    tags:
+    - Object
+    source: openapi/spendesk-public-api-openapi.yml#/components/schemas/searchPayableDocEvidenceCannotBeProvided
+  - term: searchPayableStringEqualityOperand
+    definition: String filter with equality operator (= or !=).
+    tags:
+    - Object
+    source: openapi/spendesk-public-api-openapi.yml#/components/schemas/searchPayableStringEqualityOperand
+  - term: searchPayableStringPatternOperand
+    definition: String filter with pattern-matching operator.
+    tags:
+    - Object
+    source: openapi/spendesk-public-api-openapi.yml#/components/schemas/searchPayableStringPatternOperand
+  - term: searchPayableAmountComparisonOperand
+    definition: Amount filter with a single comparison operator.
+    tags:
+    - Object
+    source: openapi/spendesk-public-api-openapi.yml#/components/schemas/searchPayableAmountComparisonOperand
+  - term: searchPayableAmountRangeOperand
+    definition: Amount filter with a range operator (between or notBetween).
+    tags:
+    - Object
+    source: openapi/spendesk-public-api-openapi.yml#/components/schemas/searchPayableAmountRangeOperand
+  - term: searchPayableDateEqualsOperand
+    definition: Date filter with equality operator. Value can be a date literal or null.
+    tags:
+    - Object
+    source: openapi/spendesk-public-api-openapi.yml#/components/schemas/searchPayableDateEqualsOperand
+  - term: searchPayableDateRelativeOperand
+    definition: Date filter with before or after operator.
+    tags:
+    - Object
+    source: openapi/spendesk-public-api-openapi.yml#/components/schemas/searchPayableDateRelativeOperand
+  - term: searchPayableDateBetweenOperand
+    definition: Date filter with between operator specifying a from/to range.
+    tags:
+    - Object
+    source: openapi/spendesk-public-api-openapi.yml#/components/schemas/searchPayableDateBetweenOperand
+  - term: searchPayableDateInLastOperand
+    definition: Date filter with inLast operator specifying a relative time window.
+    tags:
+    - Object
+    source: openapi/spendesk-public-api-openapi.yml#/components/schemas/searchPayableDateInLastOperand
+  - term: searchPayablePayableIdFilter
+    definition: Filter payables by payable ID.
+    tags:
+    - Object
+    source: openapi/spendesk-public-api-openapi.yml#/components/schemas/searchPayablePayableIdFilter
+  - term: searchPayableIdFilter
+    definition: Filter payables by an ID field (supplier, requestor, accountPayable, costCenter, paymentId, requestId).
+    tags:
+    - Object
+    source: openapi/spendesk-public-api-openapi.yml#/components/schemas/searchPayableIdFilter
+  - term: searchPayableCustomFieldFilter
+    definition: Filter payables by a custom field key and value.
+    tags:
+    - Object
+    source: openapi/spendesk-public-api-openapi.yml#/components/schemas/searchPayableCustomFieldFilter
+  - term: searchPayableDocEvidenceStatusFilter
+    definition: Filter payables by documentary evidence status. `provided`/`providedAndDpr` mean a file is attached (user-set) — they do NOT certify
+      that the document is a valid or compliant invoice; for actual validation read the payable's `documentaryEvidence.validity` field. `missing`
+      and `declaredAsInvalid` indicate the receipt still needs follow-up.
+    tags:
+    - Object
+    source: openapi/spendesk-public-api-openapi.yml#/components/schemas/searchPayableDocEvidenceStatusFilter
+  - term: searchPayablePaymentStatusFilter
+    definition: Filter payables by payment status. `toPay` means any outstanding balance remains — it INCLUDES partially-paid invoices and does
+      NOT mean 'fully unpaid'. `paid` means the allocations on the payable sum to its full amount, leaving zero outstanding (settlements and/or
+      credit notes, so a credit note alone can make an invoice `paid`); it EXCLUDES partially-paid invoices, which are classified as `toPay`
+    tags:
+    - Object
+    source: openapi/spendesk-public-api-openapi.yml#/components/schemas/searchPayablePaymentStatusFilter
+  - term: searchPayableBookkeepingStatusFilter
+    definition: Filter payables by bookkeeping status.
+    tags:
+    - Object
+    source: openapi/spendesk-public-api-openapi.yml#/components/schemas/searchPayableBookkeepingStatusFilter
+  - term: searchPayablePayableTypeFilter
+    definition: Filter payables by payable type.
+    tags:
+    - Object
+    source: openapi/spendesk-public-api-openapi.yml#/components/schemas/searchPayablePayableTypeFilter
+  - term: searchPayableStringFieldFilter
+    definition: Filter payables by a string field (description or documentaryEvidenceNumber).
+    tags:
+    - Object
+    source: openapi/spendesk-public-api-openapi.yml#/components/schemas/searchPayableStringFieldFilter
+  - term: searchPayableAmountFieldFilter
+    definition: 'Filter payables by an amount field. `grossAmount` is the payable''s total. `netAmount` and `vatAmount` are not totals: each item
+      line is tested on its own and a payable matches when ANY one line meets the condition (so `netAmount > 5000` misses a payable with two 3,000
+      lines, and payables with no item lines never match); for a threshold on a payable''s net or VAT total, sum itemLines[].netAmount / v'
+    tags:
+    - Object
+    source: openapi/spendesk-public-api-openapi.yml#/components/schemas/searchPayableAmountFieldFilter

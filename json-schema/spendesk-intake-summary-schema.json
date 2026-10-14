@@ -1,0 +1,352 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/api-evangelist/spendesk/main/json-schema/spendesk-intake-summary-schema.json",
+  "title": "intakeSummary",
+  "description": "A received supplier document (invoice, credit note or receipt) being reviewed and processed — compact representation returned by the list endpoint. Fields extracted from the document (amounts, dates, numbers, supplier) are null until captured. New fields may be added over time.",
+  "x-generated": "2026-10-14",
+  "x-method": "derived",
+  "x-generator": "derive-json-schema.py",
+  "x-source": "openapi/spendesk-public-api-openapi.yml#/components/schemas/intakeSummary",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "$ref": "#/$defs/intakeId"
+    },
+    "companyId": {
+      "type": "string",
+      "description": "Id of the company entity that received the document."
+    },
+    "type": {
+      "$ref": "#/$defs/intakeType"
+    },
+    "source": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/intakeSource"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "How the document reached Spendesk, or null when not recorded."
+    },
+    "status": {
+      "$ref": "#/$defs/intakeStatus"
+    },
+    "stage": {
+      "$ref": "#/$defs/intakeStage"
+    },
+    "supplier": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/intakeSupplier"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "The supplier that issued the document. Null when no supplier has been identified yet."
+    },
+    "assigneeId": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Id of the member the intake is assigned to — the person expected to complete and submit it. An id, not a name: resolve it with [Get Users](/reference/v1-get-users), which needs the `user:read` scope in addition to the intake read scope. Null while unassigned."
+    },
+    "invoiceNumber": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "The supplier's invoice number as printed on the document. Null if not captured or the document is not an invoice."
+    },
+    "creditNoteNumber": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "The supplier's credit-note number as printed on the document. Null if not captured or the document is not a credit note."
+    },
+    "currency": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/currency"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Currency the document is denominated in. Null until captured, and also null when the captured value is not a three-letter code."
+    },
+    "grossAmount": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/priceAmount"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Total amount including tax, in `currency`'s smallest unit. Null until captured, and also null, even once captured, whenever `currency` is null or a code Spendesk does not support."
+    },
+    "netAmount": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/priceAmount"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Total amount before tax, in `currency`'s smallest unit. Null until captured, and also null, even once captured, whenever `currency` is null or a code Spendesk does not support."
+    },
+    "netPayableAmount": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/priceAmount"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Amount actually left to pay the supplier after deductions recorded on the document (e.g. an advance already paid, or an applied credit note), in `currency`'s smallest unit. Equals `grossAmount` when there are none. Only ever populated for intakes ingested through e-invoicing: it is always null for intakes created through this API and for intakes forwarded by email, where the null is permanent rather than capture-pending."
+    },
+    "issueDate": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/date"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Date the supplier issued the document, as printed on it (emission date). Null until captured."
+    },
+    "dueDate": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/date"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Date by which the document must be paid, per the supplier's payment terms. Null until captured or when no due date applies."
+    },
+    "resultingDocument": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/intakeResultingDocument"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "The document the intake produced or was linked to. Null while the intake is in progress, and stays null for an intake that ends `refused` or `deleted` without producing one. Always null at `status: processed`, which records a controller clearing the to-process queue rather than a document being produced. A null can also mean the lookup failed rather than that none exists, on both List intakes and Get an intake."
+    },
+    "payableId": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "uuid",
+      "description": "Id of the accounting payable the intake ultimately produced, resolvable via the payables API. Null whenever none is known, which is common even at `stage: processed` — that stage also holds refused and deleted intakes, which never produce one. On [List intakes](/reference/v2-list-company-intakes) a null is \"unknown\" rather than \"none\"; [Get an intake](/reference/v2-get-company-intake) is authoritative.",
+      "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+    },
+    "purchaseOrderId": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Id of the purchase order the intake is matched against. Null when none."
+    },
+    "correctsIntakeId": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "For a corrective document (e.g. a credit note cancelling or amending an earlier invoice): id of the intake it corrects. Null otherwise."
+    },
+    "appUrl": {
+      "type": "string",
+      "description": "Link to this intake in the Spendesk invoice inbox."
+    },
+    "createdAt": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/dateTime"
+        }
+      ],
+      "description": "When the intake was received by Spendesk (ingestion time, not `issueDate`)."
+    },
+    "updatedAt": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/dateTime"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "When any field on the intake last changed. Null when never updated."
+    }
+  },
+  "required": [
+    "id",
+    "companyId",
+    "type",
+    "source",
+    "status",
+    "stage",
+    "supplier",
+    "assigneeId",
+    "invoiceNumber",
+    "creditNoteNumber",
+    "currency",
+    "grossAmount",
+    "netAmount",
+    "netPayableAmount",
+    "issueDate",
+    "dueDate",
+    "resultingDocument",
+    "payableId",
+    "purchaseOrderId",
+    "correctsIntakeId",
+    "appUrl",
+    "createdAt",
+    "updatedAt"
+  ],
+  "$defs": {
+    "currency": {
+      "type": "string",
+      "pattern": "^[A-Z]{3}$",
+      "description": "If the payment was made in a foreign currency, this amount will be the one in the payment currency. Three-letter [ISO currency codes](https://www.iso.org/iso-4217-currency-codes.html).",
+      "title": "currency"
+    },
+    "date": {
+      "type": "string",
+      "format": "date",
+      "description": "String containing a date expressed in [ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) format like `2023-05-12`.",
+      "title": "date"
+    },
+    "dateTime": {
+      "type": "string",
+      "format": "date-time",
+      "description": "String containing a UTC datetime expressed in [ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) format like `2023-05-12T14:06:40Z`.",
+      "title": "dateTime"
+    },
+    "intakeId": {
+      "type": "string",
+      "description": "Opaque unique identifier of an intake.",
+      "title": "intakeId"
+    },
+    "intakeResultingDocument": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "The document the intake produced or was linked to once processing completed. Use `type` to pick the API to resolve `id` against. `invoice` and `creditNote` ids both resolve through the invoice detail endpoint, which returns credit notes with `type` `creditNote`; a `creditNote` id can occasionally return 404 — then list credit notes on the invoices endpoint with `type` `creditNote`.",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "invoice",
+            "creditNote",
+            "expenseClaim",
+            "cardPayment"
+          ],
+          "description": "Kind of resulting document. \n\n| Type | Description |\n| --- | --- |\n| `invoice` | A supplier invoice to pay. |\n| `creditNote` | A supplier credit note. |\n| `expenseClaim` | An employee expense claim. |\n| `cardPayment` | An existing card payment the document was attached to as its receipt. |"
+        },
+        "id": {
+          "type": "string",
+          "description": "Id of the resulting document."
+        }
+      },
+      "required": [
+        "type",
+        "id"
+      ],
+      "title": "intakeResultingDocument"
+    },
+    "intakeSource": {
+      "type": "string",
+      "enum": [
+        "eInvoice",
+        "email",
+        "api"
+      ],
+      "description": "How the document reached Spendesk. \n\n| Source | Description |\n| --- | --- |\n| `eInvoice` | Delivered through an e-invoicing network (e.g. Peppol or a French PDP). |\n| `email` | Sent or forwarded to the company's invoice inbox email address. |\n| `api` | Created programmatically via this API. |",
+      "title": "intakeSource"
+    },
+    "intakeStage": {
+      "type": "string",
+      "enum": [
+        "inInbox",
+        "linked",
+        "processed"
+      ],
+      "description": "Coarse lifecycle stage of the intake, derived from `status`. \n\n| Stage | Statuses | Description |\n| --- | --- | --- |\n| `inInbox` | `received`, `assigned`, `disputed`, `assignation_rejected`, `supplier_disputed`, `validating` | Awaiting action in the invoice inbox, or submitted and still under review. |\n| `linked` | `auto_linked`, `manually_linked` | Done — it was attached to an existing document as its receipt (see `resultingDocument`). |\n| `processed` | `validated`, `refused`, `deleted`, `processed` | Terminal — it was refused, deleted, or finished processing (see `resultingDocument`; status `processed` itself never sets one). |",
+      "title": "intakeStage"
+    },
+    "intakeStatus": {
+      "type": "string",
+      "enum": [
+        "received",
+        "assigned",
+        "disputed",
+        "refused",
+        "deleted",
+        "validating",
+        "validated",
+        "processed",
+        "auto_linked",
+        "manually_linked",
+        "assignation_rejected",
+        "supplier_disputed"
+      ],
+      "description": "Fine-grained processing status of the intake — the raw underlying status values, exposed verbatim (hence the snake_case). For most integrations the coarser `stage` is easier to work with. \n\n| Status | Description |\n| --- | --- |\n| `received` | Landed in the invoice inbox, not yet assigned to a member. |\n| `assigned` | Assigned to a member (see `assigneeId`) who must complete and submit it. |\n| `supplier_disputed` | The intake was contested with the supplier and awaits their response. |\n| `assignation_rejected` | The assignee rejected the assignment; the intake is back in the inbox for reassignment. |\n| `disputed` | Legacy predecessor of `assignation_rejected`; may still appear on historical records. |\n| `validating` | Submitted and going through review. |\n| `validated` | Review complete; about to produce its resulting document. |\n| `processed` | Done — a controller cleared it from the to-process queue (e-invoicing only); it does not produce a document, so `resultingDocument` is always null. |\n| `auto_linked` | Done — automatically matched and attached to an existing document. |\n| `manually_linked` | Done — manually attached to an existing document. |\n| `refused` | Rejected by the company; it will not be processed. |\n| `deleted` | Removed from the inbox. |\n\nNew statuses may be added over time — treat unknown values defensively.",
+      "title": "intakeStatus"
+    },
+    "intakeSupplier": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "The supplier (counterparty) that issued the document, as identified on the intake. `id` and `name` are independently nullable — the object may be present with either field null.",
+      "properties": {
+        "id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Supplier id, resolvable via `GET /v1/suppliers/{id}`. Null when the supplier named on the document has not been matched to a supplier record yet."
+        },
+        "name": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Supplier name as identified on the document. Null when no name has been captured yet."
+        }
+      },
+      "required": [
+        "id",
+        "name"
+      ],
+      "title": "intakeSupplier"
+    },
+    "intakeType": {
+      "type": "string",
+      "enum": [
+        "invoice",
+        "creditNote",
+        "receipt"
+      ],
+      "description": "Kind of document the intake carries. \n\n| Type | Description |\n| --- | --- |\n| `invoice` | A supplier invoice: an amount the company owes the supplier for goods or services. |\n| `creditNote` | A supplier credit note: a document that reduces an amount owed to the supplier (a refund, cancellation, or correction of a prior invoice). |\n| `receipt` | A receipt for a payment already made (e.g. a card payment), to be linked to that payment as documentary evidence. |\n\nForwarded documents are folded into their base type — a forwarded invoice is `invoice` and a forwarded credit note is `creditNote`; how the document arrived is expressed by `source`.",
+      "title": "intakeType"
+    },
+    "priceAmount": {
+      "type": "number",
+      "description": "If the payment was made in a foreign currency, this amount will be the one in the payment currency.\nCan contain a negative value in case of refunds.\nExpressed in smallest units of the currency (e.g. cents for EUR and USD, but yen for JPY).",
+      "title": "priceAmount"
+    }
+  }
+}

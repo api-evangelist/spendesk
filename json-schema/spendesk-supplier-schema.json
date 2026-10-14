@@ -1,0 +1,303 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/api-evangelist/spendesk/main/json-schema/spendesk-supplier-schema.json",
+  "title": "supplier",
+  "x-generated": "2026-10-14",
+  "x-method": "derived",
+  "x-generator": "derive-json-schema.py",
+  "x-source": "openapi/spendesk-public-api-openapi.yml#/components/schemas/supplier",
+  "additionalProperties": false,
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Supplier ID in Spendesk"
+    },
+    "name": {
+      "type": "string",
+      "description": "Supplier name"
+    },
+    "isArchived": {
+      "type": "boolean",
+      "description": "Indicates if supplier is archived. Archiving suppliers is a feature that needs to be activated in Spendesk."
+    },
+    "externalIds": {
+      "type": "array",
+      "description": "IDs this supplier has in external systems (ERPs), one entry per system. Only present when `externalIds` is requested through `include`. Not to be confused with `accountPayable.externalId`, which is the external ID of the account payable rather than of the supplier itself.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "externalId": {
+            "type": "string",
+            "description": "ID of the supplier in the external system."
+          },
+          "provider": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The external system the ID belongs to (e.g. Netsuite, Xero)."
+          },
+          "source": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Who recorded the mapping. `native_integration` means a native ERP sync owns it and keeps it up to date; `public_api` means it was set through the API."
+          }
+        },
+        "required": [
+          "externalId"
+        ]
+      }
+    },
+    "accountPayable": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "description": "Account payable assigned to the supplier (if exists)",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Internal Spendesk ID of the account payable"
+        },
+        "generalAccountCode": {
+          "type": "string",
+          "description": "Accounting code of the account payable"
+        },
+        "auxiliaryAccountCode": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Auxiliary code of the account payable; empty string (never null) if unset"
+        },
+        "externalId": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "ERP ID of the account payable, if available; supplier ERP IDs: externalIds"
+        }
+      },
+      "required": [
+        "id",
+        "generalAccountCode"
+      ]
+    },
+    "address": {
+      "type": "object",
+      "description": "Supplier's address",
+      "additionalProperties": false,
+      "properties": {
+        "line1": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Full street address as free text"
+        },
+        "line2": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Always null; street is in line1"
+        },
+        "city": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "City"
+        },
+        "postalCode": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Postal/ZIP code"
+        },
+        "stateOrCounty": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Always null (not stored)"
+        },
+        "country": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Country as entered at supplier creation time"
+        }
+      },
+      "required": [
+        "line1",
+        "line2",
+        "city",
+        "postalCode",
+        "stateOrCounty",
+        "country"
+      ]
+    },
+    "legalName": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Legal name of the supplier"
+    },
+    "registrationNo": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Tax registration number of the supplier"
+    },
+    "vatNo": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "VAT number of the supplier"
+    },
+    "createdAt": {
+      "$ref": "#/$defs/dateTime"
+    },
+    "updatedAt": {
+      "$ref": "#/$defs/dateTime"
+    },
+    "createdBy": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Id of the user that created the supplier (If available)"
+    },
+    "updatedBy": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Id of the user that updated the supplier (If available)"
+    },
+    "bic": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Supplier's bank account BIC (for GET endpoints, backward compatibility)"
+    },
+    "iban": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Supplier's bank account IBAN (for GET endpoints, backward compatibility)"
+    },
+    "bankCountry": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Supplier's bank account ISO alpha-2 country code (for GET endpoints, backward compatibility)"
+    },
+    "bankDetailsUpdatedAt": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Date and time when bank details were last updated (ISO 8601)"
+    },
+    "bankDetailsUpdatedBy": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Id of the user who last updated the bank details"
+    },
+    "bankInfo": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "description": "Bank information for the supplier (for POST/PATCH endpoints)",
+      "additionalProperties": false,
+      "properties": {
+        "iban": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Supplier's bank account IBAN"
+        },
+        "bic": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Supplier's bank account BIC"
+        },
+        "bankCountry": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Country where the bank is located"
+        },
+        "accountNumber": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Bank account number"
+        },
+        "routingNumber": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Bank routing number (US)"
+        },
+        "sortCode": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Bank sort code (UK)"
+        },
+        "accountHolderName": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Name of the account holder"
+        }
+      }
+    }
+  },
+  "required": [
+    "id",
+    "name",
+    "isArchived",
+    "address",
+    "legalName",
+    "registrationNo",
+    "vatNo",
+    "createdAt",
+    "updatedAt"
+  ],
+  "$defs": {
+    "dateTime": {
+      "type": "string",
+      "format": "date-time",
+      "description": "String containing a UTC datetime expressed in [ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) format like `2023-05-12T14:06:40Z`.",
+      "title": "dateTime"
+    }
+  }
+}

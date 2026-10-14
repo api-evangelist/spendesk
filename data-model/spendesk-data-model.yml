@@ -1,0 +1,604 @@
+generated: '2026-10-14'
+method: derived
+generator: derive-data-model.py
+source:
+- openapi/spendesk-public-api-openapi.yml
+notation: has_one = property $ref; has_many = array of $ref; belongs_to = <entity>_id field
+summary:
+  entities: 116
+  entities_in_spec: 116
+  relationships: 64
+entities:
+- name: accountingExportQuery
+  fields: 6
+- name: analyticalFieldV2
+  fields: 8
+- name: analyticalFieldV2Value
+  fields: 6
+- name: analyticalFieldV2ValuesCursorPagination
+  fields: 4
+  description: Forward-only cursor pagination metadata.
+- name: analyticalFieldV2ValuesMeta
+  fields: 1
+- name: analyticalProperties
+  fields: 4
+  description: Analytical fields and values of the payable.
+- name: analyticalProperty
+  fields: 4
+  description: A value set for one analytical field. Analytical fields are the customer's own bookkeeping dimensions
+    (custom fields) — e.g. project, team — used to classify and report spend. `valueId`/`valueName` ar
+- name: approval
+  fields: 3
+  description: Detail of the approval workflow — the effective approval chain for this invoice's amount, with its
+    completed, current and upcoming steps. The overall outcome shows in the invoice's `stage`; this objec
+- name: approvalDecision
+  fields: 3
+  description: Who acted on a step, when, and why. Null on a step until it has been acted on. The outcome (approved
+    vs rejected) is given by the step's `state`.
+- name: approvalStep
+  fields: 3
+  description: One step in the approval chain. Steps are returned in execution order (the array index is the position);
+    each must be approved for the invoice to advance to the next.
+- name: approver
+  fields: 4
+  description: A person entitled to act on an approval step.
+- name: badRequest
+  fields: 2
+  description: Bad request
+- name: bankFee
+  fields: 7
+  description: When money moves via a card being charged or with a wire-transfer, a Settlement is be created. If
+    there were any fees for this transaction, such as FX fees, they will be recorded as a Bank fee. Each i
+- name: bulkCreateSupplierCreatedItem
+  fields: 2
+- name: bulkCreateSupplierErrorItem
+  fields: 4
+- name: bulkCreateSuppliersResponse
+  fields: 1
+- name: bulkUpdatePayablesBookkeepingStatusFullSuccess
+  fields: 1
+- name: bulkUpdatePayablesBookkeepingStatusPartialSuccess
+  fields: 1
+- name: bulkUpdateSettlementsStateFullSuccess
+  fields: 1
+- name: bulkUpdateSettlementsStatePartialSuccess
+  fields: 1
+- name: bulkUpdateSupplierErrorItem
+  fields: 4
+- name: bulkUpdateSupplierSuccessItem
+  fields: 2
+- name: bulkUpdateSuppliersResponse
+  fields: 1
+- name: buyerRef
+  fields: 4
+  description: The internal Spendesk member the invoice is assigned to — the "buyer", i.e. the person the spend
+    is for and who is accountable for it. Distinct from the supplier (the external counterparty). This hold
+- name: conflict
+  fields: 2
+  description: Conflict
+- name: costCenterRef
+  fields: 2
+  description: Reference to a cost center (the internal unit that bears the cost).
+- name: currencyTotal
+  fields: 5
+  description: Count and amount totals for the matching invoices in a single currency. `amountDue` is not computed
+    yet and is always 0; it is not the outstanding balance.
+- name: errorDetails
+  fields: 2
+  description: Error details object
+- name: expenseCategoryFieldV2
+  fields: 7
+- name: expenseCategoryRef
+  fields: 2
+  description: Reference to an expense category — the customer's spend taxonomy (e.g. Software, Travel, Meals) used
+    for accounting and analytics. Distinct from the cost center (which bears the cost) and from analyti
+- name: expenseCategoryV2
+  fields: 4
+- name: expenseCategoryV2CursorPagination
+  fields: 4
+  description: Forward-only cursor pagination metadata.
+- name: expenseCategoryV2Meta
+  fields: 1
+- name: exportFailed
+  fields: 2
+  description: Unprocessable Entity
+- name: forbidden
+  fields: 2
+  description: Forbidden
+- name: forbiddenControllerRoleRequired
+  fields: 2
+  description: Forbidden
+- name: intake
+  fields: 26
+  description: Full representation of an intake, returned by the detail endpoint. A superset of `intakeSummary`,
+    adding the received documents and line items.
+- name: intakeDocument
+  fields: 3
+  description: 'A file received as part of the intake (the invoice, credit note or receipt itself, or a companion
+    file). Unlike invoice attachments, documents carry no `id` — the underlying storage exposes no stable '
+- name: intakeLineItem
+  fields: 6
+  description: A single line of the invoice. Amounts are decimals in the intake's `currency`, not minor units, because
+    they are transcribed as they appear on the document.
+- name: intakeResultingDocument
+  fields: 2
+  description: 'The document the intake produced or was linked to once processing completed. Use `type` to pick
+    the API to resolve `id` against. `invoice` and `creditNote` ids both resolve through the invoice detail '
+- name: intakeSummary
+  fields: 23
+  description: 'A received supplier document (invoice, credit note or receipt) being reviewed and processed — compact
+    representation returned by the list endpoint. Fields extracted from the document (amounts, dates, '
+- name: intakeSupplier
+  fields: 2
+  description: The supplier (counterparty) that issued the document, as identified on the intake. `id` and `name`
+    are independently nullable — the object may be present with either field null.
+- name: intakesCursorPagination
+  fields: 4
+  description: Forward-only cursor pagination metadata.
+- name: intakesMeta
+  fields: 1
+  description: Meta object describing the intake list pagination.
+- name: internalServerError
+  fields: 2
+  description: Internal Server Error
+- name: invoice
+  fields: 37
+  description: Full representation of an invoice, returned by the detail endpoint. A superset of `invoiceSummary`,
+    adding line items, the tax breakdown, currency conversion (FX), the payment history, the approval ch
+- name: invoiceAnalyticalSplit
+  fields: 3
+  description: One allocation of the whole invoice to a cost center and/or analytical-field values, as a share of
+    its total. Splits apply to the invoice as a whole, not to individual line items.
+- name: invoiceAttachment
+  fields: 4
+  description: A file supporting the invoice (documentary evidence). An invoice may have several.
+- name: invoiceDispute
+  fields: 4
+  description: 'Details of a dispute on the invoice (contested amount, duplicate, goods/services not received, quality
+    issue…), overlaying whatever approval/payment state the invoice holds. Not populated yet: the inv'
+- name: invoiceSummary
+  fields: 21
+  description: Compact representation of an invoice, returned by the list endpoint.
+- name: invoicesCursorPagination
+  fields: 4
+  description: Forward-only cursor pagination metadata.
+- name: invoicesMeta
+  fields: 1
+  description: Meta object describing the invoice list pagination.
+- name: invoicesSummary
+  fields: 2
+  description: Aggregate figures over all invoices matching the filters, returned by `GET /v2/companies/:companyId/invoices/summary`.
+- name: lineItem
+  fields: 10
+  description: A single line of the invoice, with its amounts and tax. Accounting coding is set on the whole invoice
+    (see the invoice `costCenter`, `analyticalSplits` and `expenseCategories`), not per line.
+- name: meta
+  fields: 1
+  description: Meta object describing pagination
+- name: notFound
+  fields: 2
+  description: Not Found
+- name: pagination
+  fields: 3
+- name: paginationQuery
+  fields: 2
+- name: payable
+  fields: 34
+  description: A payable is a short-term liability owed by a company to its creditors (suppliers or employees).
+    Several types of payables are supported by Spendesk, e.g. Invoices, Credit Notes, Expense Claims, Physi
+- name: payableLineItem
+  fields: 7
+- name: payableQuery
+  fields: 16
+- name: payment
+  fields: 12
+  description: A single payment settling (or scheduled to settle) the invoice. An invoice may be settled by one
+    or several payments — a Spendesk instalment plan, or one or more payments recorded as made outside Spen
+- name: paymentFee
+  fields: 3
+  description: A fee incurred on the payment (deducted from the transfer or billed alongside it).
+- name: paymentFx
+  fields: 3
+  description: Currency conversion for this payment. Present only when the money actually moved in a currency different
+    from the payment `currency`; null otherwise. The payment `amount`/`currency` are the invoice-si
+- name: paymentStatusReason
+  fields: 2
+  description: Why a payment failed or was returned. Present for those states; null otherwise.
+- name: purchaseOrderRef
+  fields: 1
+  description: Reference to a purchase order the invoice is matched against (two/three-way match).
+- name: review
+  fields: 2
+  description: Finance/controller review that validates the invoice's data (amounts, coding, documentary evidence)
+    for accounting. Distinct from `approval`, which authorises the spend — this checks the booking data.
+- name: searchPayableAmountComparisonOperand
+  fields: 2
+  description: Amount filter with a single comparison operator.
+- name: searchPayableAmountFieldFilter
+  fields: 0
+  description: 'Filter payables by an amount field. `grossAmount` is the payable''s total. `netAmount` and `vatAmount`
+    are not totals: each item line is tested on its own and a payable matches when ANY one line meets '
+- name: searchPayableAmountRangeOperand
+  fields: 2
+  description: Amount filter with a range operator (between or notBetween).
+- name: searchPayableAnalyticalFieldAssociation
+  fields: 3
+  description: Association between an item line and an analytical field (cost center or custom field).
+- name: searchPayableBody
+  fields: 4
+  description: Search body for querying payables. Combine leaf filters or compound (and/or) filter groups with cursor-based
+    pagination.
+- name: searchPayableBookkeepingStatusFilter
+  fields: 0
+  description: Filter payables by bookkeeping status.
+- name: searchPayableBooleanFieldFilter
+  fields: 3
+  description: Filter payables by the withBookkeepingStartDate boolean. When true, excludes payables dated before
+    the company's bookkeeping start date (the onboarding/migration cutover), keeping only those whose cre
+- name: searchPayableCompliances
+  fields: 1
+  description: Country-specific compliance information (e.g. Spain e-receipt).
+- name: searchPayableCompoundFilter
+  fields: 2
+- name: searchPayableCustomFieldFilter
+  fields: 0
+  description: Filter payables by a custom field key and value.
+- name: searchPayableDateBetweenOperand
+  fields: 2
+  description: Date filter with between operator specifying a from/to range.
+- name: searchPayableDateEqualsOperand
+  fields: 2
+  description: Date filter with equality operator. Value can be a date literal or null.
+- name: searchPayableDateFieldFilter
+  fields: 0
+  description: Filter payables by a date field (payableDate, firstCreatedAt, firstExportedAt, lastUpdatedAt, dueDate,
+    accountingDate).
+- name: searchPayableDateInLastOperand
+  fields: 2
+  description: Date filter with inLast operator specifying a relative time window.
+- name: searchPayableDateRelativeOperand
+  fields: 2
+  description: Date filter with before or after operator.
+- name: searchPayableDocEvidenceStatusFilter
+  fields: 0
+  description: Filter payables by documentary evidence status. `provided`/`providedAndDpr` mean a file is attached
+    (user-set) — they do NOT certify that the document is a valid or compliant invoice; for actual valid
+- name: searchPayableIdFilter
+  fields: 0
+  description: Filter payables by an ID field (supplier, requestor, accountPayable, costCenter, paymentId, requestId).
+- name: searchPayableItemLine
+  fields: 9
+  description: An accounting line item with net/gross/VAT breakdown and analytical field associations.
+- name: searchPayablePayableIdFilter
+  fields: 3
+  description: Filter payables by payable ID.
+- name: searchPayablePayableTypeFilter
+  fields: 0
+  description: Filter payables by payable type.
+- name: searchPayablePaymentStatusFilter
+  fields: 0
+  description: Filter payables by payment status. `toPay` means any outstanding balance remains — it INCLUDES partially-paid
+    invoices and does NOT mean 'fully unpaid'. `paid` means the allocations on the payable sum
+- name: searchPayableStringEqualityOperand
+  fields: 2
+  description: String filter with equality operator (= or !=).
+- name: searchPayableStringFieldFilter
+  fields: 0
+  description: Filter payables by a string field (description or documentaryEvidenceNumber).
+- name: searchPayableStringPatternOperand
+  fields: 2
+  description: String filter with pattern-matching operator.
+- name: searchPayableValueFilter
+  fields: 0
+- name: serviceUnavailableError
+  fields: 2
+  description: Service Unavailable
+- name: settlement
+  fields: 16
+- name: supplier
+  fields: 19
+- name: supplierInfoBase
+  fields: 4
+- name: supplierRef
+  fields: 2
+  description: Reference to the supplier (counterparty) of the invoice.
+- name: supplierResponse
+  fields: 2
+- name: supplierStatusUpdateSuccessResponse
+  fields: 4
+  description: Response for the PATCH suppliers/status endpoint
+- name: supplierToCreate
+  fields: 4
+- name: supplierToUpdateBulk
+  fields: 5
+- name: supplierToUpdateSingle
+  fields: 4
+- name: tooLarge
+  fields: 2
+  description: Payload Too Large
+- name: tooManyRequests
+  fields: 2
+  description: Too Many Requests
+- name: unauthorized
+  fields: 2
+  description: Unauthorized
+- name: unsupportedMediaType
+  fields: 2
+  description: Unsupported Media Type
+- name: updatePayableBookkeepingStatusFailure
+  fields: 3
+- name: updatePayableBookkeepingStatusSuccess
+  fields: 2
+- name: updateSettlementStateFailure
+  fields: 3
+- name: updateSettlementStateSuccess
+  fields: 2
+- name: user
+  fields: 5
+- name: walletLoad
+  fields: 6
+- name: walletSummary
+  fields: 9
+- name: webhook
+  fields: 11
+- name: webhookPayable
+  fields: 2
+- name: webhookSettlement
+  fields: 2
+relationships:
+- from: meta
+  to: pagination
+  type: has_one
+  via: pagination
+- from: payable
+  to: user
+  type: belongs_to
+  via: userId
+- from: payable
+  to: analyticalProperties
+  type: has_many
+  via: analyticalProperties
+- from: payable
+  to: payableLineItem
+  type: has_many
+  via: lineItems
+- from: bulkUpdateSettlementsStateFullSuccess
+  to: updateSettlementStateSuccess
+  type: has_many
+  via: updatedSettlements
+- from: bulkUpdateSettlementsStatePartialSuccess
+  to: updateSettlementStateSuccess
+  type: has_many
+  via: updatedSettlements
+- from: bulkUpdateSettlementsStatePartialSuccess
+  to: updateSettlementStateFailure
+  type: has_many
+  via: updatedSettlements
+- from: bankFee
+  to: settlement
+  type: belongs_to
+  via: settlementId
+- from: payableQuery
+  to: supplier
+  type: belongs_to
+  via: supplierIds
+- from: payableLineItem
+  to: analyticalProperties
+  type: has_many
+  via: analyticalProperties
+- from: bulkUpdatePayablesBookkeepingStatusFullSuccess
+  to: updatePayableBookkeepingStatusSuccess
+  type: has_many
+  via: updatedPayables
+- from: bulkUpdatePayablesBookkeepingStatusPartialSuccess
+  to: updatePayableBookkeepingStatusSuccess
+  type: has_many
+  via: updatedPayables
+- from: bulkUpdatePayablesBookkeepingStatusPartialSuccess
+  to: updatePayableBookkeepingStatusFailure
+  type: has_many
+  via: updatedPayables
+- from: searchPayableItemLine
+  to: searchPayableAnalyticalFieldAssociation
+  type: has_many
+  via: analyticalFieldAssociations
+- from: supplierResponse
+  to: meta
+  type: has_one
+  via: meta
+- from: supplierResponse
+  to: supplier
+  type: has_many
+  via: data
+- from: bulkCreateSupplierCreatedItem
+  to: supplierInfoBase
+  type: has_one
+  via: supplier
+- from: bulkCreateSuppliersResponse
+  to: bulkCreateSupplierCreatedItem
+  type: has_many
+  via: items
+- from: bulkCreateSuppliersResponse
+  to: bulkCreateSupplierErrorItem
+  type: has_many
+  via: items
+- from: bulkUpdateSuppliersResponse
+  to: bulkUpdateSupplierSuccessItem
+  type: has_many
+  via: items
+- from: bulkUpdateSuppliersResponse
+  to: bulkUpdateSupplierErrorItem
+  type: has_many
+  via: items
+- from: analyticalFieldV2ValuesMeta
+  to: analyticalFieldV2ValuesCursorPagination
+  type: has_one
+  via: pagination
+- from: expenseCategoryV2Meta
+  to: expenseCategoryV2CursorPagination
+  type: has_one
+  via: pagination
+- from: invoiceAnalyticalSplit
+  to: costCenterRef
+  type: has_one
+  via: costCenter
+- from: invoiceAnalyticalSplit
+  to: analyticalProperty
+  type: has_many
+  via: analyticalProperties
+- from: invoicesMeta
+  to: invoicesCursorPagination
+  type: has_one
+  via: pagination
+- from: invoiceSummary
+  to: invoiceDispute
+  type: has_one
+  via: dispute
+- from: invoiceSummary
+  to: supplierRef
+  type: has_one
+  via: supplier
+- from: invoiceSummary
+  to: purchaseOrderRef
+  type: has_many
+  via: purchaseOrders
+- from: invoiceSummary
+  to: costCenterRef
+  type: has_one
+  via: costCenter
+- from: invoiceSummary
+  to: invoiceAnalyticalSplit
+  type: has_many
+  via: analyticalSplits
+- from: invoiceSummary
+  to: expenseCategoryRef
+  type: has_many
+  via: expenseCategories
+- from: invoicesSummary
+  to: currencyTotal
+  type: has_many
+  via: totalsByCurrency
+- from: lineItem
+  to: costCenterRef
+  type: has_one
+  via: costCenter
+- from: lineItem
+  to: expenseCategoryRef
+  type: has_one
+  via: expenseCategory
+- from: lineItem
+  to: analyticalProperty
+  type: has_many
+  via: analyticalProperties
+- from: payment
+  to: paymentStatusReason
+  type: has_one
+  via: statusReason
+- from: payment
+  to: paymentFx
+  type: has_one
+  via: fx
+- from: payment
+  to: paymentFee
+  type: has_many
+  via: fees
+- from: approver
+  to: user
+  type: belongs_to
+  via: userId
+- from: approvalStep
+  to: approver
+  type: has_many
+  via: approvers
+- from: approvalStep
+  to: approvalDecision
+  type: has_one
+  via: decision
+- from: approval
+  to: approvalStep
+  type: has_many
+  via: steps
+- from: invoice
+  to: invoiceDispute
+  type: has_one
+  via: dispute
+- from: invoice
+  to: supplierRef
+  type: has_one
+  via: supplier
+- from: invoice
+  to: purchaseOrderRef
+  type: has_many
+  via: purchaseOrders
+- from: invoice
+  to: buyerRef
+  type: has_one
+  via: buyer
+- from: invoice
+  to: costCenterRef
+  type: has_one
+  via: costCenter
+- from: invoice
+  to: invoiceAnalyticalSplit
+  type: has_many
+  via: analyticalSplits
+- from: invoice
+  to: expenseCategoryRef
+  type: has_many
+  via: expenseCategories
+- from: invoice
+  to: lineItem
+  type: has_many
+  via: lineItems
+- from: invoice
+  to: payment
+  type: has_many
+  via: payments
+- from: invoice
+  to: approval
+  type: has_one
+  via: approval
+- from: invoice
+  to: review
+  type: has_one
+  via: review
+- from: invoice
+  to: payable
+  type: belongs_to
+  via: payableId
+- from: invoice
+  to: invoiceAttachment
+  type: has_many
+  via: attachments
+- from: intakesMeta
+  to: intakesCursorPagination
+  type: has_one
+  via: pagination
+- from: intakeSummary
+  to: intakeSupplier
+  type: has_one
+  via: supplier
+- from: intakeSummary
+  to: intakeResultingDocument
+  type: has_one
+  via: resultingDocument
+- from: intakeSummary
+  to: payable
+  type: belongs_to
+  via: payableId
+- from: intake
+  to: intakeSupplier
+  type: has_one
+  via: supplier
+- from: intake
+  to: intakeResultingDocument
+  type: has_one
+  via: resultingDocument
+- from: intake
+  to: payable
+  type: belongs_to
+  via: payableId
+- from: intake
+  to: intakeDocument
+  type: has_many
+  via: documents

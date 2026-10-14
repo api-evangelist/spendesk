@@ -12,8 +12,8 @@ description: >
   return HTTP 429 until the x-ratelimit-reset interval (in seconds) has passed.
 provider: Spendesk
 providerId: spendesk
-created: 2026-06-12
-modified: 2026-06-12
+created: '2026-06-12'
+modified: '2026-06-12'
 url: https://developer.spendesk.com/public/reference/rate-limiting
 
 headers:

@@ -1,0 +1,26 @@
+generated: '2026-10-14'
+method: derived
+source: openapi/spendesk-public-api-openapi.yml
+summary:
+  types:
+  - oauth2
+  oauth2_flows:
+  - authorizationCode
+  - clientCredentials
+schemes:
+- name: Authentication
+  type: oauth2
+  flows:
+  - flow: clientCredentials
+    tokenUrl: /v1/auth/token
+    scopes: 39
+  - flow: authorizationCode
+    authorizationUrl: /v1/oauth2/authorize
+    tokenUrl: /v1/oauth2/token/create
+    scopes: 39
+  description: 'A company-level token acts on the company it was issued for. An organisation-level
+    token (experimental) acts on the companies of an organisation: send the target company in
+    the `X-Company-Id` header on every call, except on `GET /v2/companies` and on `/v2/companies/{companyId}/…`
+    routes, which carry the company in the path. See [Organisation-level access](/reference/organisation-level-access).'
+  sources:
+  - openapi/spendesk-public-api-openapi.yml

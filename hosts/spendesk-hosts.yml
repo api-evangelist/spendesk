@@ -1,0 +1,84 @@
+generated: '2026-10-14'
+method: derived
+source: the pre-flight dossier, apis.yml pointers, spec servers, well-known, vendors -- nothing fetched here
+generator: derive-hosts.py
+summary:
+  hosts: 7
+  own: 4
+  other_domain: 0
+  platform: 3
+  roles:
+  - api
+  - docs
+  - other
+  - source
+  - status
+  - website
+hosts:
+- host: api.spendesk.com
+  found_by:
+  - apis[]
+  types: []
+  serves:
+  - api
+  registrable_domain: spendesk.com
+  role: api
+  relation: own
+- host: developer.spendesk.com
+  found_by:
+  - pointer
+  - apis[]
+  types:
+  - Documentation
+  serves:
+  - docs
+  registrable_domain: spendesk.com
+  role: docs
+  relation: own
+- host: github.com
+  found_by:
+  - pointer
+  types:
+  - GitHubOrganization
+  serves: []
+  registrable_domain: github.com
+  role: source
+  relation: platform
+- host: status.spendesk.com
+  found_by:
+  - pointer
+  types:
+  - StatusPage
+  serves: []
+  registrable_domain: spendesk.com
+  role: status
+  relation: own
+- host: twitter.com
+  found_by:
+  - pointer
+  types:
+  - X
+  serves: []
+  registrable_domain: twitter.com
+  role: other
+  relation: platform
+- host: www.linkedin.com
+  found_by:
+  - pointer
+  types:
+  - LinkedIn
+  serves: []
+  registrable_domain: linkedin.com
+  role: other
+  relation: platform
+- host: www.spendesk.com
+  found_by:
+  - pointer
+  types:
+  - Website
+  - Blog
+  - Pricing
+  serves: []
+  registrable_domain: spendesk.com
+  role: website
+  relation: own

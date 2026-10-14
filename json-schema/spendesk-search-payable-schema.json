@@ -1,0 +1,1028 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/api-evangelist/spendesk/main/json-schema/spendesk-search-payable-schema.json",
+  "title": "searchPayable",
+  "description": "A payable returned by the search endpoint. Discriminated union: either an expense or a reversal, identified by the kind field.",
+  "x-generated": "2026-10-14",
+  "x-method": "derived",
+  "x-generator": "derive-json-schema.py",
+  "x-source": "openapi/spendesk-public-api-openapi.yml#/components/schemas/searchPayable",
+  "anyOf": [
+    {
+      "type": "object",
+      "description": "An expense payable (kind = \"expense\").",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Unique payable identifier.",
+          "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+        },
+        "state": {
+          "type": "string",
+          "description": "Bookkeeping lifecycle state of the payable.",
+          "enum": [
+            "toPrepare",
+            "toExport",
+            "exported"
+          ]
+        },
+        "amount": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/searchPayableMoney"
+            }
+          ],
+          "description": "Original transaction amount in currency minor units."
+        },
+        "currency": {
+          "type": "string",
+          "description": "ISO 4217 currency code of the transaction amount."
+        },
+        "functionalAmount": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/searchPayableMoney"
+            }
+          ],
+          "description": "Amount in the company's functional currency, in minor units."
+        },
+        "functionalCurrency": {
+          "type": "string",
+          "description": "ISO 4217 currency code of the functional amount."
+        },
+        "outstandingAmount": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/searchPayableMoney"
+            }
+          ],
+          "description": "Portion of the payable amount not yet covered by allocations, in the payable native currency minor units. Zero means fully allocated. Absent if allocation tracking is unavailable for that payable."
+        },
+        "outstandingFunctionalAmount": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/searchPayableMoney"
+            }
+          ],
+          "description": "Same as outstandingAmount but in the company's functional currency minor units."
+        },
+        "creationDate": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Issue date of the payable — the date on the underlying document: a supplier invoice's issue date, or for card purchases the transaction's settlement date. This is the payable's accounting-relevant business date and the default basis for placing it in an accounting period. It is set during the request/review flow, is editable by controllers, and can be backdated, so it does NOT reflect when the record entered Spendesk (see firstCreatedAt for that). When the optional accounting-date override is enabled, accountingDate takes precedence for the booking period; otherwise accountingDate defaults to this date. To filter payables by this date, use the payableDate date-filter field (this same value is returned here as creationDate) — not firstCreatedAt, which is the system-entry timestamp."
+        },
+        "memberId": {
+          "type": "string",
+          "description": "ID of the team member who owns this payable."
+        },
+        "version": {
+          "type": "number",
+          "description": "The current version of this payable. This is incremented every time the payable is modified."
+        },
+        "kind": {
+          "type": "string",
+          "description": "Discriminator. Always \"expense\" for this variant.",
+          "enum": [
+            "expense"
+          ]
+        },
+        "subType": {
+          "type": "string",
+          "description": "Payment method or expense origin.",
+          "enum": [
+            "expense",
+            "invoice",
+            "creditNote",
+            "singlePurchase",
+            "subscription",
+            "multiUseCard",
+            "physical",
+            "mileageAllowance",
+            "perDiemAllowance"
+          ]
+        },
+        "description": {
+          "type": "string",
+          "description": "Free-text description of the payable."
+        },
+        "dueDate": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Payment due date, when applicable (e.g. invoices)."
+        },
+        "accountPayableId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Linked accounts-payable entry ID."
+        },
+        "firstExportedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp of the first export to an accounting system."
+        },
+        "firstCreatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Original creation timestamp (preserved across bookkeeping resets)."
+        },
+        "accountingDate": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Date used for the accounting period."
+        },
+        "amortisation": {
+          "type": "object",
+          "description": "Prepaid-expense amortisation schedule.",
+          "properties": {
+            "date": {
+              "type": "object",
+              "properties": {
+                "from": {
+                  "type": "string"
+                },
+                "to": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "from",
+                "to"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "date"
+          ],
+          "additionalProperties": false
+        },
+        "type": {
+          "type": "string",
+          "description": "Expense type: bill, claimedBill (employee-submitted), mileageExpense or perDiemExpense.",
+          "enum": [
+            "bill",
+            "claimedBill",
+            "mileageExpense",
+            "perDiemExpense"
+          ]
+        },
+        "spendingAmount": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/searchPayableMoney"
+            }
+          ],
+          "description": "Amount in the spending (card) currency, in minor units."
+        },
+        "spendingCurrency": {
+          "type": "string",
+          "description": "ISO 4217 currency code of the spending (card) amount."
+        },
+        "allocations": {
+          "type": "array",
+          "description": "Allocations linked to this expense. `settlement` entries are cash paid; `reversal` entries are a credit note or card refund applied document-to-document, not money moved.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "allocationId": {
+                "type": "string"
+              },
+              "amount": {
+                "$ref": "#/$defs/searchPayableMoney"
+              },
+              "entityId": {
+                "type": "string"
+              },
+              "entityType": {
+                "type": "string",
+                "enum": [
+                  "reversal",
+                  "settlement"
+                ]
+              }
+            },
+            "required": [
+              "allocationId",
+              "amount",
+              "entityId",
+              "entityType"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "documentaryEvidenceCannotBeProvided": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/searchPayableDocEvidenceCannotBeProvided"
+            }
+          ],
+          "description": "Present when the member declared that documentary evidence cannot be provided."
+        },
+        "itemLines": {
+          "type": "array",
+          "description": "Accounting line items with VAT breakdown.",
+          "items": {
+            "$ref": "#/$defs/searchPayableItemLine"
+          }
+        },
+        "documentaryEvidence": {
+          "description": "Attached documentary evidence (invoice, declaration of missing invoice, mileage or per-diem entry).",
+          "anyOf": [
+            {
+              "type": "object",
+              "properties": {
+                "validity": {
+                  "$ref": "#/$defs/searchPayableValidity"
+                },
+                "compliances": {
+                  "$ref": "#/$defs/searchPayableCompliances"
+                },
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "invoice"
+                  ]
+                },
+                "invoiceNumber": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "validity",
+                "type"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "properties": {
+                "validity": {
+                  "$ref": "#/$defs/searchPayableValidity"
+                },
+                "compliances": {
+                  "$ref": "#/$defs/searchPayableCompliances"
+                },
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "declarationOfMissingInvoice"
+                  ]
+                },
+                "invoiceNumber": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "validity",
+                "type"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "properties": {
+                "validity": {
+                  "$ref": "#/$defs/searchPayableValidity"
+                },
+                "compliances": {
+                  "$ref": "#/$defs/searchPayableCompliances"
+                },
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "mileageEntry"
+                  ]
+                },
+                "invoiceNumber": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "validity",
+                "type"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "properties": {
+                "validity": {
+                  "$ref": "#/$defs/searchPayableValidity"
+                },
+                "compliances": {
+                  "$ref": "#/$defs/searchPayableCompliances"
+                },
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "perDiemEntry"
+                  ]
+                },
+                "invoiceNumber": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "validity",
+                "type"
+              ],
+              "additionalProperties": false
+            }
+          ]
+        },
+        "functionalExchangeRate": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/searchPayableRate"
+            }
+          ],
+          "description": "Exchange rate from transaction currency to functional currency."
+        },
+        "spendingExchangeRate": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/searchPayableRate"
+            }
+          ],
+          "description": "Exchange rate from spending (card) currency to transaction currency."
+        },
+        "counterparty": {
+          "description": "The supplier or employee counterparty for this expense.",
+          "anyOf": [
+            {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "supplier"
+                  ]
+                },
+                "supplierId": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "type",
+                "supplierId"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "employee"
+                  ]
+                },
+                "memberId": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "type",
+                "memberId"
+              ],
+              "additionalProperties": false
+            }
+          ]
+        },
+        "commitmentCounterparty": {
+          "description": "The spending commitment counterparty, when available. For expense claims, a supplier reference identifies the merchant while counterparty identifies the employee being reimbursed. The merchant name is available from the payable detail response; never use the employee accountPayable as a merchant creditor account.",
+          "anyOf": [
+            {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "supplier"
+                  ]
+                },
+                "supplierId": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "type",
+                "supplierId"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "employee"
+                  ]
+                },
+                "memberId": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "type",
+                "memberId"
+              ],
+              "additionalProperties": false
+            }
+          ]
+        }
+      },
+      "required": [
+        "id",
+        "state",
+        "amount",
+        "currency",
+        "functionalAmount",
+        "functionalCurrency",
+        "creationDate",
+        "memberId",
+        "version",
+        "kind",
+        "subType",
+        "description",
+        "firstCreatedAt",
+        "type",
+        "allocations",
+        "itemLines",
+        "functionalExchangeRate",
+        "spendingExchangeRate",
+        "counterparty"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "description": "A reversal payable (kind = \"reversal\"), e.g. a credit note.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Unique payable identifier.",
+          "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+        },
+        "state": {
+          "type": "string",
+          "description": "Bookkeeping lifecycle state of the payable.",
+          "enum": [
+            "toPrepare",
+            "toExport",
+            "exported"
+          ]
+        },
+        "amount": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/searchPayableMoney"
+            }
+          ],
+          "description": "Original transaction amount in currency minor units."
+        },
+        "currency": {
+          "type": "string",
+          "description": "ISO 4217 currency code of the transaction amount."
+        },
+        "functionalAmount": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/searchPayableMoney"
+            }
+          ],
+          "description": "Amount in the company's functional currency, in minor units."
+        },
+        "functionalCurrency": {
+          "type": "string",
+          "description": "ISO 4217 currency code of the functional amount."
+        },
+        "outstandingAmount": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/searchPayableMoney"
+            }
+          ],
+          "description": "Portion of the payable amount not yet covered by allocations, in the payable native currency minor units. Zero means fully allocated. Absent if allocation tracking is unavailable for that payable."
+        },
+        "outstandingFunctionalAmount": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/searchPayableMoney"
+            }
+          ],
+          "description": "Same as outstandingAmount but in the company's functional currency minor units."
+        },
+        "creationDate": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Issue date of the payable — the date on the underlying document: a supplier invoice's issue date, or for card purchases the transaction's settlement date. This is the payable's accounting-relevant business date and the default basis for placing it in an accounting period. It is set during the request/review flow, is editable by controllers, and can be backdated, so it does NOT reflect when the record entered Spendesk (see firstCreatedAt for that). When the optional accounting-date override is enabled, accountingDate takes precedence for the booking period; otherwise accountingDate defaults to this date. To filter payables by this date, use the payableDate date-filter field (this same value is returned here as creationDate) — not firstCreatedAt, which is the system-entry timestamp."
+        },
+        "memberId": {
+          "type": "string",
+          "description": "ID of the team member who owns this payable."
+        },
+        "version": {
+          "type": "number",
+          "description": "The current version of this payable. This is incremented every time the payable is modified."
+        },
+        "kind": {
+          "type": "string",
+          "description": "Discriminator. Always \"reversal\" for this variant.",
+          "enum": [
+            "reversal"
+          ]
+        },
+        "subType": {
+          "type": "string",
+          "description": "Payment method or expense origin of the reversed payable.",
+          "enum": [
+            "expense",
+            "invoice",
+            "creditNote",
+            "singlePurchase",
+            "subscription",
+            "multiUseCard",
+            "physical",
+            "mileageAllowance",
+            "perDiemAllowance"
+          ]
+        },
+        "description": {
+          "type": "string",
+          "description": "Free-text description of the payable."
+        },
+        "dueDate": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Payment due date, when applicable."
+        },
+        "accountPayableId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Linked accounts-payable entry ID."
+        },
+        "firstExportedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp of the first export to an accounting system."
+        },
+        "firstCreatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Original creation timestamp (preserved across bookkeeping resets)."
+        },
+        "accountingDate": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Date used for the accounting period."
+        },
+        "amortisation": {
+          "type": "object",
+          "description": "Prepaid-expense amortisation schedule.",
+          "properties": {
+            "date": {
+              "type": "object",
+              "properties": {
+                "from": {
+                  "type": "string"
+                },
+                "to": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "from",
+                "to"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "date"
+          ],
+          "additionalProperties": false
+        },
+        "type": {
+          "type": "string",
+          "description": "Always \"reverseBill\" for reversal payables.",
+          "enum": [
+            "reverseBill"
+          ]
+        },
+        "allocations": {
+          "type": "array",
+          "description": "Allocations linked to this reversal. `settlement` entries are cash refunded; `expense` entries are this credit note or card refund applied document-to-document to an invoice, not money moved. Amounts are negative, matching the payable.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "allocationId": {
+                "type": "string"
+              },
+              "amount": {
+                "$ref": "#/$defs/searchPayableMoney"
+              },
+              "entityId": {
+                "type": "string"
+              },
+              "entityType": {
+                "type": "string",
+                "enum": [
+                  "expense",
+                  "settlement"
+                ]
+              }
+            },
+            "required": [
+              "allocationId",
+              "amount",
+              "entityId",
+              "entityType"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "documentaryEvidenceCannotBeProvided": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/searchPayableDocEvidenceCannotBeProvided"
+            }
+          ],
+          "description": "Present when the member declared that documentary evidence cannot be provided."
+        },
+        "itemLines": {
+          "type": "array",
+          "description": "Accounting line items with VAT breakdown.",
+          "items": {
+            "$ref": "#/$defs/searchPayableItemLine"
+          }
+        },
+        "documentaryEvidence": {
+          "description": "Attached documentary evidence (credit note or declaration of missing credit note).",
+          "anyOf": [
+            {
+              "type": "object",
+              "properties": {
+                "validity": {
+                  "$ref": "#/$defs/searchPayableValidity"
+                },
+                "compliances": {
+                  "$ref": "#/$defs/searchPayableCompliances"
+                },
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "creditNote"
+                  ]
+                },
+                "creditNoteNumber": {
+                  "type": "string"
+                },
+                "referenceInvoiceNumber": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "validity",
+                "type"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "properties": {
+                "validity": {
+                  "$ref": "#/$defs/searchPayableValidity"
+                },
+                "compliances": {
+                  "$ref": "#/$defs/searchPayableCompliances"
+                },
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "declarationOfMissingCreditNote"
+                  ]
+                }
+              },
+              "required": [
+                "validity",
+                "type"
+              ],
+              "additionalProperties": false
+            }
+          ]
+        },
+        "functionalExchangeRate": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/searchPayableRate"
+            }
+          ],
+          "description": "Exchange rate from transaction currency to functional currency."
+        },
+        "counterparty": {
+          "description": "The supplier or employee counterparty for this reversal.",
+          "anyOf": [
+            {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "supplier"
+                  ]
+                },
+                "supplierId": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "type",
+                "supplierId"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "employee"
+                  ]
+                },
+                "memberId": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "type",
+                "memberId"
+              ],
+              "additionalProperties": false
+            }
+          ]
+        }
+      },
+      "required": [
+        "id",
+        "state",
+        "amount",
+        "currency",
+        "functionalAmount",
+        "functionalCurrency",
+        "creationDate",
+        "memberId",
+        "version",
+        "kind",
+        "subType",
+        "description",
+        "firstCreatedAt",
+        "type",
+        "allocations",
+        "itemLines",
+        "functionalExchangeRate",
+        "counterparty"
+      ],
+      "additionalProperties": false
+    }
+  ],
+  "$defs": {
+    "searchPayableAnalyticalFieldAssociation": {
+      "type": "object",
+      "description": "Association between an item line and an analytical field (cost center or custom field).",
+      "properties": {
+        "fieldKind": {
+          "type": "string",
+          "enum": [
+            "costCenter",
+            "customField"
+          ]
+        },
+        "fieldEntityId": {
+          "type": "string"
+        },
+        "fieldEntityValueId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "fieldKind",
+        "fieldEntityId",
+        "fieldEntityValueId"
+      ],
+      "additionalProperties": false,
+      "title": "searchPayableAnalyticalFieldAssociation"
+    },
+    "searchPayableCompliances": {
+      "type": "object",
+      "description": "Country-specific compliance information (e.g. Spain e-receipt).",
+      "properties": {
+        "spainEreceipt": {
+          "type": "object",
+          "properties": {
+            "receipt": {
+              "type": "object",
+              "properties": {
+                "path": {
+                  "type": "string"
+                },
+                "uniqueId": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "path",
+                "uniqueId"
+              ],
+              "additionalProperties": false
+            },
+            "closure": {
+              "type": "object",
+              "properties": {
+                "closedAt": {
+                  "type": "string"
+                },
+                "closingPeriod": {
+                  "type": "string"
+                },
+                "error": {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string"
+                    },
+                    "details": {}
+                  },
+                  "required": [
+                    "kind"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "closedAt",
+                "closingPeriod"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false,
+      "title": "searchPayableCompliances"
+    },
+    "searchPayableDocEvidenceCannotBeProvided": {
+      "description": "Explanation for why documentary evidence (receipt/invoice) cannot be provided.",
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "reason": {
+              "type": "string"
+            },
+            "reportMethod": {
+              "type": "string",
+              "enum": [
+                "manual"
+              ]
+            },
+            "reporterId": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "reason",
+            "reportMethod",
+            "reporterId"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "reason": {
+              "type": "string"
+            },
+            "reportMethod": {
+              "type": "string",
+              "enum": [
+                "automatic"
+              ]
+            }
+          },
+          "required": [
+            "reason",
+            "reportMethod"
+          ],
+          "additionalProperties": false
+        }
+      ],
+      "title": "searchPayableDocEvidenceCannotBeProvided"
+    },
+    "searchPayableItemLine": {
+      "type": "object",
+      "description": "An accounting line item with net/gross/VAT breakdown and analytical field associations.",
+      "properties": {
+        "taxAccountId": {
+          "type": "string"
+        },
+        "expenseAccountId": {
+          "type": "string"
+        },
+        "netAmount": {
+          "$ref": "#/$defs/searchPayableMoney"
+        },
+        "grossAmount": {
+          "$ref": "#/$defs/searchPayableMoney"
+        },
+        "functionalGrossAmount": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/searchPayableMoney"
+            }
+          ],
+          "description": "Gross amount for this line in the company functional currency. Optional during rollout; when absent, consumers fall back to grossAmount."
+        },
+        "vatAmount": {
+          "$ref": "#/$defs/searchPayableMoney"
+        },
+        "vatAdjustment": {
+          "$ref": "#/$defs/searchPayableMoney"
+        },
+        "analyticalFieldAssociations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/searchPayableAnalyticalFieldAssociation"
+          }
+        },
+        "vatRate": {
+          "$ref": "#/$defs/searchPayableRate"
+        }
+      },
+      "required": [
+        "netAmount",
+        "grossAmount",
+        "vatAmount",
+        "vatAdjustment",
+        "analyticalFieldAssociations",
+        "vatRate"
+      ],
+      "additionalProperties": false,
+      "title": "searchPayableItemLine"
+    },
+    "searchPayableMoney": {
+      "type": "number",
+      "description": "Amount expressed in the smallest unit of the currency (e.g. cents for EUR, yen for JPY).",
+      "title": "searchPayableMoney"
+    },
+    "searchPayableRate": {
+      "type": "number",
+      "description": "Exchange rate as a decimal number.",
+      "title": "searchPayableRate"
+    },
+    "searchPayableValidity": {
+      "description": "Validation status of documentary evidence. When invalid, might include a reason.",
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "valid": {
+              "type": "boolean",
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "valid"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "valid": {
+              "type": "boolean",
+              "enum": [
+                false
+              ]
+            },
+            "reason": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "valid"
+          ],
+          "additionalProperties": false
+        }
+      ],
+      "title": "searchPayableValidity"
+    }
+  }
+}

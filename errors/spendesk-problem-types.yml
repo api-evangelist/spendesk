@@ -1,0 +1,90 @@
+generated: '2026-10-14'
+method: derived
+generator: derive-problem-types.py
+source:
+- openapi/spendesk-public-api-openapi.yml
+format: custom
+envelope:
+  media_type: application/json
+  schema: badRequest
+coverage:
+  operations: 106
+  statuses_declared: 11
+problems:
+- status: 400
+  title: Bad Request
+  description: Bad request
+  operations: 101
+  media_types:
+  - application/json
+  schema: badRequest
+- status: 401
+  title: Unauthorized
+  description: Unauthorized
+  operations: 101
+  media_types:
+  - application/json
+  schema: unauthorized
+- status: 403
+  title: Forbidden
+  description: Forbidden
+  operations: 101
+  media_types:
+  - application/json
+  schema: forbidden
+- status: 404
+  title: Not Found
+  description: Not Found
+  operations: 81
+  media_types:
+  - application/json
+  schema: notFound
+- status: 409
+  title: Conflict
+  description: Conflict
+  operations: 20
+  media_types:
+  - application/json
+  schema: conflict
+- status: 413
+  title: Content Too Large
+  description: Payload Too Large
+  operations: 35
+  media_types:
+  - application/json
+  schema: tooLarge
+- status: 415
+  title: Unsupported Media Type
+  description: Unsupported Media Type
+  operations: 35
+  media_types:
+  - application/json
+  schema: unsupportedMediaType
+- status: 422
+  title: Unprocessable Content
+  description: Default Response
+  operations: 4
+  media_types:
+  - application/json
+  schema: exportFailed
+- status: 429
+  title: Too Many Requests
+  description: Too Many Requests
+  operations: 101
+  media_types:
+  - application/json
+  schema: tooManyRequests
+- status: 500
+  title: Internal Server Error
+  description: Internal Server Error
+  operations: 101
+  media_types:
+  - application/json
+  schema: internalServerError
+- status: 503
+  title: Service Unavailable
+  description: Service Unavailable
+  operations: 101
+  media_types:
+  - application/json
+  schema: serviceUnavailableError

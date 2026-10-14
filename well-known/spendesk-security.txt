@@ -1,0 +1,136 @@
+Contact: mailto:security@spendesk.com
+Expires: 2026-12-31T22:00:00.000Z
+Last-Update: 2025-09-29:08:46:00.000Z
+Encryption: If necessary, use the key at the bottom
+Preferred-Languages: en, fr
+Canonical: https://www.spendesk.com/.well-known/security.txt
+
+= Bug bounty program
+
+Scope: app.spendesk.com, api.spendesk.com
+
+DO NOT USE automated scanners or tools that generate large amount of network traffic.
+Please adhere to the additional following rules while performing research on this program:
+
+    Any vulnerability found must be reported no later than 24 hours after discovery and exclusively through the contact mentionned above
+    Denial of service (DoS) attacks on Spendesk applications, servers, networks or infrastructure are strictly forbidden.
+    Avoid tests that could cause degradation or interruption of our services.
+    DO NOT USE automated scanners or tools that generate large amount of network traffic.
+    Do not leak, manipulate, or destroy any user data or files in any of our applications/servers.
+    Do not copy any files from our applications/servers and disclose them.
+    No vulnerability disclosure, full, partial or otherwise, is allowed.
+
+= General requirement
+
+Always send a working proof of concept for any vulnerability you find.
+If possible, include the CVSS score.
+
+= Maximum rewards for each type of vulnerability
+    Critical vulnerability: 2000 euros
+    High-risk vulnerability: 500 euros
+    Medium-risk vulnerability: 200 euros
+    Low-risk vulnerability: 50 euros
+
+= Reward egibility
+
+We are happy to thank everyone who submits valid reports which help us improve the security of Spendesk, however only those that meet the following eligibility requirements may receive a monetary reward:
+
+    You must be the first reporter of a vulnerability.
+    You must not be a former or current employee of Spendesk or one of its contractor (please refer to the internal bug bounty)
+    The report must be in english language.
+    The vulnerability must be a qualifying vulnerability (see below).
+    The report must contain the following elements:
+        Clear textual description of the vulnerability, how it can be exploited, the security impact it has on the application, its users and Spendesk
+        Proof of exploitation: screenshots demonstrating the exploit was performed, and showing the final impact
+        Provide complete steps with the necessary information to reproduce the exploit, including (if necessary) code snippets, payloads, commands etc
+    You must not break any of the testing policy rules listed above
+
+= Qualifying vulnerabilities
+
+- Remote code execution (RCE)
+- Local files access and manipulation (LFI, RFI, XXE, SSRF, XSPA)
+- Code injections (HTML, JS, SQL, ...)
+- Cross-Site Scripting (XSS)
+- Open redirect with real security impact
+- Broken authentication & session management
+- Insecure direct object references
+- Horizontal privilege escalation allows access to objects of other organizations
+- Horizontal or vertical privilege escalation that allows access (CRUD) to objects of the same organization with a real security impact
+- Clickjacking/UI redressing
+- Sensitive information disclosure
+
+= Non-qualifying vulnerabilities
+
+- Known CVEs without working PoC or outdated libraries without a demonstrated security impact
+- Self-XSS or XSS that cannot be used to impact other users
+- Stack traces or path disclosure
+- Physical or social engineering attempts
+- Missing security-related HTTP headers or cookie flags which do not lead directly to a vulnerability
+- Reports from automated web vulnerability scanners (Acunetix, Vega, etc.) that have not been validated
+- Product flow and decisions about email update and password reset.
+- Tabnabbing
+- Mixed content warnings
+- Clickjacking/UI redressing
+- Denial of Service (DoS) attacks
+- Open ports without real security impact
+- Presence of autocomplete attribute on web forms
+- Vulnerabilities affecting outdated browsers or platforms
+- Expired certificate, best practices and other related issues for TLS/SSL certificates
+- Reports with attack scenarios requiring MITM or physical access to victim's device
+- Cross-Site Request Forgery (CSRF)
+- Invalid or missing SPF (Sender Policy Framework), DKIM, DMARC records
+- Session expiration policies (no automatic logout, invalidation after a certain time or after a password change)
+- CSV injection without real security impact
+- Blind SSRF without direct impact (e.g. DNS pingback)
+- Lack of rate-limiting, brute-forcing or captcha issues
+- User enumeration (email, alias, GUID, phone number)
+- Password requirements policies (length / complexity / reuse)
+- Ability to spam users (email / SMS / direct messages flooding)
+- Disclosed / misconfigured Google API key (including Google Maps)
+- Recently disclosed 0-day vulnerabilities (less than 30 days since patch release)
+- Password reset token leak on trusted third-party website via Referer header (eg Google Analytics, Facebook…)
+- Open redirect without real security impact
+- Invalid or missing SPF (Sender Policy Framework) records (Incomplete or missing SPF/DKIM/DMARC)
+
+-----BEGIN PGP PUBLIC KEY BLOCK-----
+
+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
+=735v
+-----END PGP PUBLIC KEY BLOCK-----

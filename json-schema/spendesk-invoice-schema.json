@@ -1,0 +1,1242 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/api-evangelist/spendesk/main/json-schema/spendesk-invoice-schema.json",
+  "title": "invoice",
+  "description": "Full representation of an invoice, returned by the detail endpoint. A superset of `invoiceSummary`, adding line items, the tax breakdown, currency conversion (FX), the payment history, the approval chain, accounting links, attachments and custom fields.",
+  "x-generated": "2026-10-14",
+  "x-method": "derived",
+  "x-generator": "derive-json-schema.py",
+  "x-source": "openapi/spendesk-public-api-openapi.yml#/components/schemas/invoice",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "$ref": "#/$defs/invoiceId"
+    },
+    "invoiceNumber": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Supplier's invoice/credit-note number. Null if not captured."
+    },
+    "type": {
+      "$ref": "#/$defs/invoiceType"
+    },
+    "description": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Free-text description/purpose of the invoice."
+    },
+    "stage": {
+      "$ref": "#/$defs/invoiceStage"
+    },
+    "paymentStatus": {
+      "$ref": "#/$defs/paymentStatus"
+    },
+    "exportStatus": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/exportStatus"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Null until the invoice has an accounting payable (see `payableId`) — an invoice pending approval has nothing to export yet, which is distinct from `pending` (a payable exists but hasn't been exported)."
+    },
+    "dispute": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/invoiceDispute"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Always null today, even if disputed (`stage` then shows `disputed`)."
+    },
+    "cancelledAt": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/dateTime"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "When the invoice was cancelled/voided, or null if it is still active."
+    },
+    "supplier": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/supplierRef"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Null only on a draft (`stage` `pendingApproval`) with no supplier set yet."
+    },
+    "purchaseOrders": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/purchaseOrderRef"
+      },
+      "description": "Purchase orders this invoice is matched against (two/three-way match). Empty when the invoice references no PO. May hold several when one invoice consolidates multiple POs."
+    },
+    "buyer": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/buyerRef"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "The internal member the invoice is assigned to (the buyer), or null."
+    },
+    "costCenter": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/costCenterRef"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Cost center the invoice is coded to, or null when none is set. Set independently of `analyticalSplits`: the two are not reconciled and can disagree."
+    },
+    "analyticalSplits": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/invoiceAnalyticalSplit"
+      },
+      "description": "Allocation of the invoice total across cost centers and analytical-field values. Empty when the invoice is not split. Set independently of `costCenter`, so a split can name a different cost center."
+    },
+    "expenseCategories": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/expenseCategoryRef"
+      },
+      "description": "Expense categories the invoice is coded to, sorted by name. Empty when none is set. A split invoice can carry several, one per split. These ids are the ones the `expenseCategoryId` filter matches. Only the company's current expense-category field counts: if it is changed or removed, past invoices follow the new setting. A deleted category still shows on the invoices coded to it."
+    },
+    "lineItems": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/lineItem"
+      },
+      "description": "The invoice's line items — always at least one. A non-itemised invoice is represented as a single line covering the whole amount. Lines carry no accounting coding (see `costCenter` and `analyticalSplits`); line `netAmount`/`taxAmount` sum to the header totals, except when the header total itself is null (draft/incomplete) while real captured line items exist."
+    },
+    "netAmount": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/priceAmount"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Total before tax, in `currency`'s smallest unit. Can be null in any state, not only draft/incomplete: always for credit notes, and for older invoices whose net amount was never recorded."
+    },
+    "taxAmount": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/priceAmount"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Total tax, in `currency`'s smallest unit, derived as `grossAmount - netAmount` (not summed from `lineItems`). For the tax-by-rate breakdown (VAT-return view), group the line items by `taxRate`. Null whenever `netAmount` or `grossAmount` is null, so in any state for credit notes and older invoices with no recorded net amount."
+    },
+    "grossAmount": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/priceAmount"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Total amount including tax (`netAmount` + `taxAmount`), in `currency`'s smallest unit. Positive for invoices (owed to the supplier); negative for credit notes (owed to the company). Null when the invoice has no gross amount yet (draft/incomplete)."
+    },
+    "amountPaid": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/priceAmount"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Amount settled so far, in `currency`'s smallest unit: the sum of `payments` with status `paid` in the invoice `currency` (returned payments and payments in another currency are excluded). When `payments` is empty, it comes from the stored payment status instead: `grossAmount` if `paid`, otherwise 0 (even when `partiallyPaid`). Always 0 on credit notes, which have no stored payment status and never aggregate `payments`. When `grossAmount` is not known yet, it is null if it comes from the stored status (empty `payments`, or a credit note), but is still summed from `payments` when they are recorded."
+    },
+    "amountDue": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/priceAmount"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Outstanding balance still to be settled (`grossAmount` minus `amountPaid`), in `currency`'s smallest unit. Zero when fully paid. Null when `grossAmount` is not known yet (draft/incomplete)."
+    },
+    "currency": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/currency"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Null only on a draft (`stage` `pendingApproval`) with no currency set yet. Every amount on the invoice is then null too, because an amount can't be stated without its currency."
+    },
+    "functionalAmount": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/priceAmount"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "`grossAmount` converted into the company entity's functional currency, in that currency's smallest unit. For accounting/reporting only — the supplier is paid `grossAmount` in `currency`, not this. Equal to `grossAmount` when the invoice is already in the functional currency. Null until the invoice has an accounting payable (see `payableId`) — this is not known before then, regardless of currency."
+    },
+    "functionalCurrency": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/currency"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "The company entity's functional currency — its primary currency for accounting and reporting. Equals `currency` when no conversion is needed. Null until the invoice has an accounting payable (see `payableId`)."
+    },
+    "functionalExchangeRate": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "description": "Rate used to convert `currency` into `functionalCurrency`, applied as `functionalAmount` is approximately `grossAmount x functionalExchangeRate`. 1 when both currencies match. Null until the invoice has an accounting payable (see `payableId`)."
+    },
+    "issueDate": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/date"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Date the supplier issued the invoice, as printed on the document (emission date). Null only on a draft (`stage` `pendingApproval`) with no issue date set yet."
+    },
+    "dueDate": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/date"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Date by which the invoice must be paid, per the supplier's payment terms. Null when no due date is known."
+    },
+    "accountingDate": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/date"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Posting date — the date the invoice is booked in the accounting ledger, which fixes the fiscal period it falls into. May differ from `issueDate`. Null until the invoice has an accounting payable (see `payableId`). Not the export date; see `exportedAt`."
+    },
+    "payments": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/payment"
+      },
+      "description": "The payment history/plan. Empty until payments exist, and for older invoices not yet backfilled. `paymentStatus`, `amountPaid` and `amountDue` aggregate these entries, except when this array is empty, where they come from the stored payment status, and on credit notes, which have no stored payment status and always report `unpaid`."
+    },
+    "approval": {
+      "$ref": "#/$defs/approval"
+    },
+    "review": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/review"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Finance/controller review, or null if none has been recorded."
+    },
+    "exportedAt": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/dateTime"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "When the invoice was exported to the accounting system, or null if not exported."
+    },
+    "documentaryEvidenceStatus": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/documentaryEvidenceStatus"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Null until the invoice has an accounting payable (see `payableId`) — there is nothing to attach evidence to yet for an invoice pending approval."
+    },
+    "payableId": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "uuid",
+      "description": "Id of the accounting payable this invoice produced, resolvable via the payables API. Null until the invoice has passed approval/controller validation and a payable has been created — not merely \"not yet booked\" in the accounting sense. One invoice maps to exactly one payable — line items and cost/analytical splits are allocations within that payable, not separate payables; a credit note is a separate document with its own payable.",
+      "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+    },
+    "attachments": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/invoiceAttachment"
+      },
+      "description": "Supporting files. Any without a download link is omitted, so may be partial."
+    },
+    "createdAt": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/dateTime"
+        }
+      ],
+      "description": "When the invoice record was created in Spendesk (ingest/submission time, not the issue date)."
+    },
+    "updatedAt": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/dateTime"
+        }
+      ],
+      "description": "When any field on the invoice record last changed."
+    }
+  },
+  "required": [
+    "id",
+    "invoiceNumber",
+    "type",
+    "description",
+    "stage",
+    "paymentStatus",
+    "exportStatus",
+    "dispute",
+    "cancelledAt",
+    "supplier",
+    "purchaseOrders",
+    "buyer",
+    "costCenter",
+    "analyticalSplits",
+    "expenseCategories",
+    "lineItems",
+    "netAmount",
+    "taxAmount",
+    "grossAmount",
+    "amountPaid",
+    "amountDue",
+    "currency",
+    "functionalAmount",
+    "functionalCurrency",
+    "functionalExchangeRate",
+    "issueDate",
+    "dueDate",
+    "accountingDate",
+    "payments",
+    "approval",
+    "review",
+    "exportedAt",
+    "documentaryEvidenceStatus",
+    "payableId",
+    "attachments",
+    "createdAt",
+    "updatedAt"
+  ],
+  "$defs": {
+    "analyticalProperty": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "A value set for one analytical field. Analytical fields are the customer's own bookkeeping dimensions (custom fields) — e.g. project, team — used to classify and report spend. `valueId`/`valueName` are null when the field applies but no value is selected.",
+      "properties": {
+        "fieldId": {
+          "type": "string"
+        },
+        "fieldName": {
+          "type": "string"
+        },
+        "valueId": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "valueName": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "fieldId",
+        "fieldName",
+        "valueId",
+        "valueName"
+      ],
+      "title": "analyticalProperty"
+    },
+    "approval": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Detail of the approval workflow — the effective approval chain for this invoice's amount, with its completed, current and upcoming steps. The overall outcome shows in the invoice's `stage`; this object is the breakdown. Only the applicable chain is returned (amount-bracket internals are not exposed).",
+      "properties": {
+        "isAutoApproved": {
+          "type": "boolean",
+          "description": "Whether the invoice was approved automatically by a rule rather than by approvers. When true, `steps` is empty."
+        },
+        "autoApprovalReason": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Why the invoice was auto-approved, or null when it was not."
+        },
+        "steps": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/approvalStep"
+          },
+          "description": "The approval steps in execution order. Empty when the invoice was auto-approved."
+        }
+      },
+      "required": [
+        "isAutoApproved",
+        "autoApprovalReason",
+        "steps"
+      ],
+      "title": "approval"
+    },
+    "approvalDecision": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Who acted on a step, when, and why. Null on a step until it has been acted on. The outcome (approved vs rejected) is given by the step's `state`.",
+      "properties": {
+        "byUserId": {
+          "type": "string",
+          "description": "Member who took the decision (the acting approver, i.e. the delegate when delegated)."
+        },
+        "at": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/dateTime"
+            }
+          ],
+          "description": "When the decision was taken."
+        },
+        "reason": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Optional note left with the decision (e.g. a denial reason). Null when none."
+        }
+      },
+      "required": [
+        "byUserId",
+        "at",
+        "reason"
+      ],
+      "title": "approvalDecision"
+    },
+    "approvalStep": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "One step in the approval chain. Steps are returned in execution order (the array index is the position); each must be approved for the invoice to advance to the next.",
+      "properties": {
+        "state": {
+          "$ref": "#/$defs/approvalStepState"
+        },
+        "approvers": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/approver"
+          },
+          "description": "Members who may act on this step. Usually one; when several are listed, any one of them acting resolves the step."
+        },
+        "decision": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/approvalDecision"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The decision recorded on this step, or null while it is `upcoming`/`current`."
+        }
+      },
+      "required": [
+        "state",
+        "approvers",
+        "decision"
+      ],
+      "title": "approvalStep"
+    },
+    "approvalStepState": {
+      "type": "string",
+      "enum": [
+        "approved",
+        "current",
+        "upcoming",
+        "rejected"
+      ],
+      "description": "State of a single step within the approval chain. \n\n| State | Description |\n| --- | --- |\n| `approved` | This step was approved. |\n| `current` | This step is the one awaiting a decision now. |\n| `upcoming` | A later step, not yet reached. |\n| `rejected` | This step was declined (stops the chain). |",
+      "title": "approvalStepState"
+    },
+    "approver": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "A person entitled to act on an approval step.",
+      "properties": {
+        "type": {
+          "$ref": "#/$defs/approverType"
+        },
+        "userId": {
+          "type": "string",
+          "description": "Member who nominally owns this approval slot (e.g. the reporting manager or cost-center owner). For `type: user` this is the directly-assigned approver."
+        },
+        "actingUserId": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Member acting on the nominal approver's behalf via a delegation. Null when the approval is not delegated (then the acting approver is `userId`)."
+        },
+        "isDelegated": {
+          "type": "boolean",
+          "description": "Whether this approval is delegated (`actingUserId` differs from `userId`)."
+        }
+      },
+      "required": [
+        "type",
+        "userId",
+        "actingUserId",
+        "isDelegated"
+      ],
+      "title": "approver"
+    },
+    "approverType": {
+      "type": "string",
+      "enum": [
+        "reportingManager",
+        "costCenterOwner",
+        "accountOwner",
+        "user"
+      ],
+      "description": "The role by which a person is entitled to approve a step. \n\n| Type | Description |\n| --- | --- |\n| `reportingManager` | The buyer's reporting manager. |\n| `costCenterOwner` | The owner of the invoice's cost center. |\n| `accountOwner` | The company's account owner. |\n| `user` | A specific named user, assigned directly by an approval rule. |",
+      "title": "approverType"
+    },
+    "buyerRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "The internal Spendesk member the invoice is assigned to — the \"buyer\", i.e. the person the spend is for and who is accountable for it. Distinct from the supplier (the external counterparty). This holds however the invoice was created: a member who submitted it, or the member an automatically-ingested invoice (shared mailbox, API) was assigned to. Name and email may be null for service accounts.",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "firstName": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "lastName": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "email": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "email"
+        }
+      },
+      "required": [
+        "id",
+        "firstName",
+        "lastName",
+        "email"
+      ],
+      "title": "buyerRef"
+    },
+    "costCenterRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Reference to a cost center (the internal unit that bears the cost).",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Cost-center id. Use `GET /v1/cost-centers` to resolve full details."
+        },
+        "name": {
+          "type": "string",
+          "description": "Cost-center display name."
+        }
+      },
+      "required": [
+        "id",
+        "name"
+      ],
+      "title": "costCenterRef"
+    },
+    "currency": {
+      "type": "string",
+      "pattern": "^[A-Z]{3}$",
+      "description": "If the payment was made in a foreign currency, this amount will be the one in the payment currency. Three-letter [ISO currency codes](https://www.iso.org/iso-4217-currency-codes.html).",
+      "title": "currency"
+    },
+    "date": {
+      "type": "string",
+      "format": "date",
+      "description": "String containing a date expressed in [ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) format like `2023-05-12`.",
+      "title": "date"
+    },
+    "dateTime": {
+      "type": "string",
+      "format": "date-time",
+      "description": "String containing a UTC datetime expressed in [ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) format like `2023-05-12T14:06:40Z`.",
+      "title": "dateTime"
+    },
+    "documentaryEvidenceStatus": {
+      "type": "string",
+      "enum": [
+        "provided",
+        "missing",
+        "cannotBeProvided",
+        "declaredAsInvalid"
+      ],
+      "description": "Status of the supporting document — the supplier's invoice or credit-note file — that justifies the payable for audit and tax purposes. Only meaningful once the invoice has an accounting payable — the invoice's `documentaryEvidenceStatus` field itself is null for invoices that don't have one yet. \n\n| Status | Description |\n| --- | --- |\n| `provided` | A document is attached. |\n| `missing` | No document is attached yet. |\n| `cannotBeProvided` | The buyer declared that no document can be provided; a signed affidavit stands in its place. |\n| `declaredAsInvalid` | An attached document was reviewed and marked invalid (e.g. wrong file or unreadable). |\n\nCertification/compliance details (e.g. the Spanish \"Digitised Paper Receipt\") are intentionally out of scope of this field and will be exposed via a dedicated compliance field once its format is finalised.",
+      "title": "documentaryEvidenceStatus"
+    },
+    "expenseCategoryRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Reference to an expense category — the customer's spend taxonomy (e.g. Software, Travel, Meals) used for accounting and analytics. Distinct from the cost center (which bears the cost) and from analytical fields (free custom dimensions).",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Expense-category id. Use `GET /v1/expense-categories` to resolve full details."
+        },
+        "name": {
+          "type": "string",
+          "description": "Expense-category display name."
+        }
+      },
+      "required": [
+        "id",
+        "name"
+      ],
+      "title": "expenseCategoryRef"
+    },
+    "exportStatus": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "exported",
+        "failed"
+      ],
+      "description": "Accounting-export state — whether the invoice has been exported to the customer's accounting system or ERP. Independent of `stage` and `paymentStatus`. The ledger posting date is `accountingDate`; the export timestamp is `exportedAt`. Only meaningful once the invoice has an accounting payable — the invoice's `exportStatus` field itself is null for invoices that don't have one yet. \n\n| Status | Description |\n| --- | --- |\n| `pending` | Not yet exported. |\n| `exported` | Successfully exported to the accounting system. |\n| `failed` | An export attempt failed and needs attention. |",
+      "title": "exportStatus"
+    },
+    "invoiceAnalyticalSplit": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "One allocation of the whole invoice to a cost center and/or analytical-field values, as a share of its total. Splits apply to the invoice as a whole, not to individual line items.",
+      "properties": {
+        "costCenter": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/costCenterRef"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Cost center this share is allocated to, or null when the split only sets analytical-field values."
+        },
+        "percentage": {
+          "type": "number",
+          "description": "Percentage of the invoice allocated to this split, from 0 to 100 (e.g. `25` means 25%). The splits of an invoice add up to 100."
+        },
+        "analyticalProperties": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/analyticalProperty"
+          },
+          "description": "Analytical-field values set on this split."
+        }
+      },
+      "required": [
+        "costCenter",
+        "percentage",
+        "analyticalProperties"
+      ],
+      "title": "invoiceAnalyticalSplit"
+    },
+    "invoiceAttachment": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "A file supporting the invoice (documentary evidence). An invoice may have several.",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "fileName": {
+          "type": "string"
+        },
+        "mimeType": {
+          "type": "string",
+          "description": "MIME type of the file (e.g. `application/pdf`, `application/xml` for e-invoices)."
+        },
+        "downloadUrl": {
+          "type": "string",
+          "format": "uri",
+          "description": "Pre-signed URL to download the file, valid for at most 3 hours from when it was generated. Invoice responses are cached, so a re-fetch shortly after may return the same URL — download promptly and do not persist it."
+        }
+      },
+      "required": [
+        "id",
+        "fileName",
+        "mimeType",
+        "downloadUrl"
+      ],
+      "title": "invoiceAttachment"
+    },
+    "invoiceDispute": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Details of a dispute on the invoice (contested amount, duplicate, goods/services not received, quality issue…), overlaying whatever approval/payment state the invoice holds. Not populated yet: the invoice `dispute` field is always null for now, even on an invoice in dispute with the supplier (which reports `stage` `disputed`).",
+      "properties": {
+        "reasonCode": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Machine-readable reason the invoice is disputed (e.g. a standard dispute-reason code). Not enumerated — treat as an opaque, extensible code. Null when only a free-text reason exists."
+        },
+        "reason": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Human-readable reason/comment for the dispute, if recorded."
+        },
+        "disputedBy": {
+          "type": "string",
+          "description": "Member who raised the dispute."
+        },
+        "disputedAt": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/dateTime"
+            }
+          ],
+          "description": "When the dispute was raised."
+        }
+      },
+      "required": [
+        "reasonCode",
+        "reason",
+        "disputedBy",
+        "disputedAt"
+      ],
+      "title": "invoiceDispute"
+    },
+    "invoiceId": {
+      "type": "string",
+      "description": "Opaque unique identifier of an invoice.",
+      "title": "invoiceId"
+    },
+    "invoiceStage": {
+      "type": "string",
+      "enum": [
+        "pendingApproval",
+        "inReview",
+        "disputed",
+        "toSettle",
+        "settled",
+        "rejected",
+        "cancelled"
+      ],
+      "description": "Where the invoice or credit note is in its lifecycle; exactly one value at a time. `paymentStatus` and `exportStatus` move in parallel. \n\n| Stage | Description |\n| --- | --- |\n| `pendingApproval` | Awaiting a decision in the approval workflow. |\n| `inReview` | Approved, waiting for the controller review. |\n| `disputed` | Approved, then put in dispute with the supplier. Invoices only. |\n| `toSettle` | Reviewed. An invoice is waiting for payment, fully or in part (`paymentStatus` tells which); a credit note is partially allocated. |\n| `settled` | An invoice is fully paid; a credit note is fully allocated or reimbursed. |\n| `rejected` | Declined by an approver, rejected in controller review, or expired. |\n| `cancelled` | Withdrawn by the company: archived after a supplier dispute, or replaced by a corrective invoice. Invoices withdrawn by their submitter are never returned. |",
+      "title": "invoiceStage"
+    },
+    "invoiceType": {
+      "type": "string",
+      "enum": [
+        "invoice",
+        "creditNote"
+      ],
+      "description": "Kind of document the record represents. \n\n| Type | Description |\n| --- | --- |\n| `invoice` | A supplier invoice: an amount the company owes the supplier for goods or services. Amounts are positive. |\n| `creditNote` | A supplier credit note: a document from the same supplier that reduces an amount owed (a refund, cancellation, or correction of a prior invoice). Amounts are negative. |",
+      "title": "invoiceType"
+    },
+    "lineItem": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "A single line of the invoice, with its amounts and tax. Accounting coding is set on the whole invoice (see the invoice `costCenter`, `analyticalSplits` and `expenseCategories`), not per line.",
+      "properties": {
+        "description": {
+          "type": "string",
+          "description": "What the line is for."
+        },
+        "quantity": {
+          "type": "number",
+          "description": "Quantity billed (may be fractional)."
+        },
+        "unitPrice": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/priceAmount"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Price per unit before tax, in `currency`'s smallest unit. Null when no net amount was captured, which can happen in any state (e.g. the single header-derived line of a credit note or of an older invoice whose net was never recorded)."
+        },
+        "netAmount": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/priceAmount"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Line amount before tax (`quantity` x `unitPrice`), in `currency`'s smallest unit. Null when no net amount was captured, which can happen in any state (e.g. the single header-derived line of a credit note or of an older invoice whose net was never recorded)."
+        },
+        "taxRate": {
+          "$ref": "#/$defs/taxRate"
+        },
+        "taxAmount": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/priceAmount"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Tax charged on this line, in `currency`'s smallest unit. Null when no net amount was captured, which can happen in any state (e.g. the single header-derived line of a credit note or of an older invoice whose net was never recorded), or when the gross amount is not known yet."
+        },
+        "grossAmount": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/priceAmount"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Line amount including tax (`netAmount` + `taxAmount`), in `currency`'s smallest unit. Null when the invoice has no gross amount yet (draft/incomplete)."
+        },
+        "costCenter": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/costCenterRef"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Always null: cost centers are set on the whole invoice, see the invoice `costCenter` and `analyticalSplits`."
+        },
+        "expenseCategory": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/expenseCategoryRef"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Always null: expense categories are set on the whole invoice, see the invoice `expenseCategories`."
+        },
+        "analyticalProperties": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/analyticalProperty"
+          },
+          "description": "Always empty: analytical-field values are set on the whole invoice, see the invoice `analyticalSplits`."
+        }
+      },
+      "required": [
+        "description",
+        "quantity",
+        "unitPrice",
+        "netAmount",
+        "taxRate",
+        "taxAmount",
+        "grossAmount",
+        "costCenter",
+        "expenseCategory",
+        "analyticalProperties"
+      ],
+      "title": "lineItem"
+    },
+    "payment": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "A single payment settling (or scheduled to settle) the invoice. An invoice may be settled by one or several payments — a Spendesk instalment plan, or one or more payments recorded as made outside Spendesk. `source` distinguishes the two. A failed/cancelled attempt and its retry appear as separate entries.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier of the payment."
+        },
+        "source": {
+          "$ref": "#/$defs/paymentSource"
+        },
+        "method": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/paymentMethod"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Means of payment, or null if not yet determined."
+        },
+        "amount": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/priceAmount"
+            }
+          ],
+          "description": "Amount of this payment, in `currency`'s smallest unit. Settled (`paid`) payments in the invoice `currency` sum to the invoice `amountPaid`, except on credit notes, whose `amountPaid` is always 0 (null while `grossAmount` is unknown); a single payment may be a partial instalment."
+        },
+        "currency": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/currency"
+            }
+          ],
+          "description": "Currency this payment is made in — normally the invoice `currency`."
+        },
+        "reference": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Remittance reference sent with this payment so the supplier can reconcile it (often the supplier's payment reference or the invoice number). Null if none."
+        },
+        "scheduledDate": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/date"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Date the payment is scheduled to be executed. Null for externally-recorded payments that were never scheduled through Spendesk."
+        },
+        "paidDate": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/date"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Date the payment settled, or null if not yet settled."
+        },
+        "status": {
+          "$ref": "#/$defs/paymentState"
+        },
+        "statusReason": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/paymentStatusReason"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Why the payment failed or was returned; null for other states."
+        },
+        "fx": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/paymentFx"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Currency conversion applied; null when paid in the payment `currency`."
+        },
+        "fees": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/paymentFee"
+          },
+          "description": "Fees incurred on this payment (transfer, FX, intermediary…). Empty when none."
+        }
+      },
+      "required": [
+        "id",
+        "source",
+        "method",
+        "amount",
+        "currency",
+        "reference",
+        "scheduledDate",
+        "paidDate",
+        "status",
+        "statusReason",
+        "fx",
+        "fees"
+      ],
+      "title": "payment"
+    },
+    "paymentFee": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "A fee incurred on the payment (deducted from the transfer or billed alongside it).",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "transfer",
+            "fx",
+            "intermediary",
+            "other"
+          ],
+          "description": "Kind of fee — `transfer` (bank/rail fee), `fx` (currency-conversion fee/spread), `intermediary` (correspondent-bank fee on international transfers), or `other`."
+        },
+        "amount": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/priceAmount"
+            }
+          ],
+          "description": "Fee amount, in `currency`'s smallest unit."
+        },
+        "currency": {
+          "$ref": "#/$defs/currency"
+        }
+      },
+      "required": [
+        "type",
+        "amount",
+        "currency"
+      ],
+      "title": "paymentFee"
+    },
+    "paymentFx": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Currency conversion for this payment. Present only when the money actually moved in a currency different from the payment `currency`; null otherwise. The payment `amount`/`currency` are the invoice-side figures; these are the settlement side (what actually left the paying account).",
+      "properties": {
+        "settlementCurrency": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/currency"
+            }
+          ],
+          "description": "Currency actually debited from the paying account."
+        },
+        "settlementAmount": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/priceAmount"
+            }
+          ],
+          "description": "Amount actually moved, in `settlementCurrency`'s smallest unit."
+        },
+        "rate": {
+          "type": "number",
+          "description": "Exchange rate applied, such that `settlementAmount` is approximately `amount x rate` (units of `settlementCurrency` per one unit of the payment `currency`)."
+        }
+      },
+      "required": [
+        "settlementCurrency",
+        "settlementAmount",
+        "rate"
+      ],
+      "title": "paymentFx"
+    },
+    "paymentMethod": {
+      "type": "string",
+      "enum": [
+        "wireTransfer",
+        "sepa",
+        "swift",
+        "ach",
+        "card",
+        "directDebit",
+        "check",
+        "cash",
+        "other"
+      ],
+      "description": "Means of payment. Extensible — new methods may be added over time, so treat unknown values defensively. `other` is a catch-all.",
+      "title": "paymentMethod"
+    },
+    "paymentSource": {
+      "type": "string",
+      "enum": [
+        "spendesk",
+        "external"
+      ],
+      "description": "Who executed the payment. \n\n| Source | Description |\n| --- | --- |\n| `spendesk` | Orchestrated and executed through Spendesk (scheduled, confirmed, transferred). |\n| `external` | Happened outside Spendesk (own bank, cash, another tool) and is recorded here for reporting/bookkeeping. External payments have no Spendesk orchestration. |",
+      "title": "paymentSource"
+    },
+    "paymentState": {
+      "type": "string",
+      "enum": [
+        "scheduled",
+        "confirmed",
+        "executing",
+        "paid",
+        "failed",
+        "cancelled",
+        "returned"
+      ],
+      "description": "State of a single payment (see `paymentStatus` for the invoice-level settlement aggregate). Spendesk-executed payments (`source: spendesk`) traverse the full lifecycle; externally-recorded payments (`source: external`) are typically created directly as `paid`. \n\n| State | Description |\n| --- | --- |\n| `scheduled` | Planned for a date but not yet confirmed; no money has moved (Spendesk only). |\n| `confirmed` | Approved for release by the account owner via Strong Customer Authentication (SCA); the transfer is mandated and will be executed on the scheduled date (Spendesk only). |\n| `executing` | The transfer has been sent and is in flight at the bank (Spendesk only). |\n| `paid` | Executed and settled. Not necessarily terminal — a settled payment can later become `returned`. |\n| `failed` | The transfer was rejected or failed before settling; see `statusReason`. A retry is a new payment entry (Spendesk only). |\n| `cancelled` | A scheduled payment was cancelled before execution; no money moved. |\n| `returned` | The payment had settled but the funds were later returned/clawed back by the bank (e.g. an ACH return or recall); see `statusReason`. Its amount is removed from the invoice's `amountPaid`. |",
+      "title": "paymentState"
+    },
+    "paymentStatus": {
+      "type": "string",
+      "enum": [
+        "unpaid",
+        "partiallyPaid",
+        "paid"
+      ],
+      "description": "Settlement state, independent of where the money moved (Spendesk or elsewhere) and of `stage`. On a single invoice with `payments`, it is aggregated over settled (`paid`) payments in the invoice `currency` only; on the invoice list, on credit notes (which have no stored payment status, so always report `unpaid`), and when `payments` is empty, it is the stored payment status instead, so the list and the single invoice can disagree and the `amountPaid` conditions below hold only for the aggregated case. Scheduling and per-transfer failures are visible on individual payments, not here. \n\n| Status | Description |\n| --- | --- |\n| `unpaid` | Nothing has settled (`amountPaid` equals 0). |\n| `partiallyPaid` | Some but not all has settled (`0 < amountPaid < grossAmount`). |\n| `paid` | Fully settled (`amountDue` equals 0), by any means. |\n\nA `returned` payment reduces `amountPaid`, so this can move back from `paid` to `partiallyPaid` or `unpaid`.",
+      "title": "paymentStatus"
+    },
+    "paymentStatusReason": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Why a payment failed or was returned. Present for those states; null otherwise.",
+      "properties": {
+        "code": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Machine-readable reason/return code (e.g. an ACH return code like `R01`, or a bank rejection code). Opaque and extensible; null when only a message is available."
+        },
+        "message": {
+          "type": "string",
+          "description": "Human-readable explanation (e.g. \"Rejected\", \"Insufficient funds\", \"Invalid IBAN\")."
+        }
+      },
+      "required": [
+        "code",
+        "message"
+      ],
+      "title": "paymentStatusReason"
+    },
+    "priceAmount": {
+      "type": "number",
+      "description": "If the payment was made in a foreign currency, this amount will be the one in the payment currency.\nCan contain a negative value in case of refunds.\nExpressed in smallest units of the currency (e.g. cents for EUR and USD, but yen for JPY).",
+      "title": "priceAmount"
+    },
+    "purchaseOrderRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Reference to a purchase order the invoice is matched against (two/three-way match).",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Purchase-order id."
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "title": "purchaseOrderRef"
+    },
+    "review": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Finance/controller review that validates the invoice's data (amounts, coding, documentary evidence) for accounting. Distinct from `approval`, which authorises the spend — this checks the booking data. Null on the invoice when no review has been recorded.",
+      "properties": {
+        "validatedBy": {
+          "type": "string",
+          "description": "Member who validated the invoice."
+        },
+        "validatedAt": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/dateTime"
+            }
+          ],
+          "description": "When the review was completed."
+        }
+      },
+      "required": [
+        "validatedBy",
+        "validatedAt"
+      ],
+      "title": "review"
+    },
+    "supplierRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Reference to the supplier (counterparty) of the invoice.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Supplier id. Fetch full supplier details from `GET /v1/suppliers/{id}`."
+        },
+        "name": {
+          "type": "string",
+          "description": "Supplier's current display name."
+        }
+      },
+      "required": [
+        "id",
+        "name"
+      ],
+      "title": "supplierRef"
+    },
+    "taxRate": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "description": "Tax rate as a percentage — e.g. `20` means 20%, `5.5` means 5.5%. Null when no rate applies or it is unknown.",
+      "title": "taxRate"
+    }
+  }
+}

@@ -1,0 +1,290 @@
+generated: '2026-10-14'
+method: derived
+source: openapi/spendesk-public-api-openapi.yml
+schemes:
+- name: Authentication
+  source: openapi/spendesk-public-api-openapi.yml
+  flows:
+  - flow: clientCredentials
+    tokenUrl: /v1/auth/token
+  - flow: authorizationCode
+    authorizationUrl: /v1/oauth2/authorize
+    tokenUrl: /v1/oauth2/token/create
+  description: 'A company-level token acts on the company it was issued for. An organisation-level
+    token (experimental) acts on the companies of an organisation: send the target company in
+    the `X-Company-Id` header on every call, except on `GET /v2/companies` and on `/v2/companies/{companyId}/…`
+    routes, which carry the company in the path. See [Organisation-level access](/reference/organisation-level-access).'
+scopes:
+- scope: analytical-field:read
+  description: Analytical Fields (Read)
+  flows:
+  - authorizationCode
+  - clientCredentials
+  sources:
+  - openapi/spendesk-public-api-openapi.yml
+- scope: bank-fee:read
+  description: Spending Bank Fees (Read)
+  flows:
+  - authorizationCode
+  - clientCredentials
+  sources:
+  - openapi/spendesk-public-api-openapi.yml
+- scope: cost-center:manage
+  description: Cost Center (Manage)
+  flows:
+  - authorizationCode
+  - clientCredentials
+  sources:
+  - openapi/spendesk-public-api-openapi.yml
+- scope: cost-center:read
+  description: Cost Center (Read)
+  flows:
+  - authorizationCode
+  - clientCredentials
+  sources:
+  - openapi/spendesk-public-api-openapi.yml
+- scope: expense-category:read
+  description: Expense Category (Read)
+  flows:
+  - authorizationCode
+  - clientCredentials
+  sources:
+  - openapi/spendesk-public-api-openapi.yml
+- scope: experimental:accounting-export:read
+  description: Accounting exports (Read)
+  flows:
+  - authorizationCode
+  - clientCredentials
+  sources:
+  - openapi/spendesk-public-api-openapi.yml
+- scope: experimental:accounting-export:write
+  description: Accounting exports (Write)
+  flows:
+  - authorizationCode
+  - clientCredentials
+  sources:
+  - openapi/spendesk-public-api-openapi.yml
+- scope: experimental:accounting:update
+  description: Accounting (Update)
+  flows:
+  - authorizationCode
+  - clientCredentials
+  sources:
+  - openapi/spendesk-public-api-openapi.yml
+- scope: experimental:analytical-field-v2:read
+  description: Analytical Fields v2 (Read)
+  flows:
+  - authorizationCode
+  - clientCredentials
+  sources:
+  - openapi/spendesk-public-api-openapi.yml
+- scope: experimental:analytical-field-v2:write
+  description: Analytical Fields v2 (Write)
+  flows:
+  - authorizationCode
+  - clientCredentials
+  sources:
+  - openapi/spendesk-public-api-openapi.yml
+- scope: experimental:card:read
+  description: Cards (Read)
+  flows:
+  - authorizationCode
+  - clientCredentials
+  sources:
+  - openapi/spendesk-public-api-openapi.yml
+- scope: experimental:card:write
+  description: Cards (Write)
+  flows:
+  - authorizationCode
+  - clientCredentials
+  sources:
+  - openapi/spendesk-public-api-openapi.yml
+- scope: experimental:chart-of-accounts:read
+  description: Chart of Accounts (Read)
+  flows:
+  - authorizationCode
+  - clientCredentials
+  sources:
+  - openapi/spendesk-public-api-openapi.yml
+- scope: experimental:chart-of-accounts:write
+  description: Chart of Accounts (Write)
+  flows:
+  - authorizationCode
+  - clientCredentials
+  sources:
+  - openapi/spendesk-public-api-openapi.yml
+- scope: experimental:company:read
+  description: Companies (Read)
+  flows:
+  - authorizationCode
+  - clientCredentials
+  sources:
+  - openapi/spendesk-public-api-openapi.yml
+- scope: experimental:expense-category-v2:read
+  description: Expense Category Fields v2 (Read)
+  flows:
+  - authorizationCode
+  - clientCredentials
+  sources:
+  - openapi/spendesk-public-api-openapi.yml
+- scope: experimental:expense-category-v2:write
+  description: Expense Category Fields v2 (Write)
+  flows:
+  - authorizationCode
+  - clientCredentials
+  sources:
+  - openapi/spendesk-public-api-openapi.yml
+- scope: experimental:external-reference:read
+  description: External References (Read)
+  flows:
+  - authorizationCode
+  - clientCredentials
+  sources:
+  - openapi/spendesk-public-api-openapi.yml
+- scope: experimental:external-reference:write
+  description: External References (Write)
+  flows:
+  - authorizationCode
+  - clientCredentials
+  sources:
+  - openapi/spendesk-public-api-openapi.yml
+- scope: experimental:intake:read
+  description: Intakes (Read)
+  flows:
+  - authorizationCode
+  - clientCredentials
+  sources:
+  - openapi/spendesk-public-api-openapi.yml
+- scope: experimental:intake:write
+  description: Intakes (Write)
+  flows:
+  - authorizationCode
+  - clientCredentials
+  sources:
+  - openapi/spendesk-public-api-openapi.yml
+- scope: experimental:invoice:read
+  description: Invoices (Read) - experimental
+  flows:
+  - authorizationCode
+  - clientCredentials
+  sources:
+  - openapi/spendesk-public-api-openapi.yml
+- scope: experimental:payable-attachment:write
+  description: Payable Attachments (Write)
+  flows:
+  - authorizationCode
+  - clientCredentials
+  sources:
+  - openapi/spendesk-public-api-openapi.yml
+- scope: experimental:payable-search:read
+  description: Payable Search (Read)
+  flows:
+  - authorizationCode
+  - clientCredentials
+  sources:
+  - openapi/spendesk-public-api-openapi.yml
+- scope: experimental:purchase-order:read
+  description: Purchase Orders (Read)
+  flows:
+  - authorizationCode
+  - clientCredentials
+  sources:
+  - openapi/spendesk-public-api-openapi.yml
+- scope: experimental:purchase-order:write
+  description: Purchase Orders (Write)
+  flows:
+  - authorizationCode
+  - clientCredentials
+  sources:
+  - openapi/spendesk-public-api-openapi.yml
+- scope: experimental:request:read
+  description: Requests (Read)
+  flows:
+  - authorizationCode
+  - clientCredentials
+  sources:
+  - openapi/spendesk-public-api-openapi.yml
+- scope: experimental:supplier:manage
+  description: Suppliers (Manage)
+  flows:
+  - authorizationCode
+  - clientCredentials
+  sources:
+  - openapi/spendesk-public-api-openapi.yml
+- scope: experimental:transaction:read
+  description: Transactions (Read)
+  flows:
+  - authorizationCode
+  - clientCredentials
+  sources:
+  - openapi/spendesk-public-api-openapi.yml
+- scope: experimental:user:manage
+  description: Users (Manage)
+  flows:
+  - authorizationCode
+  - clientCredentials
+  sources:
+  - openapi/spendesk-public-api-openapi.yml
+- scope: experimental:webhooks:read
+  description: Webhooks (Read)
+  flows:
+  - authorizationCode
+  - clientCredentials
+  sources:
+  - openapi/spendesk-public-api-openapi.yml
+- scope: experimental:webhooks:write
+  description: Webhooks (Write)
+  flows:
+  - authorizationCode
+  - clientCredentials
+  sources:
+  - openapi/spendesk-public-api-openapi.yml
+- scope: payable-attachment:read
+  description: Spending Payable Attachments (Read)
+  flows:
+  - authorizationCode
+  - clientCredentials
+  sources:
+  - openapi/spendesk-public-api-openapi.yml
+- scope: payable:read
+  description: Spending Payables (Read)
+  flows:
+  - authorizationCode
+  - clientCredentials
+  sources:
+  - openapi/spendesk-public-api-openapi.yml
+- scope: settlement:read
+  description: Spending Settlements (Read)
+  flows:
+  - authorizationCode
+  - clientCredentials
+  sources:
+  - openapi/spendesk-public-api-openapi.yml
+- scope: supplier:read
+  description: Suppliers (Read)
+  flows:
+  - authorizationCode
+  - clientCredentials
+  sources:
+  - openapi/spendesk-public-api-openapi.yml
+- scope: user:read
+  description: Users (Read)
+  flows:
+  - authorizationCode
+  - clientCredentials
+  sources:
+  - openapi/spendesk-public-api-openapi.yml
+- scope: wallet-load:read
+  description: Spending Wallet Loads (Read)
+  flows:
+  - authorizationCode
+  - clientCredentials
+  sources:
+  - openapi/spendesk-public-api-openapi.yml
+- scope: wallet-summary:read
+  description: Spending Wallet Summary (Read)
+  flows:
+  - authorizationCode
+  - clientCredentials
+  sources:
+  - openapi/spendesk-public-api-openapi.yml

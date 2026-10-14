@@ -1,0 +1,16 @@
+generated: '2026-10-14'
+method: none
+source:
+- https://zapier.com/apps/spendesk/integrations
+- https://n8n.io/integrations/spendesk/
+- https://composio.dev/toolkits/spendesk
+- https://monid.ai/tools/spendesk
+checked:
+- https://composio.dev/toolkits/spendesk
+- https://monid.ai/tools/spendesk
+- https://n8n.io/integrations/spendesk/
+- https://zapier.com/apps/spendesk/integrations
+summary: null
+marketplace_apps: []
+edges: []
+templates: []

@@ -1,0 +1,1669 @@
+generated: '2026-10-14'
+method: generated
+source: openapi/spendesk-public-api-openapi.yml
+description: Recommended x-agentic-access execution contracts, classified heuristically from
+  the OpenAPI. A governance starting point for exposing this API to AI agents — review and bind
+  audience per deployment. See research/curity/agentic-governance/.
+summary:
+  operations: 106
+  by_action_class:
+    connected: 56
+    acting: 50
+  by_consequence:
+    read: 56
+    write: 44
+    physical: 6
+  human_in_the_loop_required: 0
+operations:
+- path: /.well-known/oauth-authorization-server
+  method: get
+  operationId: mcp-authorization-server-metadata
+  x-agentic-access:
+    action-class: connected
+    consequence: read
+    subject: optional
+    token:
+      max-ttl: 3600
+    audit: none
+- path: /.well-known/oauth-protected-resource/v1/mcp
+  method: get
+  operationId: mcp-protected-resource-metadata-mcp
+  x-agentic-access:
+    action-class: connected
+    consequence: read
+    subject: optional
+    token:
+      max-ttl: 3600
+    audit: none
+- path: /v1/analytical-fields
+  method: get
+  operationId: v1-get-analytical-fields
+  x-agentic-access:
+    action-class: connected
+    consequence: read
+    subject: optional
+    scope:
+    - analytical-field:read
+    token:
+      max-ttl: 3600
+    audit: none
+- path: /v1/analytical-fields/{fieldId}/values
+  method: get
+  operationId: v1-get-analytical-field-values
+  x-agentic-access:
+    action-class: connected
+    consequence: read
+    subject: optional
+    scope:
+    - analytical-field:read
+    token:
+      max-ttl: 3600
+    audit: none
+- path: /v1/auth/token
+  method: post
+  operationId: v1-create-auth-token
+  x-agentic-access:
+    action-class: acting
+    consequence: write
+    subject: required
+    audience: null
+    token:
+      max-ttl: 900
+    escalation:
+      human-in-the-loop: conditional
+      triggers:
+      - abnormal
+      - high-value
+    audit: required
+- path: /v1/bank-fees
+  method: get
+  operationId: v1-get-bank-fees
+  x-agentic-access:
+    action-class: connected
+    consequence: read
+    subject: optional
+    scope:
+    - bank-fee:read
+    token:
+      max-ttl: 3600
+    audit: none
+- path: /v1/cards
+  method: get
+  operationId: v1-get-cards
+  x-agentic-access:
+    action-class: connected
+    consequence: read
+    subject: optional
+    scope:
+    - experimental:card:read
+    token:
+      max-ttl: 3600
+    audit: none
+- path: /v1/cards/{cardId}
+  method: get
+  operationId: v1-get-card
+  x-agentic-access:
+    action-class: connected
+    consequence: read
+    subject: optional
+    scope:
+    - experimental:card:read
+    token:
+      max-ttl: 3600
+    audit: none
+- path: /v1/cards/{cardId}/blocking-history
+  method: get
+  operationId: v1-get-card-blocking-history
+  x-agentic-access:
+    action-class: connected
+    consequence: read
+    subject: optional
+    scope:
+    - experimental:card:read
+    token:
+      max-ttl: 3600
+    audit: none
+- path: /v1/cards/{cardId}/order
+  method: get
+  operationId: v1-get-card-order
+  x-agentic-access:
+    action-class: connected
+    consequence: read
+    subject: optional
+    scope:
+    - experimental:card:read
+    token:
+      max-ttl: 3600
+    audit: none
+- path: /v1/cost-centers
+  method: get
+  operationId: v1-get-cost-centers
+  x-agentic-access:
+    action-class: connected
+    consequence: read
+    subject: optional
+    scope:
+    - cost-center:read
+    token:
+      max-ttl: 3600
+    audit: none
+- path: /v1/cost-centers
+  method: post
+  operationId: v1-create-cost-centers
+  x-agentic-access:
+    action-class: acting
+    consequence: write
+    subject: required
+    scope:
+    - cost-center:manage
+    audience: null
+    token:
+      max-ttl: 900
+    escalation:
+      human-in-the-loop: conditional
+      triggers:
+      - abnormal
+      - high-value
+    audit: required
+- path: /v1/cost-centers/{costCenterId}
+  method: put
+  operationId: v1-update-cost-centers
+  x-agentic-access:
+    action-class: acting
+    consequence: write
+    subject: required
+    scope:
+    - cost-center:manage
+    audience: null
+    token:
+      max-ttl: 900
+    escalation:
+      human-in-the-loop: conditional
+      triggers:
+      - abnormal
+      - high-value
+    audit: required
+- path: /v1/cost-centers/{costCenterId}
+  method: delete
+  operationId: v1-delete-cost-centers
+  x-agentic-access:
+    action-class: acting
+    consequence: write
+    subject: required
+    scope:
+    - cost-center:manage
+    audience: null
+    token:
+      max-ttl: 900
+    escalation:
+      human-in-the-loop: conditional
+      triggers:
+      - abnormal
+      - high-value
+    audit: required
+- path: /v1/expense-categories
+  method: get
+  operationId: v1-get-expense-categories
+  x-agentic-access:
+    action-class: connected
+    consequence: read
+    subject: optional
+    scope:
+    - expense-category:read
+    token:
+      max-ttl: 3600
+    audit: none
+- path: /v1/experimental/accounts
+  method: get
+  operationId: v1-get-accounts
+  x-agentic-access:
+    action-class: connected
+    consequence: read
+    subject: optional
+    scope:
+    - experimental:chart-of-accounts:read
+    token:
+      max-ttl: 3600
+    audit: none
+- path: /v1/experimental/accounts
+  method: post
+  operationId: v1-create-account
+  x-agentic-access:
+    action-class: acting
+    consequence: write
+    subject: required
+    scope:
+    - experimental:chart-of-accounts:write
+    audience: null
+    token:
+      max-ttl: 900
+    escalation:
+      human-in-the-loop: conditional
+      triggers:
+      - abnormal
+      - high-value
+    audit: required
+- path: /v1/experimental/accounts
+  method: put
+  operationId: v1-sync-accounts
+  x-agentic-access:
+    action-class: acting
+    consequence: write
+    subject: required
+    scope:
+    - experimental:chart-of-accounts:write
+    audience: null
+    token:
+      max-ttl: 900
+    escalation:
+      human-in-the-loop: conditional
+      triggers:
+      - abnormal
+      - high-value
+    audit: required
+- path: /v1/experimental/accounts
+  method: patch
+  operationId: v1-patch-accounts
+  x-agentic-access:
+    action-class: acting
+    consequence: write
+    subject: required
+    scope:
+    - experimental:chart-of-accounts:write
+    audience: null
+    token:
+      max-ttl: 900
+    escalation:
+      human-in-the-loop: conditional
+      triggers:
+      - abnormal
+      - high-value
+    audit: required
+- path: /v1/experimental/accounts/creditors
+  method: put
+  operationId: v1-assign-creditors-to-accounts
+  x-agentic-access:
+    action-class: acting
+    consequence: write
+    subject: required
+    scope:
+    - experimental:chart-of-accounts:write
+    audience: null
+    token:
+      max-ttl: 900
+    escalation:
+      human-in-the-loop: conditional
+      triggers:
+      - abnormal
+      - high-value
+    audit: required
+- path: /v1/experimental/accounts/creditors/remove-from-accounts
+  method: put
+  operationId: v1-remove-creditors-from-accounts
+  x-agentic-access:
+    action-class: acting
+    consequence: write
+    subject: required
+    scope:
+    - experimental:chart-of-accounts:write
+    audience: null
+    token:
+      max-ttl: 900
+    escalation:
+      human-in-the-loop: conditional
+      triggers:
+      - abnormal
+      - high-value
+    audit: required
+- path: /v1/experimental/accounts/creditors/search
+  method: post
+  operationId: v1-search-creditor-account-assignments
+  x-agentic-access:
+    action-class: connected
+    consequence: read
+    subject: optional
+    scope:
+    - experimental:chart-of-accounts:read
+    token:
+      max-ttl: 3600
+    audit: none
+- path: /v1/experimental/accounts/set-purpose
+  method: put
+  operationId: v1-set-account-purpose
+  x-agentic-access:
+    action-class: acting
+    consequence: write
+    subject: required
+    scope:
+    - experimental:chart-of-accounts:write
+    audience: null
+    token:
+      max-ttl: 900
+    escalation:
+      human-in-the-loop: conditional
+      triggers:
+      - abnormal
+      - high-value
+    audit: required
+- path: /v1/experimental/accounts/{accountId}
+  method: get
+  operationId: v1-get-account-by-id
+  x-agentic-access:
+    action-class: connected
+    consequence: read
+    subject: optional
+    scope:
+    - experimental:chart-of-accounts:read
+    token:
+      max-ttl: 3600
+    audit: none
+- path: /v1/experimental/accounts/{accountId}
+  method: delete
+  operationId: v1-delete-account
+  x-agentic-access:
+    action-class: acting
+    consequence: write
+    subject: required
+    scope:
+    - experimental:chart-of-accounts:write
+    audience: null
+    token:
+      max-ttl: 900
+    escalation:
+      human-in-the-loop: conditional
+      triggers:
+      - abnormal
+      - high-value
+    audit: required
+- path: /v1/experimental/external-references
+  method: get
+  operationId: v1-get-external-references
+  x-agentic-access:
+    action-class: connected
+    consequence: read
+    subject: optional
+    scope:
+    - experimental:external-reference:read
+    token:
+      max-ttl: 3600
+    audit: none
+- path: /v1/experimental/external-references
+  method: post
+  operationId: v1-upsert-external-references
+  x-agentic-access:
+    action-class: acting
+    consequence: write
+    subject: required
+    scope:
+    - experimental:external-reference:write
+    audience: null
+    token:
+      max-ttl: 900
+    escalation:
+      human-in-the-loop: conditional
+      triggers:
+      - abnormal
+      - high-value
+    audit: required
+- path: /v1/experimental/integrations/export-status
+  method: get
+  operationId: v1-get-integrations-export-status
+  x-agentic-access:
+    action-class: connected
+    consequence: read
+    subject: optional
+    scope:
+    - experimental:accounting-export:read
+    token:
+      max-ttl: 3600
+    audit: none
+- path: /v1/experimental/integrations/refresh-settings
+  method: post
+  operationId: v1-post-experimental-integrations-refresh-settings
+  x-agentic-access:
+    action-class: acting
+    consequence: write
+    subject: required
+    scope:
+    - experimental:chart-of-accounts:write
+    audience: null
+    token:
+      max-ttl: 900
+    escalation:
+      human-in-the-loop: conditional
+      triggers:
+      - abnormal
+      - high-value
+    audit: required
+- path: /v1/experimental/journals
+  method: post
+  operationId: v1-create-journal
+  x-agentic-access:
+    action-class: acting
+    consequence: write
+    subject: required
+    scope:
+    - experimental:accounting-export:read
+    - experimental:accounting-export:write
+    audience: null
+    token:
+      max-ttl: 900
+    escalation:
+      human-in-the-loop: conditional
+      triggers:
+      - abnormal
+      - high-value
+    audit: required
+- path: /v1/experimental/journals/templates
+  method: get
+  operationId: v1-get-journal-templates
+  x-agentic-access:
+    action-class: connected
+    consequence: read
+    subject: optional
+    scope:
+    - experimental:accounting-export:read
+    token:
+      max-ttl: 3600
+    audit: none
+- path: /v1/experimental/journals/{key}
+  method: get
+  operationId: v1-get-journal
+  x-agentic-access:
+    action-class: connected
+    consequence: read
+    subject: optional
+    scope:
+    - experimental:accounting-export:read
+    token:
+      max-ttl: 3600
+    audit: none
+- path: /v1/experimental/suppliers/status
+  method: patch
+  operationId: v1-patch-suppliers-status
+  x-agentic-access:
+    action-class: acting
+    consequence: write
+    subject: required
+    scope:
+    - experimental:supplier:manage
+    audience: null
+    token:
+      max-ttl: 900
+    escalation:
+      human-in-the-loop: conditional
+      triggers:
+      - abnormal
+      - high-value
+    audit: required
+- path: /v1/experimental/suppliers/{id}/status
+  method: patch
+  operationId: v1-patch-supplier-status
+  x-agentic-access:
+    action-class: acting
+    consequence: write
+    subject: required
+    scope:
+    - experimental:supplier:manage
+    audience: null
+    token:
+      max-ttl: 900
+    escalation:
+      human-in-the-loop: conditional
+      triggers:
+      - abnormal
+      - high-value
+    audit: required
+- path: /v1/experimental/webhooks
+  method: post
+  operationId: v1-create-webhook
+  x-agentic-access:
+    action-class: acting
+    consequence: write
+    subject: required
+    scope:
+    - experimental:webhooks:write
+    audience: null
+    token:
+      max-ttl: 900
+    escalation:
+      human-in-the-loop: conditional
+      triggers:
+      - abnormal
+      - high-value
+    audit: required
+- path: /v1/experimental/webhooks
+  method: get
+  operationId: v1-get-webhook
+  x-agentic-access:
+    action-class: connected
+    consequence: read
+    subject: optional
+    scope:
+    - experimental:webhooks:read
+    token:
+      max-ttl: 3600
+    audit: none
+- path: /v1/experimental/webhooks/{id}
+  method: get
+  operationId: v1-get-webhook-by-id
+  x-agentic-access:
+    action-class: connected
+    consequence: read
+    subject: optional
+    scope:
+    - experimental:webhooks:read
+    token:
+      max-ttl: 3600
+    audit: none
+- path: /v1/experimental/webhooks/{id}
+  method: put
+  operationId: v1-update-webhook
+  x-agentic-access:
+    action-class: acting
+    consequence: write
+    subject: required
+    scope:
+    - experimental:webhooks:write
+    audience: null
+    token:
+      max-ttl: 900
+    escalation:
+      human-in-the-loop: conditional
+      triggers:
+      - abnormal
+      - high-value
+    audit: required
+- path: /v1/experimental/webhooks/{id}
+  method: delete
+  operationId: v1-delete-webhook
+  x-agentic-access:
+    action-class: acting
+    consequence: write
+    subject: required
+    scope:
+    - experimental:webhooks:write
+    audience: null
+    token:
+      max-ttl: 900
+    escalation:
+      human-in-the-loop: conditional
+      triggers:
+      - abnormal
+      - high-value
+    audit: required
+- path: /v1/mcp
+  method: post
+  operationId: v1-post-mcp
+  x-agentic-access:
+    action-class: acting
+    consequence: physical
+    subject: required
+    scope:
+    - analytical-field:read
+    - cost-center:manage
+    - cost-center:read
+    - expense-category:read
+    - experimental:accounting-export:write
+    - experimental:accounting:update
+    - experimental:analytical-field-v2:write
+    - experimental:card:read
+    - experimental:card:write
+    - experimental:chart-of-accounts:read
+    - experimental:chart-of-accounts:write
+    - experimental:company:read
+    - experimental:expense-category-v2:read
+    - experimental:expense-category-v2:write
+    - experimental:intake:read
+    - experimental:invoice:read
+    - experimental:purchase-order:read
+    - experimental:purchase-order:write
+    - experimental:request:read
+    - experimental:supplier:manage
+    - experimental:transaction:read
+    - payable-attachment:read
+    - payable:read
+    - settlement:read
+    - supplier:read
+    - user:read
+    - wallet-load:read
+    - wallet-summary:read
+    audience: null
+    token:
+      max-ttl: 300
+      exchange: true
+      purpose-required: true
+    escalation:
+      human-in-the-loop: conditional
+      triggers:
+      - abnormal
+      - high-value
+    audit: required
+- path: /v1/mcp
+  method: get
+  operationId: v1-get-mcp
+  x-agentic-access:
+    action-class: connected
+    consequence: read
+    subject: optional
+    scope:
+    - analytical-field:read
+    - cost-center:manage
+    - cost-center:read
+    - expense-category:read
+    - experimental:accounting-export:write
+    - experimental:accounting:update
+    - experimental:analytical-field-v2:write
+    - experimental:card:read
+    - experimental:card:write
+    - experimental:chart-of-accounts:read
+    - experimental:chart-of-accounts:write
+    - experimental:company:read
+    - experimental:expense-category-v2:read
+    - experimental:expense-category-v2:write
+    - experimental:intake:read
+    - experimental:invoice:read
+    - experimental:purchase-order:read
+    - experimental:purchase-order:write
+    - experimental:request:read
+    - experimental:supplier:manage
+    - experimental:transaction:read
+    - payable-attachment:read
+    - payable:read
+    - settlement:read
+    - supplier:read
+    - user:read
+    - wallet-load:read
+    - wallet-summary:read
+    token:
+      max-ttl: 3600
+    audit: none
+- path: /v1/mcp
+  method: delete
+  operationId: v1-delete-mcp
+  x-agentic-access:
+    action-class: acting
+    consequence: write
+    subject: required
+    scope:
+    - analytical-field:read
+    - cost-center:manage
+    - cost-center:read
+    - expense-category:read
+    - experimental:accounting-export:write
+    - experimental:accounting:update
+    - experimental:analytical-field-v2:write
+    - experimental:card:read
+    - experimental:card:write
+    - experimental:chart-of-accounts:read
+    - experimental:chart-of-accounts:write
+    - experimental:company:read
+    - experimental:expense-category-v2:read
+    - experimental:expense-category-v2:write
+    - experimental:intake:read
+    - experimental:invoice:read
+    - experimental:purchase-order:read
+    - experimental:purchase-order:write
+    - experimental:request:read
+    - experimental:supplier:manage
+    - experimental:transaction:read
+    - payable-attachment:read
+    - payable:read
+    - settlement:read
+    - supplier:read
+    - user:read
+    - wallet-load:read
+    - wallet-summary:read
+    audience: null
+    token:
+      max-ttl: 900
+    escalation:
+      human-in-the-loop: conditional
+      triggers:
+      - abnormal
+      - high-value
+    audit: required
+- path: /v1/oauth2/authorize
+  method: get
+  operationId: v1-request-authorization
+  x-agentic-access:
+    action-class: connected
+    consequence: read
+    subject: optional
+    token:
+      max-ttl: 3600
+    audit: none
+- path: /v1/oauth2/register
+  method: post
+  operationId: v1-register-oauth2-client
+  x-agentic-access:
+    action-class: acting
+    consequence: write
+    subject: required
+    audience: null
+    token:
+      max-ttl: 900
+    escalation:
+      human-in-the-loop: conditional
+      triggers:
+      - abnormal
+      - high-value
+    audit: required
+- path: /v1/oauth2/token/create
+  method: post
+  operationId: v1-create-oauth2-token
+  x-agentic-access:
+    action-class: acting
+    consequence: write
+    subject: required
+    audience: null
+    token:
+      max-ttl: 900
+    escalation:
+      human-in-the-loop: conditional
+      triggers:
+      - abnormal
+      - high-value
+    audit: required
+- path: /v1/oauth2/token/refresh
+  method: post
+  operationId: v1-refresh-oauth2-token
+  x-agentic-access:
+    action-class: acting
+    consequence: write
+    subject: required
+    audience: null
+    token:
+      max-ttl: 900
+    escalation:
+      human-in-the-loop: conditional
+      triggers:
+      - abnormal
+      - high-value
+    audit: required
+- path: /v1/payables/bookkeeping-status
+  method: put
+  operationId: v1-put-payables-bookkeeping-status
+  x-agentic-access:
+    action-class: acting
+    consequence: write
+    subject: required
+    scope:
+    - experimental:accounting:update
+    audience: null
+    token:
+      max-ttl: 900
+    escalation:
+      human-in-the-loop: conditional
+      triggers:
+      - abnormal
+      - high-value
+    audit: required
+- path: /v1/payables/search
+  method: post
+  operationId: v1-search-payables
+  x-agentic-access:
+    action-class: connected
+    consequence: read
+    subject: optional
+    scope:
+    - experimental:payable-search:read
+    token:
+      max-ttl: 3600
+    audit: none
+- path: /v1/payables/{id}
+  method: get
+  operationId: v1-get-payable-by-id
+  x-agentic-access:
+    action-class: connected
+    consequence: read
+    subject: optional
+    scope:
+    - payable:read
+    token:
+      max-ttl: 3600
+    audit: none
+- path: /v1/payables/{id}
+  method: patch
+  operationId: v1-patch-payable-accounting-fields
+  x-agentic-access:
+    action-class: acting
+    consequence: write
+    subject: required
+    scope:
+    - experimental:accounting:update
+    audience: null
+    token:
+      max-ttl: 900
+    escalation:
+      human-in-the-loop: conditional
+      triggers:
+      - abnormal
+      - high-value
+    audit: required
+- path: /v1/payables/{id}/mark-as-ready
+  method: post
+  operationId: v1-post-payable-mark-as-ready
+  x-agentic-access:
+    action-class: acting
+    consequence: write
+    subject: required
+    scope:
+    - experimental:accounting:update
+    audience: null
+    token:
+      max-ttl: 900
+    escalation:
+      human-in-the-loop: conditional
+      triggers:
+      - abnormal
+      - high-value
+    audit: required
+- path: /v1/payables/{payableId}/attachments
+  method: get
+  operationId: v1-get-payable-attachments
+  x-agentic-access:
+    action-class: connected
+    consequence: read
+    subject: optional
+    scope:
+    - payable-attachment:read
+    token:
+      max-ttl: 3600
+    audit: none
+- path: /v1/payables/{payableId}/attachments
+  method: post
+  operationId: v1-create-payable-attachment-upload
+  x-agentic-access:
+    action-class: acting
+    consequence: write
+    subject: required
+    scope:
+    - experimental:payable-attachment:write
+    audience: null
+    token:
+      max-ttl: 900
+    escalation:
+      human-in-the-loop: conditional
+      triggers:
+      - abnormal
+      - high-value
+    audit: required
+- path: /v1/purchase-orders
+  method: get
+  operationId: v1-get-purchase-orders
+  x-agentic-access:
+    action-class: connected
+    consequence: read
+    subject: optional
+    scope:
+    - experimental:purchase-order:read
+    token:
+      max-ttl: 3600
+    audit: none
+- path: /v1/purchase-orders
+  method: post
+  operationId: v1-create-purchase-order
+  x-agentic-access:
+    action-class: acting
+    consequence: physical
+    subject: required
+    scope:
+    - experimental:purchase-order:write
+    audience: null
+    token:
+      max-ttl: 300
+      exchange: true
+      purpose-required: true
+    escalation:
+      human-in-the-loop: conditional
+      triggers:
+      - abnormal
+      - high-value
+    audit: required
+- path: /v1/purchase-orders/{purchaseOrderId}
+  method: get
+  operationId: v1-get-purchase-order
+  x-agentic-access:
+    action-class: connected
+    consequence: read
+    subject: optional
+    scope:
+    - experimental:purchase-order:read
+    token:
+      max-ttl: 3600
+    audit: none
+- path: /v1/purchase-orders/{purchaseOrderId}/cancel
+  method: post
+  operationId: v1-cancel-purchase-order
+  x-agentic-access:
+    action-class: acting
+    consequence: physical
+    subject: required
+    scope:
+    - experimental:purchase-order:write
+    audience: null
+    token:
+      max-ttl: 300
+      exchange: true
+      purpose-required: true
+    escalation:
+      human-in-the-loop: conditional
+      triggers:
+      - abnormal
+      - high-value
+    audit: required
+- path: /v1/purchase-orders/{purchaseOrderId}/close
+  method: post
+  operationId: v1-close-purchase-order
+  x-agentic-access:
+    action-class: acting
+    consequence: physical
+    subject: required
+    scope:
+    - experimental:purchase-order:write
+    audience: null
+    token:
+      max-ttl: 300
+      exchange: true
+      purpose-required: true
+    escalation:
+      human-in-the-loop: conditional
+      triggers:
+      - abnormal
+      - high-value
+    audit: required
+- path: /v1/purchase-orders/{purchaseOrderId}/document
+  method: get
+  operationId: v1-get-purchase-order-document
+  x-agentic-access:
+    action-class: connected
+    consequence: read
+    subject: optional
+    scope:
+    - experimental:purchase-order:read
+    token:
+      max-ttl: 3600
+    audit: none
+- path: /v1/requests
+  method: get
+  operationId: v1-get-requests
+  x-agentic-access:
+    action-class: connected
+    consequence: read
+    subject: optional
+    scope:
+    - experimental:request:read
+    token:
+      max-ttl: 3600
+    audit: none
+- path: /v1/requests/{requestId}
+  method: get
+  operationId: v1-get-request
+  x-agentic-access:
+    action-class: connected
+    consequence: read
+    subject: optional
+    scope:
+    - experimental:request:read
+    token:
+      max-ttl: 3600
+    audit: none
+- path: /v1/settlements
+  method: get
+  operationId: v1-get-settlements
+  x-agentic-access:
+    action-class: connected
+    consequence: read
+    subject: optional
+    scope:
+    - settlement:read
+    token:
+      max-ttl: 3600
+    audit: none
+- path: /v1/settlements/state
+  method: put
+  operationId: v1-put-settlements-state
+  x-agentic-access:
+    action-class: acting
+    consequence: write
+    subject: required
+    scope:
+    - experimental:accounting:update
+    audience: null
+    token:
+      max-ttl: 900
+    escalation:
+      human-in-the-loop: conditional
+      triggers:
+      - abnormal
+      - high-value
+    audit: required
+- path: /v1/snapshots/payables
+  method: post
+  operationId: v1-create-snapshot-payables
+  x-agentic-access:
+    action-class: acting
+    consequence: write
+    subject: required
+    scope:
+    - payable:read
+    audience: null
+    token:
+      max-ttl: 900
+    escalation:
+      human-in-the-loop: conditional
+      triggers:
+      - abnormal
+      - high-value
+    audit: required
+- path: /v1/snapshots/payables/{key}
+  method: get
+  operationId: v1-get-snapshot-payables
+  x-agentic-access:
+    action-class: connected
+    consequence: read
+    subject: optional
+    scope:
+    - payable:read
+    token:
+      max-ttl: 3600
+    audit: none
+- path: /v1/suppliers
+  method: get
+  operationId: v1-get-suppliers
+  x-agentic-access:
+    action-class: connected
+    consequence: read
+    subject: optional
+    scope:
+    - supplier:read
+    token:
+      max-ttl: 3600
+    audit: none
+- path: /v1/suppliers
+  method: post
+  operationId: v1-create-suppliers
+  x-agentic-access:
+    action-class: acting
+    consequence: write
+    subject: required
+    scope:
+    - experimental:supplier:manage
+    audience: null
+    token:
+      max-ttl: 900
+    escalation:
+      human-in-the-loop: conditional
+      triggers:
+      - abnormal
+      - high-value
+    audit: required
+- path: /v1/suppliers
+  method: patch
+  operationId: v1-update-suppliers
+  x-agentic-access:
+    action-class: acting
+    consequence: write
+    subject: required
+    scope:
+    - experimental:supplier:manage
+    audience: null
+    token:
+      max-ttl: 900
+    escalation:
+      human-in-the-loop: conditional
+      triggers:
+      - abnormal
+      - high-value
+    audit: required
+- path: /v1/suppliers/{id}
+  method: get
+  operationId: v1-get-supplier-by-id
+  x-agentic-access:
+    action-class: connected
+    consequence: read
+    subject: optional
+    scope:
+    - supplier:read
+    token:
+      max-ttl: 3600
+    audit: none
+- path: /v1/suppliers/{id}
+  method: patch
+  operationId: v1-update-supplier
+  x-agentic-access:
+    action-class: acting
+    consequence: write
+    subject: required
+    scope:
+    - experimental:supplier:manage
+    audience: null
+    token:
+      max-ttl: 900
+    escalation:
+      human-in-the-loop: conditional
+      triggers:
+      - abnormal
+      - high-value
+    audit: required
+- path: /v1/transactions
+  method: get
+  operationId: v1-get-transactions
+  x-agentic-access:
+    action-class: connected
+    consequence: read
+    subject: optional
+    scope:
+    - experimental:transaction:read
+    token:
+      max-ttl: 3600
+    audit: none
+- path: /v1/transactions/failed
+  method: get
+  operationId: v1-get-failed-transactions
+  x-agentic-access:
+    action-class: connected
+    consequence: read
+    subject: optional
+    scope:
+    - experimental:transaction:read
+    token:
+      max-ttl: 3600
+    audit: none
+- path: /v1/transactions/successful
+  method: get
+  operationId: v1-get-successful-transactions
+  x-agentic-access:
+    action-class: connected
+    consequence: read
+    subject: optional
+    scope:
+    - experimental:transaction:read
+    token:
+      max-ttl: 3600
+    audit: none
+- path: /v1/users
+  method: get
+  operationId: v1-get-users
+  x-agentic-access:
+    action-class: connected
+    consequence: read
+    subject: optional
+    scope:
+    - user:read
+    token:
+      max-ttl: 3600
+    audit: none
+- path: /v1/users/{id}
+  method: get
+  operationId: v1-get-user-by-id
+  x-agentic-access:
+    action-class: connected
+    consequence: read
+    subject: optional
+    scope:
+    - user:read
+    token:
+      max-ttl: 3600
+    audit: none
+- path: /v1/wallet-loads
+  method: get
+  operationId: v1-get-wallet-loads
+  x-agentic-access:
+    action-class: connected
+    consequence: read
+    subject: optional
+    scope:
+    - wallet-load:read
+    token:
+      max-ttl: 3600
+    audit: none
+- path: /v1/wallet-summary
+  method: get
+  operationId: v1-get-wallet-summary
+  x-agentic-access:
+    action-class: connected
+    consequence: read
+    subject: optional
+    scope:
+    - wallet-summary:read
+    token:
+      max-ttl: 3600
+    audit: none
+- path: /v2/analytical-fields
+  method: get
+  operationId: v2-list-analytical-fields
+  x-agentic-access:
+    action-class: connected
+    consequence: read
+    subject: optional
+    scope:
+    - experimental:analytical-field-v2:read
+    token:
+      max-ttl: 3600
+    audit: none
+- path: /v2/analytical-fields
+  method: post
+  operationId: v2-create-analytical-field
+  x-agentic-access:
+    action-class: acting
+    consequence: write
+    subject: required
+    scope:
+    - experimental:analytical-field-v2:write
+    audience: null
+    token:
+      max-ttl: 900
+    escalation:
+      human-in-the-loop: conditional
+      triggers:
+      - abnormal
+      - high-value
+    audit: required
+- path: /v2/analytical-fields/{fieldId}
+  method: get
+  operationId: v2-get-analytical-field
+  x-agentic-access:
+    action-class: connected
+    consequence: read
+    subject: optional
+    scope:
+    - experimental:analytical-field-v2:read
+    token:
+      max-ttl: 3600
+    audit: none
+- path: /v2/analytical-fields/{fieldId}
+  method: patch
+  operationId: v2-update-analytical-field
+  x-agentic-access:
+    action-class: acting
+    consequence: write
+    subject: required
+    scope:
+    - experimental:analytical-field-v2:write
+    audience: null
+    token:
+      max-ttl: 900
+    escalation:
+      human-in-the-loop: conditional
+      triggers:
+      - abnormal
+      - high-value
+    audit: required
+- path: /v2/analytical-fields/{fieldId}
+  method: delete
+  operationId: v2-delete-analytical-field
+  x-agentic-access:
+    action-class: acting
+    consequence: write
+    subject: required
+    scope:
+    - experimental:analytical-field-v2:write
+    audience: null
+    token:
+      max-ttl: 900
+    escalation:
+      human-in-the-loop: conditional
+      triggers:
+      - abnormal
+      - high-value
+    audit: required
+- path: /v2/analytical-fields/{fieldId}/values
+  method: get
+  operationId: v2-list-analytical-field-values
+  x-agentic-access:
+    action-class: connected
+    consequence: read
+    subject: optional
+    scope:
+    - experimental:analytical-field-v2:read
+    token:
+      max-ttl: 3600
+    audit: none
+- path: /v2/analytical-fields/{fieldId}/values
+  method: post
+  operationId: v2-create-analytical-field-value
+  x-agentic-access:
+    action-class: acting
+    consequence: write
+    subject: required
+    scope:
+    - experimental:analytical-field-v2:write
+    audience: null
+    token:
+      max-ttl: 900
+    escalation:
+      human-in-the-loop: conditional
+      triggers:
+      - abnormal
+      - high-value
+    audit: required
+- path: /v2/analytical-fields/{fieldId}/values/{valueId}
+  method: get
+  operationId: v2-get-analytical-field-value
+  x-agentic-access:
+    action-class: connected
+    consequence: read
+    subject: optional
+    scope:
+    - experimental:analytical-field-v2:read
+    token:
+      max-ttl: 3600
+    audit: none
+- path: /v2/analytical-fields/{fieldId}/values/{valueId}
+  method: patch
+  operationId: v2-update-analytical-field-value
+  x-agentic-access:
+    action-class: acting
+    consequence: write
+    subject: required
+    scope:
+    - experimental:analytical-field-v2:write
+    audience: null
+    token:
+      max-ttl: 900
+    escalation:
+      human-in-the-loop: conditional
+      triggers:
+      - abnormal
+      - high-value
+    audit: required
+- path: /v2/analytical-fields/{fieldId}/values/{valueId}
+  method: delete
+  operationId: v2-delete-analytical-field-value
+  x-agentic-access:
+    action-class: acting
+    consequence: write
+    subject: required
+    scope:
+    - experimental:analytical-field-v2:write
+    audience: null
+    token:
+      max-ttl: 900
+    escalation:
+      human-in-the-loop: conditional
+      triggers:
+      - abnormal
+      - high-value
+    audit: required
+- path: /v2/companies
+  method: get
+  operationId: v2-get-companies
+  x-agentic-access:
+    action-class: connected
+    consequence: read
+    subject: optional
+    scope:
+    - experimental:company:read
+    token:
+      max-ttl: 3600
+    audit: none
+- path: /v2/companies/{companyId}/intakes
+  method: post
+  operationId: v2-post-company-intakes
+  x-agentic-access:
+    action-class: acting
+    consequence: physical
+    subject: required
+    scope:
+    - experimental:intake:write
+    audience: null
+    token:
+      max-ttl: 300
+      exchange: true
+      purpose-required: true
+    escalation:
+      human-in-the-loop: conditional
+      triggers:
+      - abnormal
+      - high-value
+    audit: required
+- path: /v2/companies/{companyId}/intakes
+  method: get
+  operationId: v2-list-company-intakes
+  x-agentic-access:
+    action-class: connected
+    consequence: read
+    subject: optional
+    scope:
+    - experimental:intake:read
+    token:
+      max-ttl: 3600
+    audit: none
+- path: /v2/companies/{companyId}/intakes/files/upload
+  method: post
+  operationId: v2-create-intake-file-upload
+  x-agentic-access:
+    action-class: acting
+    consequence: physical
+    subject: required
+    scope:
+    - experimental:intake:write
+    audience: null
+    token:
+      max-ttl: 300
+      exchange: true
+      purpose-required: true
+    escalation:
+      human-in-the-loop: conditional
+      triggers:
+      - abnormal
+      - high-value
+    audit: required
+- path: /v2/companies/{companyId}/intakes/files/upload/{uploadId}
+  method: get
+  operationId: v2-get-intake-file-upload-status
+  x-agentic-access:
+    action-class: connected
+    consequence: read
+    subject: optional
+    scope:
+    - experimental:intake:write
+    token:
+      max-ttl: 3600
+    audit: none
+- path: /v2/companies/{companyId}/intakes/{id}
+  method: get
+  operationId: v2-get-company-intake
+  x-agentic-access:
+    action-class: connected
+    consequence: read
+    subject: optional
+    scope:
+    - experimental:intake:read
+    token:
+      max-ttl: 3600
+    audit: none
+- path: /v2/companies/{companyId}/invoices
+  method: get
+  operationId: v2-list-invoices
+  x-agentic-access:
+    action-class: connected
+    consequence: read
+    subject: optional
+    scope:
+    - experimental:invoice:read
+    token:
+      max-ttl: 3600
+    audit: none
+- path: /v2/companies/{companyId}/invoices/summary
+  method: get
+  operationId: v2-get-invoices-summary
+  x-agentic-access:
+    action-class: connected
+    consequence: read
+    subject: optional
+    scope:
+    - experimental:invoice:read
+    token:
+      max-ttl: 3600
+    audit: none
+- path: /v2/companies/{companyId}/invoices/{id}
+  method: get
+  operationId: v2-get-invoice
+  x-agentic-access:
+    action-class: connected
+    consequence: read
+    subject: optional
+    scope:
+    - experimental:invoice:read
+    token:
+      max-ttl: 3600
+    audit: none
+- path: /v2/expense-category-fields
+  method: get
+  operationId: v2-list-expense-category-fields
+  x-agentic-access:
+    action-class: connected
+    consequence: read
+    subject: optional
+    scope:
+    - experimental:expense-category-v2:read
+    token:
+      max-ttl: 3600
+    audit: none
+- path: /v2/expense-category-fields
+  method: post
+  operationId: v2-create-expense-category-field
+  x-agentic-access:
+    action-class: acting
+    consequence: write
+    subject: required
+    scope:
+    - experimental:expense-category-v2:write
+    audience: null
+    token:
+      max-ttl: 900
+    escalation:
+      human-in-the-loop: conditional
+      triggers:
+      - abnormal
+      - high-value
+    audit: required
+- path: /v2/expense-category-fields/{fieldId}
+  method: get
+  operationId: v2-get-expense-category-field
+  x-agentic-access:
+    action-class: connected
+    consequence: read
+    subject: optional
+    scope:
+    - experimental:expense-category-v2:read
+    token:
+      max-ttl: 3600
+    audit: none
+- path: /v2/expense-category-fields/{fieldId}
+  method: patch
+  operationId: v2-update-expense-category-field
+  x-agentic-access:
+    action-class: acting
+    consequence: write
+    subject: required
+    scope:
+    - experimental:expense-category-v2:write
+    audience: null
+    token:
+      max-ttl: 900
+    escalation:
+      human-in-the-loop: conditional
+      triggers:
+      - abnormal
+      - high-value
+    audit: required
+- path: /v2/expense-category-fields/{fieldId}
+  method: delete
+  operationId: v2-delete-expense-category-field
+  x-agentic-access:
+    action-class: acting
+    consequence: write
+    subject: required
+    scope:
+    - experimental:expense-category-v2:write
+    audience: null
+    token:
+      max-ttl: 900
+    escalation:
+      human-in-the-loop: conditional
+      triggers:
+      - abnormal
+      - high-value
+    audit: required
+- path: /v2/expense-category-fields/{fieldId}/categories
+  method: get
+  operationId: v2-list-expense-categories
+  x-agentic-access:
+    action-class: connected
+    consequence: read
+    subject: optional
+    scope:
+    - experimental:expense-category-v2:read
+    token:
+      max-ttl: 3600
+    audit: none
+- path: /v2/expense-category-fields/{fieldId}/categories
+  method: post
+  operationId: v2-create-expense-category
+  x-agentic-access:
+    action-class: acting
+    consequence: write
+    subject: required
+    scope:
+    - experimental:expense-category-v2:write
+    audience: null
+    token:
+      max-ttl: 900
+    escalation:
+      human-in-the-loop: conditional
+      triggers:
+      - abnormal
+      - high-value
+    audit: required
+- path: /v2/expense-category-fields/{fieldId}/categories/{categoryId}
+  method: get
+  operationId: v2-get-expense-category
+  x-agentic-access:
+    action-class: connected
+    consequence: read
+    subject: optional
+    scope:
+    - experimental:expense-category-v2:read
+    token:
+      max-ttl: 3600
+    audit: none
+- path: /v2/expense-category-fields/{fieldId}/categories/{categoryId}
+  method: patch
+  operationId: v2-update-expense-category
+  x-agentic-access:
+    action-class: acting
+    consequence: write
+    subject: required
+    scope:
+    - experimental:expense-category-v2:write
+    audience: null
+    token:
+      max-ttl: 900
+    escalation:
+      human-in-the-loop: conditional
+      triggers:
+      - abnormal
+      - high-value
+    audit: required
+- path: /v2/expense-category-fields/{fieldId}/categories/{categoryId}
+  method: delete
+  operationId: v2-delete-expense-category
+  x-agentic-access:
+    action-class: acting
+    consequence: write
+    subject: required
+    scope:
+    - experimental:expense-category-v2:write
+    audience: null
+    token:
+      max-ttl: 900
+    escalation:
+      human-in-the-loop: conditional
+      triggers:
+      - abnormal
+      - high-value
+    audit: required

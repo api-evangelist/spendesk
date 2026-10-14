@@ -1,0 +1,213 @@
+generated: '2026-10-14'
+method: derived
+generator: derive-mcp-candidate.py
+source:
+- openapi/spendesk-public-api-openapi.yml
+status: candidate
+deployment:
+  mode: none
+  auth: unknown
+  verified: derived
+note: No MCP server was found. No probe result in the dossier. Candidate tools below are derived from the 106 operation(s) in the provider's own
+  OpenAPI (40 listed); they describe what a server WOULD expose, not one that exists.
+tools:
+- name: mcp_authorization_server_metadata
+  operationId: mcp-authorization-server-metadata
+  method: GET
+  path: /.well-known/oauth-authorization-server
+  description: Authorization Server Metadata
+- name: mcp_protected_resource_metadata_mcp
+  operationId: mcp-protected-resource-metadata-mcp
+  method: GET
+  path: /.well-known/oauth-protected-resource/v1/mcp
+  description: MCP Protected Resource Metadata
+- name: v1_get_analytical_fields
+  operationId: v1-get-analytical-fields
+  method: GET
+  path: /v1/analytical-fields
+  description: Get Analytical Fields
+- name: v1_get_analytical_field_values
+  operationId: v1-get-analytical-field-values
+  method: GET
+  path: /v1/analytical-fields/{fieldId}/values
+  description: Get Analytical Values
+- name: v1_create_auth_token
+  operationId: v1-create-auth-token
+  method: POST
+  path: /v1/auth/token
+  description: Create Access Token (Public API credentials)
+- name: v1_get_bank_fees
+  operationId: v1-get-bank-fees
+  method: GET
+  path: /v1/bank-fees
+  description: Get Bank Fees
+- name: v1_get_cards
+  operationId: v1-get-cards
+  method: GET
+  path: /v1/cards
+  description: Get Cards
+- name: v1_get_card
+  operationId: v1-get-card
+  method: GET
+  path: /v1/cards/{cardId}
+  description: Get a Card
+- name: v1_get_card_blocking_history
+  operationId: v1-get-card-blocking-history
+  method: GET
+  path: /v1/cards/{cardId}/blocking-history
+  description: Get a Card Blocking History
+- name: v1_get_card_order
+  operationId: v1-get-card-order
+  method: GET
+  path: /v1/cards/{cardId}/order
+  description: Get a Card Order
+- name: v1_get_cost_centers
+  operationId: v1-get-cost-centers
+  method: GET
+  path: /v1/cost-centers
+  description: Get Cost Centers
+- name: v1_create_cost_centers
+  operationId: v1-create-cost-centers
+  method: POST
+  path: /v1/cost-centers
+  description: Create Cost Centers
+- name: v1_update_cost_centers
+  operationId: v1-update-cost-centers
+  method: PUT
+  path: /v1/cost-centers/{costCenterId}
+  description: Update Cost Centers
+- name: v1_delete_cost_centers
+  operationId: v1-delete-cost-centers
+  method: DELETE
+  path: /v1/cost-centers/{costCenterId}
+  description: Delete Cost Centers
+- name: v1_get_expense_categories
+  operationId: v1-get-expense-categories
+  method: GET
+  path: /v1/expense-categories
+  description: Get Expense Categories
+- name: v1_get_accounts
+  operationId: v1-get-accounts
+  method: GET
+  path: /v1/experimental/accounts
+  description: Get accounts
+- name: v1_create_account
+  operationId: v1-create-account
+  method: POST
+  path: /v1/experimental/accounts
+  description: Create account
+- name: v1_sync_accounts
+  operationId: v1-sync-accounts
+  method: PUT
+  path: /v1/experimental/accounts
+  description: Bulk update accounts
+- name: v1_patch_accounts
+  operationId: v1-patch-accounts
+  method: PATCH
+  path: /v1/experimental/accounts
+  description: Bulk patch accounts
+- name: v1_assign_creditors_to_accounts
+  operationId: v1-assign-creditors-to-accounts
+  method: PUT
+  path: /v1/experimental/accounts/creditors
+  description: Assign creditors to accounts
+- name: v1_remove_creditors_from_accounts
+  operationId: v1-remove-creditors-from-accounts
+  method: PUT
+  path: /v1/experimental/accounts/creditors/remove-from-accounts
+  description: Remove creditors from accounts
+- name: v1_search_creditor_account_assignments
+  operationId: v1-search-creditor-account-assignments
+  method: POST
+  path: /v1/experimental/accounts/creditors/search
+  description: Search creditor account assignments
+- name: v1_set_account_purpose
+  operationId: v1-set-account-purpose
+  method: PUT
+  path: /v1/experimental/accounts/set-purpose
+  description: Set account purpose
+- name: v1_get_account_by_id
+  operationId: v1-get-account-by-id
+  method: GET
+  path: /v1/experimental/accounts/{accountId}
+  description: Get account by id
+- name: v1_delete_account
+  operationId: v1-delete-account
+  method: DELETE
+  path: /v1/experimental/accounts/{accountId}
+  description: Archive account
+- name: v1_get_external_references
+  operationId: v1-get-external-references
+  method: GET
+  path: /v1/experimental/external-references
+  description: Get external references
+- name: v1_upsert_external_references
+  operationId: v1-upsert-external-references
+  method: POST
+  path: /v1/experimental/external-references
+  description: Upsert external references
+- name: v1_get_integrations_export_status
+  operationId: v1-get-integrations-export-status
+  method: GET
+  path: /v1/experimental/integrations/export-status
+  description: Get entity export status
+- name: v1_post_experimental_integrations_refresh_settings
+  operationId: v1-post-experimental-integrations-refresh-settings
+  method: POST
+  path: /v1/experimental/integrations/refresh-settings
+  description: Refresh accounting integration settings
+- name: v1_create_journal
+  operationId: v1-create-journal
+  method: POST
+  path: /v1/experimental/journals
+  description: Create an accounting export
+- name: v1_get_journal_templates
+  operationId: v1-get-journal-templates
+  method: GET
+  path: /v1/experimental/journals/templates
+  description: Get available journal templates
+- name: v1_get_journal
+  operationId: v1-get-journal
+  method: GET
+  path: /v1/experimental/journals/{key}
+  description: Get a journal CSV content
+- name: v1_patch_suppliers_status
+  operationId: v1-patch-suppliers-status
+  method: PATCH
+  path: /v1/experimental/suppliers/status
+  description: Archive/Unarchive Suppliers
+- name: v1_patch_supplier_status
+  operationId: v1-patch-supplier-status
+  method: PATCH
+  path: /v1/experimental/suppliers/{id}/status
+  description: Archive/Unarchive Supplier
+- name: v1_create_webhook
+  operationId: v1-create-webhook
+  method: POST
+  path: /v1/experimental/webhooks
+  description: Create a webhook instance
+- name: v1_get_webhook
+  operationId: v1-get-webhook
+  method: GET
+  path: /v1/experimental/webhooks
+  description: Get all webhook instances ordered by creation date.
+- name: v1_get_webhook_by_id
+  operationId: v1-get-webhook-by-id
+  method: GET
+  path: /v1/experimental/webhooks/{id}
+  description: Get a webhook instance by id.
+- name: v1_update_webhook
+  operationId: v1-update-webhook
+  method: PUT
+  path: /v1/experimental/webhooks/{id}
+  description: Update a webhook instance
+- name: v1_delete_webhook
+  operationId: v1-delete-webhook
+  method: DELETE
+  path: /v1/experimental/webhooks/{id}
+  description: Delete a webhook instance
+- name: v1_post_mcp
+  operationId: v1-post-mcp
+  method: POST
+  path: /v1/mcp
+  description: Send MCP messages

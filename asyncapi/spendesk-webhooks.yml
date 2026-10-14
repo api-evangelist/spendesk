@@ -1,0 +1,26 @@
+generated: '2026-10-14'
+method: derived
+generator: derive-webhooks.py
+source:
+- openapi/spendesk-public-api-openapi.yml
+description: 'Event surface derived from the provider''s own OpenAPI: webhooks, enum webhookEvent. No AsyncAPI document is published by the provider;
+  this catalog lists the events the contract names.'
+management_operations:
+- v1-create-webhook
+- v1-get-webhook
+- v1-get-webhook-by-id
+- v1-update-webhook
+- v1-delete-webhook
+events:
+- event: payables-created
+  declared_in: webhooks
+- event: payables-prepared
+  declared_in: webhooks
+- event: settlement-created
+  declared_in: webhooks
+- event: created
+  declared_in: components/schemas/webhookEvent
+- event: prepared
+  declared_in: components/schemas/webhookEvent
+- event: updated
+  declared_in: components/schemas/webhookEvent
