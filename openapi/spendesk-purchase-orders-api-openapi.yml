@@ -1,0 +1,1851 @@
+openapi: 3.2.0
+info:
+  title: Spendesk Public Purchase orders API
+  description: Spendesk Public API
+  version: '1.0'
+  summary: Spendesk Public API
+  contact:
+    email: support-public-api@spendesk.com
+    url: https://developer.spendesk.com/
+    name: Spendesk for Developers
+  termsOfService: https://www.spendesk.com/en/legals/terms/api-agreement
+servers:
+- url: https://public-api.spendesk.com
+  description: Production
+- url: https://public-api.demo.spendesk.com
+  description: Sandbox
+tags:
+- name: Purchase orders
+  description: 'Experimental purchase orders: list, retrieve, create, cancel and close them, and download a purchase order''s document.'
+paths:
+  /v1/purchase-orders:
+    get:
+      operationId: v1-get-purchase-orders
+      summary: Get Purchase Orders
+      tags:
+      - Purchase orders
+      description: '**Allowed Scopes**: _`experimental:purchase-order:read`_
+
+
+        Returns purchase orders. Purchase order data is cached for up to 2 hours. Changes made through the API are returned by subsequent reads; changes made in Spendesk can take up to 2 hours to appear.'
+      parameters:
+      - schema:
+          type: integer
+          default: 1
+          minimum: 1
+        in: query
+        name: page
+        required: false
+        description: Page number
+      - schema:
+          type: integer
+          default: 30
+          minimum: 1
+          maximum: 30
+        in: query
+        name: pageSize
+        required: false
+        description: Page size
+      - schema:
+          type: boolean
+        in: query
+        name: withItems
+        required: false
+        description: Whether to include line items in the response
+      - schema:
+          anyOf:
+          - type: string
+          - type: array
+            items:
+              type: string
+        in: query
+        name: supplierIds
+        required: false
+        description: Filter by supplier IDs
+      - schema:
+          anyOf:
+          - type: string
+            enum:
+            - open
+            - closed
+            - cancelled
+          - type: array
+            items:
+              type: string
+              enum:
+              - open
+              - closed
+              - cancelled
+        in: query
+        name: status
+        required: false
+        description: Filter by purchase order status
+      - schema:
+          anyOf:
+          - type: string
+          - type: array
+            items:
+              type: string
+            maxItems: 100
+        in: query
+        name: companyIds
+        required: false
+        description: Filter by company IDs
+      - schema:
+          type: string
+          format: date
+          pattern: ^\d{4}-\d{2}-\d{2}$
+        in: query
+        name: createdFrom
+        required: false
+        description: Filter purchase orders created from this date (YYYY-MM-DD)
+      - schema:
+          type: string
+          format: date
+          pattern: ^\d{4}-\d{2}-\d{2}$
+        in: query
+        name: createdTo
+        required: false
+        description: Filter purchase orders created until this date (YYYY-MM-DD)
+      - schema:
+          type: string
+          format: date
+          pattern: ^\d{4}-\d{2}-\d{2}$
+        in: query
+        name: startDateFrom
+        required: false
+        description: Filter purchase orders with start date from this date (YYYY-MM-DD)
+      - schema:
+          type: string
+          format: date
+          pattern: ^\d{4}-\d{2}-\d{2}$
+        in: query
+        name: startDateTo
+        required: false
+        description: Filter purchase orders with start date until this date (YYYY-MM-DD)
+      - schema:
+          type: string
+          format: date
+          pattern: ^\d{4}-\d{2}-\d{2}$
+        in: query
+        name: endDateFrom
+        required: false
+        description: Filter purchase orders with end date from this date (YYYY-MM-DD)
+      - schema:
+          type: string
+          format: date
+          pattern: ^\d{4}-\d{2}-\d{2}$
+        in: query
+        name: endDateTo
+        required: false
+        description: Filter purchase orders with end date until this date (YYYY-MM-DD)
+      - schema:
+          type: string
+        in: header
+        name: X-Company-Id
+        required: false
+        description: ID of the company the request acts on. Required with an organisation-level token; not needed with a company-level token.
+      security:
+      - Authentication:
+        - experimental:purchase-order:read
+      x-roles:
+      - controller
+      - admin
+      - accountOwner
+      responses:
+        '200':
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  meta:
+                    $ref: '#/components/schemas/meta'
+                  data:
+                    description: List of purchase orders
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        status:
+                          type: string
+                          enum:
+                          - open
+                          - closed
+                          - cancelled
+                          description: Status of the purchase order
+                        billingStatus:
+                          type: string
+                        deliveryStatus:
+                          type: string
+                        billingOverDeliveryStatus:
+                          type: string
+                        billing:
+                          type: string
+                        version:
+                          type: number
+                        amount:
+                          type: object
+                          properties:
+                            amount:
+                              type: number
+                              description: Amount in the smallest currency unit (e.g., cents for USD)
+                            currency:
+                              type: string
+                              description: ISO 4217 currency code (e.g., USD, EUR)
+                              minLength: 3
+                              maxLength: 3
+                              pattern: ^[A-Z]{3}$
+                            precision:
+                              type: number
+                              description: Number of decimal places (e.g., 2 for USD)
+                          required:
+                          - amount
+                          - currency
+                          - precision
+                        netAmount:
+                          type: object
+                          properties:
+                            amount:
+                              type: number
+                              description: Amount in the smallest currency unit (e.g., cents for USD)
+                            currency:
+                              type: string
+                              description: ISO 4217 currency code (e.g., USD, EUR)
+                              minLength: 3
+                              maxLength: 3
+                              pattern: ^[A-Z]{3}$
+                            precision:
+                              type: number
+                              description: Number of decimal places (e.g., 2 for USD)
+                          required:
+                          - amount
+                          - currency
+                          - precision
+                        billedAmount:
+                          type: object
+                          properties:
+                            amount:
+                              type: number
+                              description: Amount in the smallest currency unit (e.g., cents for USD)
+                            currency:
+                              type: string
+                              description: ISO 4217 currency code (e.g., USD, EUR)
+                              minLength: 3
+                              maxLength: 3
+                              pattern: ^[A-Z]{3}$
+                            precision:
+                              type: number
+                              description: Number of decimal places (e.g., 2 for USD)
+                          required:
+                          - amount
+                          - currency
+                          - precision
+                        deliveredAmount:
+                          type: object
+                          properties:
+                            amount:
+                              type: number
+                              description: Amount in the smallest currency unit (e.g., cents for USD)
+                            currency:
+                              type: string
+                              description: ISO 4217 currency code (e.g., USD, EUR)
+                              minLength: 3
+                              maxLength: 3
+                              pattern: ^[A-Z]{3}$
+                            precision:
+                              type: number
+                              description: Number of decimal places (e.g., 2 for USD)
+                          required:
+                          - amount
+                          - currency
+                          - precision
+                        spendingCommitmentId:
+                          type: string
+                        purchaseOrderNumber:
+                          type: number
+                        description:
+                          type: string
+                        startDate:
+                          type: string
+                          format: date
+                          pattern: ^\d{4}-\d{2}-\d{2}$
+                        endDate:
+                          type: string
+                          format: date
+                          pattern: ^\d{4}-\d{2}-\d{2}$
+                        supplierId:
+                          type: string
+                        requesterId:
+                          type: string
+                        invoices:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              invoiceRequestId:
+                                type: string
+                              invoiceNumber:
+                                type: string
+                              amount:
+                                type: object
+                                properties:
+                                  amount:
+                                    type: number
+                                    description: Amount in the smallest currency unit (e.g., cents for USD)
+                                  currency:
+                                    type: string
+                                    description: ISO 4217 currency code (e.g., USD, EUR)
+                                    minLength: 3
+                                    maxLength: 3
+                                    pattern: ^[A-Z]{3}$
+                                  precision:
+                                    type: number
+                                    description: Number of decimal places (e.g., 2 for USD)
+                                required:
+                                - amount
+                                - currency
+                                - precision
+                              status:
+                                type: string
+                                enum:
+                                - pending-approval
+                                - in-review
+                                - to-schedule
+                                - paid
+                              requestId:
+                                type: string
+                              paymentToScheduleId:
+                                type: string
+                              latestPaymentId:
+                                type: string
+                            required:
+                            - invoiceRequestId
+                            - invoiceNumber
+                            - amount
+                            - status
+                        companyId:
+                          type: string
+                        teamId:
+                          type:
+                          - 'null'
+                          - string
+                        costCenterId:
+                          type: string
+                        requestId:
+                          type: string
+                        items:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              name:
+                                type: string
+                              quantity:
+                                type: number
+                              unitPrice:
+                                type: number
+                                description: Price of one unit, in `currency`, as a decimal in major units (12.5 means 12.50). Unlike the `{amount, currency, precision}` objects on the purchase order, this is a plain decimal.
+                              currency:
+                                type: string
+                              vatRate:
+                                type:
+                                - 'null'
+                                - number
+                            required:
+                            - name
+                            - quantity
+                            - unitPrice
+                            - currency
+                            - vatRate
+                        customFields:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              field:
+                                type: object
+                                properties:
+                                  id:
+                                    type: string
+                                  name:
+                                    type: string
+                                required:
+                                - id
+                                - name
+                              value:
+                                type: object
+                                properties:
+                                  id:
+                                    type: string
+                                  value:
+                                    type: string
+                                required:
+                                - id
+                                - value
+                            required:
+                            - field
+                            - value
+                      required:
+                      - id
+                      - status
+                      - version
+                      - amount
+                      - billedAmount
+                      - deliveredAmount
+                      - spendingCommitmentId
+                      - purchaseOrderNumber
+                      - startDate
+                      - endDate
+                      - supplierId
+                      - requesterId
+                      - invoices
+                      - companyId
+                      - requestId
+                required:
+                - meta
+                - data
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/badRequest'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/unauthorized'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/forbidden'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/notFound'
+        '429':
+          description: Too Many Requests
+          headers:
+            retry-after:
+              schema:
+                type: integer
+              description: Seconds to wait before retrying the request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/tooManyRequests'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/internalServerError'
+        '503':
+          description: Service Unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/serviceUnavailableError'
+    post:
+      operationId: v1-create-purchase-order
+      summary: Create a purchase order
+      tags:
+      - Purchase orders
+      description: '**Allowed Scopes**: _`experimental:purchase-order:write`_
+
+
+        Create a purchase order.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+              - type: object
+                properties:
+                  externalPONumber:
+                    type: string
+                  userId:
+                    type: string
+                  amount:
+                    type: object
+                    properties:
+                      amount:
+                        type: number
+                        description: Amount in the smallest currency unit (e.g., cents for USD)
+                      currency:
+                        type: string
+                        description: ISO 4217 currency code (e.g., USD, EUR)
+                        minLength: 3
+                        maxLength: 3
+                        pattern: ^[A-Z]{3}$
+                      precision:
+                        type: number
+                        description: Number of decimal places (e.g., 2 for USD)
+                    required:
+                    - amount
+                    - currency
+                    - precision
+                  netAmount:
+                    type: object
+                    properties:
+                      amount:
+                        type: number
+                        description: Amount in the smallest currency unit (e.g., cents for USD)
+                      currency:
+                        type: string
+                        description: ISO 4217 currency code (e.g., USD, EUR)
+                        minLength: 3
+                        maxLength: 3
+                        pattern: ^[A-Z]{3}$
+                      precision:
+                        type: number
+                        description: Number of decimal places (e.g., 2 for USD)
+                    required:
+                    - amount
+                    - currency
+                    - precision
+                  description:
+                    type: string
+                    maxLength: 255
+                  costCenterId:
+                    type: string
+                  teamId:
+                    type: string
+                  startDate:
+                    type: string
+                    format: date-time
+                  endDate:
+                    type: string
+                    format: date-time
+                  customFieldAssociations:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        customFieldId:
+                          type: string
+                        customFieldValueId:
+                          oneOf:
+                          - type: string
+                          - type: 'null'
+                        value:
+                          oneOf:
+                          - type: string
+                          - type: boolean
+                          - type: 'null'
+                      required:
+                      - customFieldId
+                  analyticalSplits:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        amount:
+                          type: object
+                          properties:
+                            amount:
+                              type: number
+                              description: Amount in the smallest currency unit (e.g., cents for USD)
+                            currency:
+                              type: string
+                              description: ISO 4217 currency code (e.g., USD, EUR)
+                              minLength: 3
+                              maxLength: 3
+                              pattern: ^[A-Z]{3}$
+                            precision:
+                              type: number
+                              description: Number of decimal places (e.g., 2 for USD)
+                          required:
+                          - amount
+                          - currency
+                          - precision
+                        costCenterId:
+                          oneOf:
+                          - type: string
+                          - type: 'null'
+                        customFields:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              customFieldId:
+                                type: string
+                              customFieldValueId:
+                                oneOf:
+                                - type: string
+                                - type: 'null'
+                              value:
+                                oneOf:
+                                - type: string
+                                - type: boolean
+                                - type: 'null'
+                            required:
+                            - customFieldId
+                        percentage:
+                          type: number
+                      required:
+                      - amount
+                      - percentage
+                    default: []
+                  items:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                          maxLength: 255
+                        quantity:
+                          type: number
+                          exclusiveMinimum: 0
+                        unitPrice:
+                          type: object
+                          properties:
+                            amount:
+                              type: number
+                              description: Amount in the smallest currency unit (e.g., cents for USD)
+                            currency:
+                              type: string
+                              description: ISO 4217 currency code (e.g., USD, EUR)
+                              minLength: 3
+                              maxLength: 3
+                              pattern: ^[A-Z]{3}$
+                            precision:
+                              type: number
+                              description: Number of decimal places (e.g., 2 for USD)
+                          required:
+                          - amount
+                          - currency
+                          - precision
+                        vatRate:
+                          oneOf:
+                          - type: number
+                            minimum: 0
+                      required:
+                      - name
+                      - quantity
+                      - unitPrice
+                    default: []
+                  deliveryNotesExpected:
+                    type: boolean
+                required:
+                - userId
+                - amount
+                - netAmount
+                - costCenterId
+                - startDate
+                - endDate
+                - customFieldAssociations
+              - anyOf:
+                - type: object
+                  properties:
+                    supplierId:
+                      type: string
+                  required:
+                  - supplierId
+                - type: object
+                  properties:
+                    supplierName:
+                      type: string
+                  required:
+                  - supplierName
+      parameters:
+      - schema:
+          type: string
+        in: header
+        name: X-Company-Id
+        required: false
+        description: ID of the company the request acts on. Required with an organisation-level token; not needed with a company-level token.
+      security:
+      - Authentication:
+        - experimental:purchase-order:write
+      x-roles:
+      - controller
+      - admin
+      - accountOwner
+      responses:
+        '201':
+          description: Default Response
+          content:
+            application/json:
+              schema: {}
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/badRequest'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/unauthorized'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/forbidden'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/notFound'
+        '413':
+          description: Payload Too Large
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/tooLarge'
+        '415':
+          description: Unsupported Media Type
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/unsupportedMediaType'
+        '429':
+          description: Too Many Requests
+          headers:
+            retry-after:
+              schema:
+                type: integer
+              description: Seconds to wait before retrying the request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/tooManyRequests'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/internalServerError'
+        '503':
+          description: Service Unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/serviceUnavailableError'
+  /v1/purchase-orders/{purchaseOrderId}:
+    get:
+      operationId: v1-get-purchase-order
+      summary: Get a purchase order by ID
+      tags:
+      - Purchase orders
+      description: '**Allowed Scopes**: _`experimental:purchase-order:read`_
+
+
+        Returns a purchase order by ID. Purchase order data is cached for up to 24 hours. Changes made through the API are returned by subsequent reads; changes made in Spendesk can take up to 24 hours to appear.'
+      parameters:
+      - schema:
+          type: boolean
+        in: query
+        name: withItems
+        required: false
+        description: Whether to include line items in the response
+      - schema:
+          type: string
+        in: path
+        name: purchaseOrderId
+        required: true
+        description: The ID of the purchase order to retrieve
+      - schema:
+          type: string
+        in: header
+        name: X-Company-Id
+        required: false
+        description: ID of the company the request acts on. Required with an organisation-level token; not needed with a company-level token.
+      security:
+      - Authentication:
+        - experimental:purchase-order:read
+      x-roles:
+      - controller
+      - admin
+      - accountOwner
+      responses:
+        '200':
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                      status:
+                        type: string
+                        enum:
+                        - open
+                        - closed
+                        - cancelled
+                        description: Status of the purchase order
+                      billingStatus:
+                        type: string
+                      deliveryStatus:
+                        type: string
+                      billingOverDeliveryStatus:
+                        type: string
+                      billing:
+                        type: string
+                      version:
+                        type: number
+                      amount:
+                        type: object
+                        properties:
+                          amount:
+                            type: number
+                            description: Amount in the smallest currency unit (e.g., cents for USD)
+                          currency:
+                            type: string
+                            description: ISO 4217 currency code (e.g., USD, EUR)
+                            minLength: 3
+                            maxLength: 3
+                            pattern: ^[A-Z]{3}$
+                          precision:
+                            type: number
+                            description: Number of decimal places (e.g., 2 for USD)
+                        required:
+                        - amount
+                        - currency
+                        - precision
+                      netAmount:
+                        type: object
+                        properties:
+                          amount:
+                            type: number
+                            description: Amount in the smallest currency unit (e.g., cents for USD)
+                          currency:
+                            type: string
+                            description: ISO 4217 currency code (e.g., USD, EUR)
+                            minLength: 3
+                            maxLength: 3
+                            pattern: ^[A-Z]{3}$
+                          precision:
+                            type: number
+                            description: Number of decimal places (e.g., 2 for USD)
+                        required:
+                        - amount
+                        - currency
+                        - precision
+                      billedAmount:
+                        type: object
+                        properties:
+                          amount:
+                            type: number
+                            description: Amount in the smallest currency unit (e.g., cents for USD)
+                          currency:
+                            type: string
+                            description: ISO 4217 currency code (e.g., USD, EUR)
+                            minLength: 3
+                            maxLength: 3
+                            pattern: ^[A-Z]{3}$
+                          precision:
+                            type: number
+                            description: Number of decimal places (e.g., 2 for USD)
+                        required:
+                        - amount
+                        - currency
+                        - precision
+                      deliveredAmount:
+                        type: object
+                        properties:
+                          amount:
+                            type: number
+                            description: Amount in the smallest currency unit (e.g., cents for USD)
+                          currency:
+                            type: string
+                            description: ISO 4217 currency code (e.g., USD, EUR)
+                            minLength: 3
+                            maxLength: 3
+                            pattern: ^[A-Z]{3}$
+                          precision:
+                            type: number
+                            description: Number of decimal places (e.g., 2 for USD)
+                        required:
+                        - amount
+                        - currency
+                        - precision
+                      spendingCommitmentId:
+                        type: string
+                      purchaseOrderNumber:
+                        type: number
+                      description:
+                        type: string
+                      startDate:
+                        type: string
+                        format: date
+                        pattern: ^\d{4}-\d{2}-\d{2}$
+                      endDate:
+                        type: string
+                        format: date
+                        pattern: ^\d{4}-\d{2}-\d{2}$
+                      supplierId:
+                        type: string
+                      requesterId:
+                        type: string
+                      invoices:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            invoiceRequestId:
+                              type: string
+                            invoiceNumber:
+                              type: string
+                            amount:
+                              type: object
+                              properties:
+                                amount:
+                                  type: number
+                                  description: Amount in the smallest currency unit (e.g., cents for USD)
+                                currency:
+                                  type: string
+                                  description: ISO 4217 currency code (e.g., USD, EUR)
+                                  minLength: 3
+                                  maxLength: 3
+                                  pattern: ^[A-Z]{3}$
+                                precision:
+                                  type: number
+                                  description: Number of decimal places (e.g., 2 for USD)
+                              required:
+                              - amount
+                              - currency
+                              - precision
+                            status:
+                              type: string
+                              enum:
+                              - pending-approval
+                              - in-review
+                              - to-schedule
+                              - paid
+                            requestId:
+                              type: string
+                            paymentToScheduleId:
+                              type: string
+                            latestPaymentId:
+                              type: string
+                          required:
+                          - invoiceRequestId
+                          - invoiceNumber
+                          - amount
+                          - status
+                      companyId:
+                        type: string
+                      teamId:
+                        type:
+                        - 'null'
+                        - string
+                      costCenterId:
+                        type: string
+                      requestId:
+                        type: string
+                      items:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            name:
+                              type: string
+                            quantity:
+                              type: number
+                            unitPrice:
+                              type: number
+                              description: Price of one unit, in `currency`, as a decimal in major units (12.5 means 12.50). Unlike the `{amount, currency, precision}` objects on the purchase order, this is a plain decimal.
+                            currency:
+                              type: string
+                            vatRate:
+                              type:
+                              - 'null'
+                              - number
+                          required:
+                          - name
+                          - quantity
+                          - unitPrice
+                          - currency
+                          - vatRate
+                      customFields:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            field:
+                              type: object
+                              properties:
+                                id:
+                                  type: string
+                                name:
+                                  type: string
+                              required:
+                              - id
+                              - name
+                            value:
+                              type: object
+                              properties:
+                                id:
+                                  type: string
+                                value:
+                                  type: string
+                              required:
+                              - id
+                              - value
+                          required:
+                          - field
+                          - value
+                    required:
+                    - id
+                    - status
+                    - version
+                    - amount
+                    - billedAmount
+                    - deliveredAmount
+                    - spendingCommitmentId
+                    - purchaseOrderNumber
+                    - startDate
+                    - endDate
+                    - supplierId
+                    - requesterId
+                    - invoices
+                    - companyId
+                    - requestId
+                required:
+                - data
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/badRequest'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/unauthorized'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/forbidden'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/notFound'
+        '429':
+          description: Too Many Requests
+          headers:
+            retry-after:
+              schema:
+                type: integer
+              description: Seconds to wait before retrying the request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/tooManyRequests'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/internalServerError'
+        '503':
+          description: Service Unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/serviceUnavailableError'
+  /v1/purchase-orders/{purchaseOrderId}/cancel:
+    post:
+      operationId: v1-cancel-purchase-order
+      summary: Cancel a purchase order
+      tags:
+      - Purchase orders
+      description: '**Allowed Scopes**: _`experimental:purchase-order:write`_
+
+
+        Cancel an existing purchase order by ID.'
+      parameters:
+      - schema:
+          type: boolean
+        in: query
+        name: withItems
+        required: false
+        description: Ignored. The response only reports the outcome, not the purchase order or its line items.
+      - schema:
+          type: string
+        in: path
+        name: purchaseOrderId
+        required: true
+        description: The ID of the purchase order to cancel
+      - schema:
+          type: string
+        in: header
+        name: X-Company-Id
+        required: false
+        description: ID of the company the request acts on. Required with an organisation-level token; not needed with a company-level token.
+      security:
+      - Authentication:
+        - experimental:purchase-order:write
+      x-roles:
+      - controller
+      - admin
+      - accountOwner
+      responses:
+        '200':
+          description: Purchase order cancellation result
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Purchase order cancellation result
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      outcome:
+                        type: string
+                        enum:
+                        - cancelled
+        '400':
+          description: 'Bad request. A refused cancel also returns 400, with one of these reasons in `detail`: purchaseOrderNotFound, attachedInvoicesExist, forbidden, statusNotOpened, alreadyExists, spendingCommitmentNotFound, hasExpenses.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/badRequest'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/unauthorized'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/forbidden'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/notFound'
+        '429':
+          description: Too Many Requests
+          headers:
+            retry-after:
+              schema:
+                type: integer
+              description: Seconds to wait before retrying the request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/tooManyRequests'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/internalServerError'
+        '503':
+          description: Service Unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/serviceUnavailableError'
+  /v1/purchase-orders/{purchaseOrderId}/close:
+    post:
+      operationId: v1-close-purchase-order
+      summary: Close a purchase order
+      tags:
+      - Purchase orders
+      description: '**Allowed Scopes**: _`experimental:purchase-order:write`_
+
+
+        Close an existing purchase order by ID. Closing a purchase order prevents further modifications.'
+      parameters:
+      - schema:
+          type: boolean
+        in: query
+        name: withItems
+        required: false
+        description: Ignored. The response only reports the outcome, not the purchase order or its line items.
+      - schema:
+          type: string
+        in: path
+        name: purchaseOrderId
+        required: true
+        description: The ID of the purchase order to close
+      - schema:
+          type: string
+        in: header
+        name: X-Company-Id
+        required: false
+        description: ID of the company the request acts on. Required with an organisation-level token; not needed with a company-level token.
+      security:
+      - Authentication:
+        - experimental:purchase-order:write
+      x-roles:
+      - controller
+      - admin
+      - accountOwner
+      responses:
+        '200':
+          description: Purchase order closure result
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Purchase order closure result
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      outcome:
+                        type: string
+                        enum:
+                        - closed
+        '400':
+          description: 'Bad request. A refused close also returns 400, with one of these reasons in `detail`: alreadyExists, cannotAmendCurrencyOnCommitmentWithExistingExpenses, cannotAmendCounterpartyOnCommitmentWithExistingExpenses, forbidden, invalidSegments, invalidCounterparty, noAttachedInvoices, noDataProvided, purchaseOrderNotFound, spendingCommitmentNotFound, spendingCommitmentRevoked, statusNotOpened, unpaidInvoices.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/badRequest'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/unauthorized'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/forbidden'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/notFound'
+        '429':
+          description: Too Many Requests
+          headers:
+            retry-after:
+              schema:
+                type: integer
+              description: Seconds to wait before retrying the request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/tooManyRequests'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/internalServerError'
+        '503':
+          description: Service Unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/serviceUnavailableError'
+  /v1/purchase-orders/{purchaseOrderId}/document:
+    get:
+      operationId: v1-get-purchase-order-document
+      summary: Get Purchase Order Document
+      tags:
+      - Purchase orders
+      description: '**Allowed Scopes**: _`experimental:purchase-order:read`_
+
+
+        Returns the document for a given purchase order as a short lived URL. Download and save the file in your long term storage. Purchase order document data is cached for up to 55 minutes. Changes made through the API are returned by subsequent reads; changes made in Spendesk can take up to 55 minutes to appear.'
+      parameters:
+      - schema:
+          type: string
+          minLength: 8
+          maxLength: 36
+        in: path
+        name: purchaseOrderId
+        required: true
+      - schema:
+          type: string
+        in: header
+        name: X-Company-Id
+        required: false
+        description: ID of the company the request acts on. Required with an organisation-level token; not needed with a company-level token.
+      security:
+      - Authentication:
+        - experimental:purchase-order:read
+      x-roles:
+      - controller
+      - admin
+      - accountOwner
+      responses:
+        '200':
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  data:
+                    type: object
+                    additionalProperties: false
+                    properties:
+                      url:
+                        type: string
+                        description: A short-lived URL to download the document.
+                      mimeType:
+                        type: string
+                        description: Media type of the document.
+                    required:
+                    - url
+                    - mimeType
+                required:
+                - data
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/badRequest'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/unauthorized'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/forbidden'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/notFound'
+        '429':
+          description: Too Many Requests
+          headers:
+            retry-after:
+              schema:
+                type: integer
+              description: Seconds to wait before retrying the request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/tooManyRequests'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/internalServerError'
+        '503':
+          description: Service Unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/serviceUnavailableError'
+components:
+  schemas:
+    tooLarge:
+      type: object
+      description: Payload Too Large
+      additionalProperties: false
+      properties:
+        correlationId:
+          type: string
+        errors:
+          type: array
+          items:
+            additionalProperties: false
+            type: object
+            properties:
+              code:
+                type: string
+                enum:
+                - LARGE_BODY_ERROR
+              detail:
+                type: string
+                enum:
+                - 'The request is too large for this endpoint: send a smaller body or a smaller file.'
+            required:
+            - code
+            - detail
+      required:
+      - errors
+      title: tooLarge
+    pagination:
+      type: object
+      properties:
+        page:
+          type: integer
+          default: 1
+          minimum: 1
+          description: Page number
+        pageSize:
+          type: integer
+          default: 30
+          minimum: 1
+          maximum: 30
+          description: Page size
+        total:
+          type: integer
+          minimum: 0
+          description: Total amount of records for this collection
+      required:
+      - page
+      - pageSize
+      - total
+      title: pagination
+    unauthorized:
+      type: object
+      description: Unauthorized
+      additionalProperties: false
+      properties:
+        correlationId:
+          type: string
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              code:
+                type: string
+                enum:
+                - AUTHENTICATION_ERROR
+              detail:
+                type: string
+            required:
+            - code
+            - detail
+      required:
+      - errors
+      title: unauthorized
+    forbidden:
+      type: object
+      description: Forbidden
+      additionalProperties: false
+      properties:
+        correlationId:
+          type: string
+        errors:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            properties:
+              code:
+                type: string
+                enum:
+                - FORBIDDEN_ERROR
+              detail:
+                type: string
+            required:
+            - code
+            - detail
+      required:
+      - errors
+      title: forbidden
+    notFound:
+      type: object
+      description: Not Found
+      additionalProperties: false
+      properties:
+        correlationId:
+          type: string
+        errors:
+          type: array
+          items:
+            additionalProperties: false
+            type: object
+            properties:
+              code:
+                type: string
+                enum:
+                - NOT_FOUND
+              detail:
+                type: string
+            required:
+            - code
+            - detail
+      required:
+      - errors
+      title: notFound
+    unsupportedMediaType:
+      type: object
+      description: Unsupported Media Type
+      additionalProperties: false
+      properties:
+        correlationId:
+          type: string
+        errors:
+          type: array
+          items:
+            additionalProperties: false
+            type: object
+            properties:
+              code:
+                type: string
+                enum:
+                - UNSUPPORTED_MEDIA_TYPE_ERROR
+              detail:
+                type: string
+                enum:
+                - 'The Content-Type of the request is not supported: send application/json, or application/x-www-form-urlencoded where the endpoint documents it.'
+            required:
+            - code
+            - detail
+      required:
+      - errors
+      title: unsupportedMediaType
+    serviceUnavailableError:
+      type: object
+      description: Service Unavailable
+      additionalProperties: false
+      properties:
+        correlationId:
+          type: string
+        errors:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            properties:
+              code:
+                type: string
+                enum:
+                - SERVICE_UNAVAILABLE_ERROR
+              detail:
+                type: string
+            required:
+            - code
+            - detail
+      required:
+      - errors
+      title: serviceUnavailableError
+    tooManyRequests:
+      type: object
+      description: Too Many Requests
+      additionalProperties: false
+      properties:
+        correlationId:
+          type: string
+        errors:
+          type: array
+          items:
+            additionalProperties: false
+            type: object
+            properties:
+              code:
+                type: string
+                enum:
+                - TOO_MANY_REQUESTS
+              detail:
+                type: string
+            required:
+            - code
+            - detail
+      required:
+      - errors
+      title: tooManyRequests
+    internalServerError:
+      type: object
+      description: Internal Server Error
+      additionalProperties: false
+      properties:
+        correlationId:
+          type: string
+        errors:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            properties:
+              code:
+                type: string
+                enum:
+                - INTERNAL_SERVER_ERROR
+              detail:
+                type: string
+                enum:
+                - Sorry, something has gone wrong at our end. If this persists please contact support.
+            required:
+            - code
+            - detail
+      required:
+      - errors
+      title: internalServerError
+    meta:
+      description: Meta object describing pagination
+      type: object
+      properties:
+        pagination:
+          type: object
+          unevaluatedProperties: false
+          allOf:
+          - $ref: '#/components/schemas/pagination'
+      required:
+      - pagination
+      title: meta
+    badRequest:
+      type: object
+      description: Bad request
+      additionalProperties: false
+      properties:
+        correlationId:
+          type: string
+        errors:
+          type: array
+          items:
+            additionalProperties: false
+            type: object
+            properties:
+              code:
+                type: string
+                enum:
+                - BAD_REQUEST_INCORRECT_OR_MISSING_FIELD
+                - RESPONSE_TOO_LARGE
+              detail:
+                type: string
+              source:
+                type: string
+            required:
+            - code
+            - detail
+            - source
+      required:
+      - errors
+      title: badRequest
+  securitySchemes:
+    Authentication:
+      type: oauth2
+      description: 'A company-level token acts on the company it was issued for. An organisation-level token (experimental) acts on the companies of an organisation: send the target company in the `X-Company-Id` header on every call, except on `GET /v2/companies` and on `/v2/companies/{companyId}/…` routes, which carry the company in the path. See [Organisation-level access](/reference/organisation-level-access).'
+      flows:
+        clientCredentials:
+          tokenUrl: /v1/auth/token
+          scopes:
+            analytical-field:read: Analytical Fields (Read)
+            bank-fee:read: Spending Bank Fees (Read)
+            cost-center:read: Cost Center (Read)
+            cost-center:manage: Cost Center (Manage)
+            expense-category:read: Expense Category (Read)
+            payable:read: Spending Payables (Read)
+            payable-attachment:read: Spending Payable Attachments (Read)
+            settlement:read: Spending Settlements (Read)
+            supplier:read: Suppliers (Read)
+            user:read: Users (Read)
+            experimental:user:manage: Users (Manage)
+            wallet-load:read: Spending Wallet Loads (Read)
+            wallet-summary:read: Spending Wallet Summary (Read)
+            experimental:accounting-export:read: Accounting exports (Read)
+            experimental:accounting-export:write: Accounting exports (Write)
+            experimental:accounting:update: Accounting (Update)
+            experimental:chart-of-accounts:read: Chart of Accounts (Read)
+            experimental:chart-of-accounts:write: Chart of Accounts (Write)
+            experimental:purchase-order:read: Purchase Orders (Read)
+            experimental:purchase-order:write: Purchase Orders (Write)
+            experimental:webhooks:read: Webhooks (Read)
+            experimental:webhooks:write: Webhooks (Write)
+            experimental:supplier:manage: Suppliers (Manage)
+            experimental:company:read: Companies (Read)
+            experimental:payable-search:read: Payable Search (Read)
+            experimental:payable-attachment:write: Payable Attachments (Write)
+            experimental:card:read: Cards (Read)
+            experimental:card:write: Cards (Write)
+            experimental:request:read: Requests (Read)
+            experimental:transaction:read: Transactions (Read)
+            experimental:analytical-field-v2:read: Analytical Fields v2 (Read)
+            experimental:analytical-field-v2:write: Analytical Fields v2 (Write)
+            experimental:expense-category-v2:read: Expense Category Fields v2 (Read)
+            experimental:expense-category-v2:write: Expense Category Fields v2 (Write)
+            experimental:invoice:read: Invoices (Read) - experimental
+            experimental:intake:read: Intakes (Read)
+            experimental:intake:write: Intakes (Write)
+            experimental:external-reference:read: External References (Read)
+            experimental:external-reference:write: External References (Write)
+        authorizationCode:
+          authorizationUrl: /v1/oauth2/authorize
+          tokenUrl: /v1/oauth2/token/create
+          scopes:
+            analytical-field:read: Analytical Fields (Read)
+            bank-fee:read: Spending Bank Fees (Read)
+            cost-center:read: Cost Center (Read)
+            cost-center:manage: Cost Center (Manage)
+            expense-category:read: Expense Category (Read)
+            payable:read: Spending Payables (Read)
+            payable-attachment:read: Spending Payable Attachments (Read)
+            settlement:read: Spending Settlements (Read)
+            supplier:read: Suppliers (Read)
+            user:read: Users (Read)
+            experimental:user:manage: Users (Manage)
+            wallet-load:read: Spending Wallet Loads (Read)
+            wallet-summary:read: Spending Wallet Summary (Read)
+            experimental:accounting-export:read: Accounting exports (Read)
+            experimental:accounting-export:write: Accounting exports (Write)
+            experimental:accounting:update: Accounting (Update)
+            experimental:chart-of-accounts:read: Chart of Accounts (Read)
+            experimental:chart-of-accounts:write: Chart of Accounts (Write)
+            experimental:purchase-order:read: Purchase Orders (Read)
+            experimental:purchase-order:write: Purchase Orders (Write)
+            experimental:webhooks:read: Webhooks (Read)
+            experimental:webhooks:write: Webhooks (Write)
+            experimental:supplier:manage: Suppliers (Manage)
+            experimental:company:read: Companies (Read)
+            experimental:payable-search:read: Payable Search (Read)
+            experimental:payable-attachment:write: Payable Attachments (Write)
+            experimental:card:read: Cards (Read)
+            experimental:card:write: Cards (Write)
+            experimental:request:read: Requests (Read)
+            experimental:transaction:read: Transactions (Read)
+            experimental:analytical-field-v2:read: Analytical Fields v2 (Read)
+            experimental:analytical-field-v2:write: Analytical Fields v2 (Write)
+            experimental:expense-category-v2:read: Expense Category Fields v2 (Read)
+            experimental:expense-category-v2:write: Expense Category Fields v2 (Write)
+            experimental:invoice:read: Invoices (Read) - experimental
+            experimental:intake:read: Intakes (Read)
+            experimental:intake:write: Intakes (Write)
+            experimental:external-reference:read: External References (Read)
+            experimental:external-reference:write: External References (Write)
+x-provenance:
+  method: searched
+  source: https://developer.spendesk.com/reference
+  harvested: '2026-10-14'
+  tool: harvest-readme-openapi.py
+  note: Assembled verbatim from the OpenAPI definition ReadMe embeds in each operation page of the provider's developer portal; paths and components merged by API title, nothing authored.
+  assembled_from:
+  - https://developer.spendesk.com/reference/mcp-authorization-server-metadata.md
+  - https://developer.spendesk.com/reference/mcp-protected-resource-metadata-mcp.md
+  - https://developer.spendesk.com/reference/v1-assign-creditors-to-accounts.md
+  - https://developer.spendesk.com/reference/v1-cancel-purchase-order.md
+  - https://developer.spendesk.com/reference/v1-close-purchase-order.md
+  - https://developer.spendesk.com/reference/v1-create-account.md
+  - https://developer.spendesk.com/reference/v1-create-auth-token.md
+  - https://developer.spendesk.com/reference/v1-create-cost-centers.md
+  - https://developer.spendesk.com/reference/v1-create-journal.md
+  - https://developer.spendesk.com/reference/v1-create-oauth2-token.md
+  - https://developer.spendesk.com/reference/v1-create-payable-attachment-upload.md
+  - https://developer.spendesk.com/reference/v1-create-purchase-order.md
+  - https://developer.spendesk.com/reference/v1-create-snapshot-payables.md
+  - https://developer.spendesk.com/reference/v1-create-suppliers.md
+  - https://developer.spendesk.com/reference/v1-create-webhook.md
+  - https://developer.spendesk.com/reference/v1-delete-account.md
+  - https://developer.spendesk.com/reference/v1-delete-cost-centers.md
+  - https://developer.spendesk.com/reference/v1-delete-mcp.md
+  - https://developer.spendesk.com/reference/v1-delete-webhook.md
+  - https://developer.spendesk.com/reference/v1-get-account-by-id.md
+  - https://developer.spendesk.com/reference/v1-get-accounts.md
+  - https://developer.spendesk.com/reference/v1-get-analytical-field-values.md
+  - https://developer.spendesk.com/reference/v1-get-analytical-fields.md
+  - https://developer.spendesk.com/reference/v1-get-bank-fees.md
+  - https://developer.spendesk.com/reference/v1-get-card-blocking-history.md
+  - https://developer.spendesk.com/reference/v1-get-card-order.md
+  - https://developer.spendesk.com/reference/v1-get-card.md
+  - https://developer.spendesk.com/reference/v1-get-cards.md
+  - https://developer.spendesk.com/reference/v1-get-cost-centers.md
+  - https://developer.spendesk.com/reference/v1-get-expense-categories.md
+  - https://developer.spendesk.com/reference/v1-get-external-references.md
+  - https://developer.spendesk.com/reference/v1-get-failed-transactions.md
+  - https://developer.spendesk.com/reference/v1-get-integrations-export-status.md
+  - https://developer.spendesk.com/reference/v1-get-journal-templates.md
+  - https://developer.spendesk.com/reference/v1-get-journal.md
+  - https://developer.spendesk.com/reference/v1-get-mcp.md
+  - https://developer.spendesk.com/reference/v1-get-payable-attachments.md
+  - https://developer.spendesk.com/reference/v1-get-payable-by-id.md
+  - https://developer.spendesk.com/reference/v1-get-purchase-order-document.md
+  - https://developer.spendesk.com/reference/v1-get-purchase-order.md
+  - https://developer.spendesk.com/reference/v1-get-purchase-orders.md
+  - https://developer.spendesk.com/reference/v1-get-request.md
+  - https://developer.spendesk.com/reference/v1-get-requests.md
+  - https://developer.spendesk.com/reference/v1-get-settlements.md
+  - https://developer.spendesk.com/reference/v1-get-snapshot-payables.md
+  - https://developer.spendesk.com/reference/v1-get-successful-transactions.md
+  - https://developer.spendesk.com/reference/v1-get-supplier-by-id.md
+  - https://developer.spendesk.com/reference/v1-get-suppliers.md
+  - https://developer.spendesk.com/reference/v1-get-transactions.md
+  - https://developer.spendesk.com/reference/v1-get-user-by-id.md
+  - https://developer.spendesk.com/reference/v1-get-users.md
+  - https://developer.spendesk.com/reference/v1-get-wallet-loads.md
+  - https://developer.spendesk.com/reference/v1-get-wallet-summary.md
+  - https://developer.spendesk.com/reference/v1-get-webhook-by-id.md
+  - https://developer.spendesk.com/reference/v1-get-webhook.md
+  - https://developer.spendesk.com/reference/v1-patch-accounts.md
+  - https://developer.spendesk.com/reference/v1-patch-payable-accounting-fields.md
+  - https://developer.spendesk.com/reference/v1-patch-supplier-status.md
+  - https://developer.spendesk.com/reference/v1-patch-suppliers-status.md
+  - https://developer.spendesk.com/reference/v1-post-experimental-integrations-refresh-settings.md
+  - https://developer.spendesk.com/reference/v1-post-mcp.md
+  - https://developer.spendesk.com/reference/v1-post-payable-mark-as-ready.md
+  - https://developer.spendesk.com/reference/v1-put-payables-bookkeeping-status.md
+  - https://developer.spendesk.com/reference/v1-put-settlements-state.md
+  - https://developer.spendesk.com/reference/v1-refresh-oauth2-token.md
+  - https://developer.spendesk.com/reference/v1-register-oauth2-client.md
+  - https://developer.spendesk.com/reference/v1-remove-creditors-from-accounts.md
+  - https://developer.spendesk.com/reference/v1-request-authorization.md
+  - https://developer.spendesk.com/reference/v1-search-creditor-account-assignments.md
+  - https://developer.spendesk.com/reference/v1-search-payables.md
+  - https://developer.spendesk.com/reference/v1-set-account-purpose.md
+  - https://developer.spendesk.com/reference/v1-sync-accounts.md
+  - https://developer.spendesk.com/reference/v1-update-cost-centers.md
+  - https://developer.spendesk.com/reference/v1-update-supplier.md
+  - https://developer.spendesk.com/reference/v1-update-suppliers.md
+  - https://developer.spendesk.com/reference/v1-update-webhook.md
+  - https://developer.spendesk.com/reference/v1-upsert-external-references.md
+  - https://developer.spendesk.com/reference/v2-create-analytical-field-value.md
+  - https://developer.spendesk.com/reference/v2-create-analytical-field.md
+  - https://developer.spendesk.com/reference/v2-create-expense-category-field.md
+  - https://developer.spendesk.com/reference/v2-create-expense-category.md
+  - https://developer.spendesk.com/reference/v2-create-intake-file-upload.md
+  - https://developer.spendesk.com/reference/v2-delete-analytical-field-value.md
+  - https://developer.spendesk.com/reference/v2-delete-analytical-field.md
+  - https://developer.spendesk.com/reference/v2-delete-expense-category-field.md
+  - https://developer.spendesk.com/reference/v2-delete-expense-category.md
+  - https://developer.spendesk.com/reference/v2-get-analytical-field-value.md
+  - https://developer.spendesk.com/reference/v2-get-analytical-field.md
+  - https://developer.spendesk.com/reference/v2-get-companies.md
+  - https://developer.spendesk.com/reference/v2-get-company-intake.md
+  - https://developer.spendesk.com/reference/v2-get-expense-category-field.md
+  - https://developer.spendesk.com/reference/v2-get-expense-category.md
+  - https://developer.spendesk.com/reference/v2-get-intake-file-upload-status.md
+  - https://developer.spendesk.com/reference/v2-get-invoice.md
+  - https://developer.spendesk.com/reference/v2-get-invoices-summary.md
+  - https://developer.spendesk.com/reference/v2-list-analytical-field-values.md
+  - https://developer.spendesk.com/reference/v2-list-analytical-fields.md
+  - https://developer.spendesk.com/reference/v2-list-company-intakes.md
+  - https://developer.spendesk.com/reference/v2-list-expense-categories.md
+  - https://developer.spendesk.com/reference/v2-list-expense-category-fields.md
+  - https://developer.spendesk.com/reference/v2-list-invoices.md
+  - https://developer.spendesk.com/reference/v2-post-company-intakes.md
+  - https://developer.spendesk.com/reference/v2-update-analytical-field-value.md
+  - https://developer.spendesk.com/reference/v2-update-analytical-field.md
+  - https://developer.spendesk.com/reference/v2-update-expense-category-field.md
+  - https://developer.spendesk.com/reference/v2-update-expense-category.md
+  merge:
+    pages: 106
+    deduped: 1705
+    conflicts_kept_first: 0

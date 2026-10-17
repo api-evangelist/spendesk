@@ -1,0 +1,1306 @@
+openapi: 3.2.0
+info:
+  title: Spendesk Public Authentication API
+  description: Spendesk Public API
+  version: '1.0'
+  summary: Spendesk Public API
+  contact:
+    email: support-public-api@spendesk.com
+    url: https://developer.spendesk.com/
+    name: Spendesk for Developers
+  termsOfService: https://www.spendesk.com/en/legals/terms/api-agreement
+servers:
+- url: https://public-api.spendesk.com
+  description: Production
+- url: https://public-api.demo.spendesk.com
+  description: Sandbox
+tags:
+- name: Authentication
+  description: 'How to get an access token: Public API credentials (API keys) exchanged with HTTP Basic authentication, or OAuth 2.0 for partner apps — authorization code with PKCE, the token endpoint (code exchange and refresh), dynamic client registration and discovery metadata. Part of: How to Authenticate.'
+paths:
+  /.well-known/oauth-authorization-server:
+    get:
+      operationId: mcp-authorization-server-metadata
+      summary: Authorization Server Metadata
+      tags:
+      - Authentication
+      description: Returns OAuth2 authorization server metadata as defined by RFC 8414. Used by MCP clients to discover endpoints for authorization, token exchange, and dynamic registration.
+      responses:
+        '200':
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  issuer:
+                    type: string
+                    description: The authorization server issuer URL.
+                  authorization_endpoint:
+                    type: string
+                    description: URL for the authorization endpoint.
+                  token_endpoint:
+                    type: string
+                    description: URL for the token endpoint.
+                  registration_endpoint:
+                    type: string
+                    description: URL for the dynamic client registration endpoint.
+                  token_endpoint_auth_methods_supported:
+                    type: array
+                    items:
+                      type: string
+                    description: Supported token endpoint authentication methods.
+                  code_challenge_methods_supported:
+                    type: array
+                    items:
+                      type: string
+                    description: Supported PKCE code challenge methods.
+                  response_types_supported:
+                    type: array
+                    items:
+                      type: string
+                    description: Supported response types.
+                  grant_types_supported:
+                    type: array
+                    items:
+                      type: string
+                    description: Supported grant types.
+                  scopes_supported:
+                    type: array
+                    items:
+                      type: string
+                    description: Supported OAuth2 scopes.
+                  authorization_response_iss_parameter_supported:
+                    type: boolean
+                    description: 'RFC 9207: every authorization response carries an iss parameter equal to issuer. Only advertised when issuer is the configured base URL.'
+  /.well-known/oauth-protected-resource/v1/mcp:
+    get:
+      operationId: mcp-protected-resource-metadata-mcp
+      summary: MCP Protected Resource Metadata
+      tags:
+      - Authentication
+      description: Returns OAuth2 protected resource metadata scoped to the MCP resource path, as defined by RFC 9728.
+      responses:
+        '200':
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  resource:
+                    type: string
+                    description: The MCP resource identifier.
+                  authorization_servers:
+                    type: array
+                    items:
+                      type: string
+                    description: List of authorization server URLs.
+                  scopes_supported:
+                    type: array
+                    items:
+                      type: string
+                    description: Supported OAuth2 scopes.
+  /v1/auth/token:
+    post:
+      operationId: v1-create-auth-token
+      summary: Create Access Token (Public API credentials)
+      tags:
+      - Authentication
+      description: 'Create an access token for Public API credentials.
+
+
+        Use this endpoint for server-to-server integrations that were issued Public API credentials. Send `Authorization: Basic base64(client_id:client_secret)` and either an empty JSON body or `{"grant_type":"client_credentials"}`.
+
+
+        Do not use this endpoint for OAuth app credentials. OAuth apps must use the PKCE flow with Request Authorization and OAuth2 Token Endpoint.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              nullable: true
+              description: Optional body. You can omit it entirely or send `grant_type=client_credentials`. Use `scope` only if you want to narrow the token scope.
+              properties:
+                grant_type:
+                  type: string
+                  enum:
+                  - client_credentials
+                  default: client_credentials
+                  description: Optional. Defaults to `client_credentials` when omitted.
+                scope:
+                  type: string
+                  description: 'Optional field to restrict the scope of the token. The default scope will match the scope defined in the front end when generating your API client id and secret.
+
+
+                    See [available scopes](/reference/scopes) for more information.'
+        description: Optional body. You can omit it entirely or send `grant_type=client_credentials`. Use `scope` only if you want to narrow the token scope.
+      parameters:
+      - schema:
+          type: string
+          minLength: 1
+        in: header
+        name: authorization
+        required: true
+        description: Should contain "Basic " followed by base64 encoded Public API `client_id:client_secret`.
+      responses:
+        '200':
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  access_token:
+                    $ref: '#/components/schemas/token'
+                  token_type:
+                    enum:
+                    - Bearer
+                    type: string
+                  expires_in:
+                    type: integer
+                    exclusiveMinimum: 0
+                    description: Amount of seconds until the given token expires
+                    default: 3600
+                required:
+                - access_token
+                - token_type
+                - expires_in
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/badRequest'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/unauthorized'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/forbidden'
+        '429':
+          description: Too Many Requests
+          headers:
+            retry-after:
+              schema:
+                type: integer
+              description: Seconds to wait before retrying the request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/tooManyRequests'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/internalServerError'
+        '503':
+          description: Service Unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/serviceUnavailableError'
+  /v1/oauth2/authorize:
+    get:
+      operationId: v1-request-authorization
+      summary: Request Authorization (OAuth app PKCE)
+      tags:
+      - Authentication
+      description: 'Start the PKCE authorization-code flow for an OAuth app.
+
+
+        Use this endpoint only for OAuth app credentials that require a Spendesk user to authorize access. Do not use it with Public API credentials; server-to-server Public API credentials should request a bearer token from Create Access Token.'
+      parameters:
+      - schema:
+          type: string
+          enum:
+          - code
+        in: query
+        name: response_type
+        required: true
+        description: Always `code`.
+      - schema:
+          type: string
+          format: uuid
+          minLength: 1
+        in: query
+        name: client_id
+        required: true
+        description: OAuth app `client_id` provided by Spendesk.
+      - schema:
+          format: uri
+          type: string
+          minLength: 1
+        in: query
+        name: redirect_uri
+        required: true
+        description: 'URI to redirect the user after connection is authorized. If successful, the redirect URL will look like: `{redirect_uri}?code={auth_code}&state={state}&iss={issuer}`, where `iss` is the authorization server issuer (RFC 9207), `code` is the `authorization` code to be used in the [Request Access Token endpoint](/public/reference/v1-create-oauth2-token), and `state` allows you to verify the integrity of the connection.'
+      - schema:
+          type: string
+        in: query
+        name: scope
+        required: true
+        description: 'Optional field to restrict the scope of the token. The default scope will match the scope defined in the front end when generating your API client id and secret.
+
+
+          See [available scopes](/reference/scopes) for more information.'
+      - schema:
+          type: string
+        in: query
+        name: state
+        required: false
+        description: This string will be sent back at the end of the OAuth2 flow, so that whoever starts the flow can double-check that the same variable is being returned (and there has been no tampering).
+      - schema:
+          type: string
+          minLength: 1
+        in: query
+        name: code_challenge
+        required: true
+        description: The client should locally generate a `secret` (AKA `code_verifier`), that at this initial stage of the OAuth2 flow should be passed as a `code_challenge` in the format of `base64url(sha256(secret))`. You can find an example about that [here](https://www.oauth.com/playground/authorization-code-with-pkce.html).
+      - schema:
+          type: string
+          enum:
+          - S256
+          default: S256
+        in: query
+        name: code_challenge_method
+        required: false
+        description: Always `S256`.
+      - schema:
+          type: string
+        in: query
+        name: resource
+        required: false
+        description: Optional RFC 8707 resource indicator. Ignored for standard OAuth clients — any value (including an empty string) is accepted and never read. For public MCP dynamic client registration clients it is required and must match the MCP resource URL; that check is enforced in business logic once the client is resolved.
+      responses:
+        '302':
+          description: 'On success: redirect to the Spendesk consent page `{spendesk_frontend}?id={token_id}&code={consent_handle}`; `consent_handle` is not an authorization code and cannot be exchanged for tokens. On a validated-client error: redirect to `{redirect_uri}?error={code}&error_description={msg}&state={state}&iss={issuer}` (RFC 6749 §4.1.2.1, RFC 9207). On an unverifiable client or redirect_uri: redirect to the Spendesk error page `/auth/oauth2/error?error={code}`.'
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                description: 'On success: redirect to the Spendesk consent page `{spendesk_frontend}?id={token_id}&code={consent_handle}`; `consent_handle` is not an authorization code and cannot be exchanged for tokens. On a validated-client error: redirect to `{redirect_uri}?error={code}&error_description={msg}&state={state}&iss={issuer}` (RFC 6749 §4.1.2.1, RFC 9207). On an unverifiable client or redirect_uri: redirect to the Spendesk error page `/auth/oauth2/error?error={code}`.'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/badRequest'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/unauthorized'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/forbidden'
+        '429':
+          description: Too Many Requests
+          headers:
+            retry-after:
+              schema:
+                type: integer
+              description: Seconds to wait before retrying the request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/tooManyRequests'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/internalServerError'
+        '503':
+          description: Service Unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/serviceUnavailableError'
+  /v1/oauth2/register:
+    post:
+      operationId: v1-register-oauth2-client
+      summary: Dynamic Client Registration
+      tags:
+      - Authentication
+      description: Registers an MCP OAuth2 client using the RFC 7591 Dynamic Client Registration flow.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+              properties:
+                redirect_uris:
+                  type: array
+                  items:
+                    type: string
+                    format: uri
+                    minLength: 1
+                    maxLength: 2048
+                  minItems: 1
+                  maxItems: 3
+                  description: OAuth redirect URIs registered for this dynamic client.
+                client_name:
+                  type: string
+                  minLength: 1
+                  maxLength: 64
+                client_uri:
+                  type: string
+                  format: uri
+                  minLength: 1
+                  maxLength: 2048
+                logo_uri:
+                  type: string
+                  format: uri
+                  minLength: 1
+                  maxLength: 2048
+                scope:
+                  type: string
+                  minLength: 1
+                  maxLength: 4096
+                grant_types:
+                  type: array
+                  items:
+                    type: string
+                    minLength: 1
+                    maxLength: 64
+                  minItems: 1
+                  maxItems: 2
+                response_types:
+                  type: array
+                  items:
+                    type: string
+                    minLength: 1
+                    maxLength: 64
+                  minItems: 1
+                  maxItems: 1
+                token_endpoint_auth_method:
+                  type: string
+                  minLength: 1
+                  maxLength: 64
+                tos_uri:
+                  type: string
+                  format: uri
+                  minLength: 1
+                  maxLength: 2048
+                policy_uri:
+                  type: string
+                  format: uri
+                  minLength: 1
+                  maxLength: 2048
+                contacts:
+                  type: array
+                  items:
+                    type: string
+                    minLength: 1
+                    maxLength: 320
+                  maxItems: 5
+                software_id:
+                  type: string
+                  minLength: 1
+                  maxLength: 64
+                software_version:
+                  type: string
+                  minLength: 1
+                  maxLength: 64
+              required:
+              - redirect_uris
+              - client_name
+      responses:
+        '201':
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  client_id:
+                    type: string
+                    format: uuid
+                  client_id_issued_at:
+                    type: integer
+                  redirect_uris:
+                    type: array
+                    items:
+                      type: string
+                  grant_types:
+                    type: array
+                    items:
+                      type: string
+                  response_types:
+                    type: array
+                    items:
+                      type: string
+                  token_endpoint_auth_method:
+                    type: string
+                    enum:
+                    - none
+                  client_name:
+                    type: string
+                  client_uri:
+                    type: string
+                  logo_uri:
+                    type: string
+                  scope:
+                    type: string
+                required:
+                - client_id
+                - client_id_issued_at
+                - redirect_uris
+                - grant_types
+                - response_types
+                - token_endpoint_auth_method
+                - client_name
+                - scope
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/badRequest'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/unauthorized'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/forbidden'
+        '429':
+          description: Too Many Requests
+          headers:
+            retry-after:
+              schema:
+                type: integer
+              description: Seconds to wait before retrying the request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/tooManyRequests'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/internalServerError'
+        '503':
+          description: Service Unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/serviceUnavailableError'
+  /v1/oauth2/token/create:
+    post:
+      operationId: v1-create-oauth2-token
+      summary: OAuth2 Token Endpoint (OAuth app PKCE)
+      tags:
+      - Authentication
+      description: 'Standard OAuth2 token endpoint for OAuth app credentials. Use `grant_type=authorization_code` to exchange an authorization code for access and refresh tokens after Request Authorization. Use `grant_type=refresh_token` on this same endpoint to rotate tokens and keep the connection alive.
+
+
+        OAuth token requests should be sent as `application/x-www-form-urlencoded`, as specified by OAuth 2.0. JSON requests remain accepted for backwards compatibility.
+
+
+        Do not use this endpoint with Public API credentials issued for server-to-server access. Those credentials must call Create Access Token on `/v1/auth/token`.
+
+
+        The legacy Refresh token endpoint remains available temporarily for backwards compatibility.
+
+
+        If a refresh fails:
+
+        - 401 "Provided secret does not match the client", "client_secret is required for this client" or "The requested token does not belong to the provided client": the `client_id`/`client_secret` you sent are wrong (for example another environment''s app). Fix them and retry with the same refresh token, which was not consumed.
+
+        - 401 "No active OAuth2 client found for provided credentials": the client is unknown, disabled or expired. Check `client_id`, or register or re-enable the client; retrying with the same credentials will not help. The refresh token was not consumed, but it only works with the client it was issued to.
+
+        - Any other 401, and a 403: this refresh token can no longer be used (expired, revoked or already rotated). Discard it and ask the user to reconnect.
+
+        - 400: the request is malformed. 5xx: temporary, retry later with the same refresh token.'
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              oneOf:
+              - type: object
+                additionalProperties: false
+                properties:
+                  grant_type:
+                    type: string
+                    enum:
+                    - authorization_code
+                    description: Use the authorization code grant to exchange an auth code for tokens in the OAuth app PKCE flow.
+                  client_id:
+                    type: string
+                    format: uuid
+                    minLength: 1
+                    description: The OAuth app `client_id` received from Spendesk.
+                  client_secret:
+                    type: string
+                    minLength: 1
+                    description: The OAuth app `client_secret` received from Spendesk. Required for confidential clients using client_secret_post; omit for public PKCE clients using token_endpoint_auth_method=none.
+                  redirect_uri:
+                    type: string
+                    minLength: 1
+                    description: This URI must match the URI used in the [Request Authorization endpoint](/reference/v1-request-authorization).
+                  scope:
+                    type: string
+                    description: Optional interoperability field accepted from OAuth clients. It is ignored during token exchange; the issued token retains the scope approved during authorization.
+                  resource:
+                    type: string
+                    description: Optional RFC 8707 resource indicator. Ignored for standard OAuth clients — any value (including an empty string) is accepted and never read. For public MCP dynamic client registration clients it is required and must match the MCP resource URL; that check is enforced in business logic once the client is resolved.
+                  code:
+                    type: string
+                    minLength: 1
+                    description: The authorization code set on the redirect URI on the way back from connecting to Spendesk.
+                  code_verifier:
+                    type: string
+                    minLength: 43
+                    maxLength: 128
+                    description: This is the `secret` that was used to generate `code_challenge` you sent when starting the OAuth2 PCKE flow.
+                required:
+                - grant_type
+                - client_id
+                - redirect_uri
+                - code
+                - code_verifier
+              - type: object
+                additionalProperties: false
+                properties:
+                  grant_type:
+                    type: string
+                    enum:
+                    - refresh_token
+                    description: Use the refresh token grant to obtain a new access token pair.
+                  refresh_token:
+                    $ref: '#/components/schemas/token'
+                  scope:
+                    type: string
+                    description: 'Optional, accepted for RFC 6749 section 6 compatibility and ignored: the refreshed token keeps the scope granted at authorization, returned in `scope`.'
+                  resource:
+                    type: string
+                    description: Optional RFC 8707 resource indicator. Ignored for standard OAuth clients — any value (including an empty string) is accepted and never read. For public MCP dynamic client registration clients it is required and must match the MCP resource URL; that check is enforced in business logic once the client is resolved.
+                  client_id:
+                    type: string
+                    format: uuid
+                    minLength: 1
+                    description: The `client_id` received from Spendesk.
+                  client_secret:
+                    type: string
+                    minLength: 1
+                    description: The `client_secret` received from Spendesk. Required for confidential clients using client_secret_post; omit for public PKCE clients using token_endpoint_auth_method=none.
+                required:
+                - grant_type
+                - refresh_token
+                - client_id
+          application/json:
+            schema:
+              oneOf:
+              - type: object
+                additionalProperties: false
+                properties:
+                  grant_type:
+                    type: string
+                    enum:
+                    - authorization_code
+                    description: Use the authorization code grant to exchange an auth code for tokens in the OAuth app PKCE flow.
+                  client_id:
+                    type: string
+                    format: uuid
+                    minLength: 1
+                    description: The OAuth app `client_id` received from Spendesk.
+                  client_secret:
+                    type: string
+                    minLength: 1
+                    description: The OAuth app `client_secret` received from Spendesk. Required for confidential clients using client_secret_post; omit for public PKCE clients using token_endpoint_auth_method=none.
+                  redirect_uri:
+                    type: string
+                    minLength: 1
+                    description: This URI must match the URI used in the [Request Authorization endpoint](/reference/v1-request-authorization).
+                  scope:
+                    type: string
+                    description: Optional interoperability field accepted from OAuth clients. It is ignored during token exchange; the issued token retains the scope approved during authorization.
+                  resource:
+                    type: string
+                    description: Optional RFC 8707 resource indicator. Ignored for standard OAuth clients — any value (including an empty string) is accepted and never read. For public MCP dynamic client registration clients it is required and must match the MCP resource URL; that check is enforced in business logic once the client is resolved.
+                  code:
+                    type: string
+                    minLength: 1
+                    description: The authorization code set on the redirect URI on the way back from connecting to Spendesk.
+                  code_verifier:
+                    type: string
+                    minLength: 43
+                    maxLength: 128
+                    description: This is the `secret` that was used to generate `code_challenge` you sent when starting the OAuth2 PCKE flow.
+                required:
+                - grant_type
+                - client_id
+                - redirect_uri
+                - code
+                - code_verifier
+              - type: object
+                additionalProperties: false
+                properties:
+                  grant_type:
+                    type: string
+                    enum:
+                    - refresh_token
+                    description: Use the refresh token grant to obtain a new access token pair.
+                  refresh_token:
+                    $ref: '#/components/schemas/token'
+                  scope:
+                    type: string
+                    description: 'Optional, accepted for RFC 6749 section 6 compatibility and ignored: the refreshed token keeps the scope granted at authorization, returned in `scope`.'
+                  resource:
+                    type: string
+                    description: Optional RFC 8707 resource indicator. Ignored for standard OAuth clients — any value (including an empty string) is accepted and never read. For public MCP dynamic client registration clients it is required and must match the MCP resource URL; that check is enforced in business logic once the client is resolved.
+                  client_id:
+                    type: string
+                    format: uuid
+                    minLength: 1
+                    description: The `client_id` received from Spendesk.
+                  client_secret:
+                    type: string
+                    minLength: 1
+                    description: The `client_secret` received from Spendesk. Required for confidential clients using client_secret_post; omit for public PKCE clients using token_endpoint_auth_method=none.
+                required:
+                - grant_type
+                - refresh_token
+                - client_id
+      responses:
+        '200':
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  token_type:
+                    type: string
+                    enum:
+                    - Bearer
+                    default: Bearer
+                    description: The type of token generated.
+                  access_token:
+                    $ref: '#/components/schemas/token'
+                  expires_in:
+                    type: integer
+                    exclusiveMinimum: 0
+                    description: Amount of seconds until the given access token expires
+                    default: 3600
+                  refresh_token:
+                    $ref: '#/components/schemas/token'
+                  scope:
+                    type: string
+                    description: 'Optional field to restrict the scope of the token. The default scope will match the scope defined in the front end when generating your API client id and secret.
+
+
+                      See [available scopes](/reference/scopes) for more information.'
+                required:
+                - token_type
+                - access_token
+                - expires_in
+                - refresh_token
+                - scope
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/badRequest'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/unauthorized'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/forbidden'
+        '429':
+          description: Too Many Requests
+          headers:
+            retry-after:
+              schema:
+                type: integer
+              description: Seconds to wait before retrying the request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/tooManyRequests'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/internalServerError'
+        '503':
+          description: Service Unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/serviceUnavailableError'
+  /v1/oauth2/token/refresh:
+    post:
+      operationId: v1-refresh-oauth2-token
+      summary: Refresh Token (Deprecated)
+      tags:
+      - Authentication
+      description: 'Deprecated compatibility endpoint. Prefer the OAuth2 token endpoint with `grant_type=refresh_token`.
+
+
+        OAuth token requests should be sent as `application/x-www-form-urlencoded`, as specified by OAuth 2.0. JSON requests remain accepted for backwards compatibility.
+
+
+        Request new access and refresh tokens. Upon requesting new tokens, both old `access_token` and `refresh_token` values will be invalidated - make sure you update the `refresh_token` in your database every time you call this endpoint.
+
+        New refresh tokens should be requested at least once every 30 days (daily or weekly is fine) in order to keep the connection alive.
+
+
+        If a refresh fails:
+
+        - 401 "Provided secret does not match the client", "client_secret is required for this client" or "The requested token does not belong to the provided client": the `client_id`/`client_secret` you sent are wrong (for example another environment''s app). Fix them and retry with the same refresh token, which was not consumed.
+
+        - 401 "No active OAuth2 client found for provided credentials": the client is unknown, disabled or expired. Check `client_id`, or register or re-enable the client; retrying with the same credentials will not help. The refresh token was not consumed, but it only works with the client it was issued to.
+
+        - Any other 401, and a 403: this refresh token can no longer be used (expired, revoked or already rotated). Discard it and ask the user to reconnect.
+
+        - 400: the request is malformed. 5xx: temporary, retry later with the same refresh token.'
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                grant_type:
+                  type: string
+                  enum:
+                  - refresh_token
+                  description: Use the refresh token grant to obtain a new access token pair.
+                refresh_token:
+                  $ref: '#/components/schemas/token'
+                scope:
+                  type: string
+                  description: 'Optional, accepted for RFC 6749 section 6 compatibility and ignored: the refreshed token keeps the scope granted at authorization, returned in `scope`.'
+                resource:
+                  type: string
+                  description: Optional RFC 8707 resource indicator. Ignored for standard OAuth clients — any value (including an empty string) is accepted and never read. For public MCP dynamic client registration clients it is required and must match the MCP resource URL; that check is enforced in business logic once the client is resolved.
+                client_id:
+                  type: string
+                  format: uuid
+                  minLength: 1
+                  description: The `client_id` received from Spendesk.
+                client_secret:
+                  type: string
+                  minLength: 1
+                  description: The `client_secret` received from Spendesk. Required for confidential clients using client_secret_post; omit for public PKCE clients using token_endpoint_auth_method=none.
+              required:
+              - grant_type
+              - refresh_token
+              - client_id
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                grant_type:
+                  type: string
+                  enum:
+                  - refresh_token
+                  description: Use the refresh token grant to obtain a new access token pair.
+                refresh_token:
+                  $ref: '#/components/schemas/token'
+                scope:
+                  type: string
+                  description: 'Optional, accepted for RFC 6749 section 6 compatibility and ignored: the refreshed token keeps the scope granted at authorization, returned in `scope`.'
+                resource:
+                  type: string
+                  description: Optional RFC 8707 resource indicator. Ignored for standard OAuth clients — any value (including an empty string) is accepted and never read. For public MCP dynamic client registration clients it is required and must match the MCP resource URL; that check is enforced in business logic once the client is resolved.
+                client_id:
+                  type: string
+                  format: uuid
+                  minLength: 1
+                  description: The `client_id` received from Spendesk.
+                client_secret:
+                  type: string
+                  minLength: 1
+                  description: The `client_secret` received from Spendesk. Required for confidential clients using client_secret_post; omit for public PKCE clients using token_endpoint_auth_method=none.
+              required:
+              - grant_type
+              - refresh_token
+              - client_id
+      deprecated: true
+      responses:
+        '200':
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  token_type:
+                    type: string
+                    enum:
+                    - Bearer
+                    default: Bearer
+                    description: The type of token generated.
+                  access_token:
+                    $ref: '#/components/schemas/token'
+                  expires_in:
+                    type: integer
+                    exclusiveMinimum: 0
+                    description: Amount of seconds until the given access token expires
+                    default: 3600
+                  refresh_token:
+                    $ref: '#/components/schemas/token'
+                  scope:
+                    type: string
+                    description: 'Optional field to restrict the scope of the token. The default scope will match the scope defined in the front end when generating your API client id and secret.
+
+
+                      See [available scopes](/reference/scopes) for more information.'
+                required:
+                - token_type
+                - access_token
+                - expires_in
+                - refresh_token
+                - scope
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/badRequest'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/unauthorized'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/forbidden'
+        '429':
+          description: Too Many Requests
+          headers:
+            retry-after:
+              schema:
+                type: integer
+              description: Seconds to wait before retrying the request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/tooManyRequests'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/internalServerError'
+        '503':
+          description: Service Unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/serviceUnavailableError'
+components:
+  schemas:
+    forbidden:
+      type: object
+      description: Forbidden
+      additionalProperties: false
+      properties:
+        correlationId:
+          type: string
+        errors:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            properties:
+              code:
+                type: string
+                enum:
+                - FORBIDDEN_ERROR
+              detail:
+                type: string
+            required:
+            - code
+            - detail
+      required:
+      - errors
+      title: forbidden
+    unauthorized:
+      type: object
+      description: Unauthorized
+      additionalProperties: false
+      properties:
+        correlationId:
+          type: string
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              code:
+                type: string
+                enum:
+                - AUTHENTICATION_ERROR
+              detail:
+                type: string
+            required:
+            - code
+            - detail
+      required:
+      - errors
+      title: unauthorized
+    token:
+      description: This token allows access the endpoints protected by `scope`.
+      type: string
+      minLength: 1
+      title: token
+    serviceUnavailableError:
+      type: object
+      description: Service Unavailable
+      additionalProperties: false
+      properties:
+        correlationId:
+          type: string
+        errors:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            properties:
+              code:
+                type: string
+                enum:
+                - SERVICE_UNAVAILABLE_ERROR
+              detail:
+                type: string
+            required:
+            - code
+            - detail
+      required:
+      - errors
+      title: serviceUnavailableError
+    tooManyRequests:
+      type: object
+      description: Too Many Requests
+      additionalProperties: false
+      properties:
+        correlationId:
+          type: string
+        errors:
+          type: array
+          items:
+            additionalProperties: false
+            type: object
+            properties:
+              code:
+                type: string
+                enum:
+                - TOO_MANY_REQUESTS
+              detail:
+                type: string
+            required:
+            - code
+            - detail
+      required:
+      - errors
+      title: tooManyRequests
+    internalServerError:
+      type: object
+      description: Internal Server Error
+      additionalProperties: false
+      properties:
+        correlationId:
+          type: string
+        errors:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            properties:
+              code:
+                type: string
+                enum:
+                - INTERNAL_SERVER_ERROR
+              detail:
+                type: string
+                enum:
+                - Sorry, something has gone wrong at our end. If this persists please contact support.
+            required:
+            - code
+            - detail
+      required:
+      - errors
+      title: internalServerError
+    badRequest:
+      type: object
+      description: Bad request
+      additionalProperties: false
+      properties:
+        correlationId:
+          type: string
+        errors:
+          type: array
+          items:
+            additionalProperties: false
+            type: object
+            properties:
+              code:
+                type: string
+                enum:
+                - BAD_REQUEST_INCORRECT_OR_MISSING_FIELD
+                - RESPONSE_TOO_LARGE
+              detail:
+                type: string
+              source:
+                type: string
+            required:
+            - code
+            - detail
+            - source
+      required:
+      - errors
+      title: badRequest
+  securitySchemes:
+    Authentication:
+      type: oauth2
+      description: 'A company-level token acts on the company it was issued for. An organisation-level token (experimental) acts on the companies of an organisation: send the target company in the `X-Company-Id` header on every call, except on `GET /v2/companies` and on `/v2/companies/{companyId}/…` routes, which carry the company in the path. See [Organisation-level access](/reference/organisation-level-access).'
+      flows:
+        clientCredentials:
+          tokenUrl: /v1/auth/token
+          scopes:
+            analytical-field:read: Analytical Fields (Read)
+            bank-fee:read: Spending Bank Fees (Read)
+            cost-center:read: Cost Center (Read)
+            cost-center:manage: Cost Center (Manage)
+            expense-category:read: Expense Category (Read)
+            payable:read: Spending Payables (Read)
+            payable-attachment:read: Spending Payable Attachments (Read)
+            settlement:read: Spending Settlements (Read)
+            supplier:read: Suppliers (Read)
+            user:read: Users (Read)
+            experimental:user:manage: Users (Manage)
+            wallet-load:read: Spending Wallet Loads (Read)
+            wallet-summary:read: Spending Wallet Summary (Read)
+            experimental:accounting-export:read: Accounting exports (Read)
+            experimental:accounting-export:write: Accounting exports (Write)
+            experimental:accounting:update: Accounting (Update)
+            experimental:chart-of-accounts:read: Chart of Accounts (Read)
+            experimental:chart-of-accounts:write: Chart of Accounts (Write)
+            experimental:purchase-order:read: Purchase Orders (Read)
+            experimental:purchase-order:write: Purchase Orders (Write)
+            experimental:webhooks:read: Webhooks (Read)
+            experimental:webhooks:write: Webhooks (Write)
+            experimental:supplier:manage: Suppliers (Manage)
+            experimental:company:read: Companies (Read)
+            experimental:payable-search:read: Payable Search (Read)
+            experimental:payable-attachment:write: Payable Attachments (Write)
+            experimental:card:read: Cards (Read)
+            experimental:card:write: Cards (Write)
+            experimental:request:read: Requests (Read)
+            experimental:transaction:read: Transactions (Read)
+            experimental:analytical-field-v2:read: Analytical Fields v2 (Read)
+            experimental:analytical-field-v2:write: Analytical Fields v2 (Write)
+            experimental:expense-category-v2:read: Expense Category Fields v2 (Read)
+            experimental:expense-category-v2:write: Expense Category Fields v2 (Write)
+            experimental:invoice:read: Invoices (Read) - experimental
+            experimental:intake:read: Intakes (Read)
+            experimental:intake:write: Intakes (Write)
+            experimental:external-reference:read: External References (Read)
+            experimental:external-reference:write: External References (Write)
+        authorizationCode:
+          authorizationUrl: /v1/oauth2/authorize
+          tokenUrl: /v1/oauth2/token/create
+          scopes:
+            analytical-field:read: Analytical Fields (Read)
+            bank-fee:read: Spending Bank Fees (Read)
+            cost-center:read: Cost Center (Read)
+            cost-center:manage: Cost Center (Manage)
+            expense-category:read: Expense Category (Read)
+            payable:read: Spending Payables (Read)
+            payable-attachment:read: Spending Payable Attachments (Read)
+            settlement:read: Spending Settlements (Read)
+            supplier:read: Suppliers (Read)
+            user:read: Users (Read)
+            experimental:user:manage: Users (Manage)
+            wallet-load:read: Spending Wallet Loads (Read)
+            wallet-summary:read: Spending Wallet Summary (Read)
+            experimental:accounting-export:read: Accounting exports (Read)
+            experimental:accounting-export:write: Accounting exports (Write)
+            experimental:accounting:update: Accounting (Update)
+            experimental:chart-of-accounts:read: Chart of Accounts (Read)
+            experimental:chart-of-accounts:write: Chart of Accounts (Write)
+            experimental:purchase-order:read: Purchase Orders (Read)
+            experimental:purchase-order:write: Purchase Orders (Write)
+            experimental:webhooks:read: Webhooks (Read)
+            experimental:webhooks:write: Webhooks (Write)
+            experimental:supplier:manage: Suppliers (Manage)
+            experimental:company:read: Companies (Read)
+            experimental:payable-search:read: Payable Search (Read)
+            experimental:payable-attachment:write: Payable Attachments (Write)
+            experimental:card:read: Cards (Read)
+            experimental:card:write: Cards (Write)
+            experimental:request:read: Requests (Read)
+            experimental:transaction:read: Transactions (Read)
+            experimental:analytical-field-v2:read: Analytical Fields v2 (Read)
+            experimental:analytical-field-v2:write: Analytical Fields v2 (Write)
+            experimental:expense-category-v2:read: Expense Category Fields v2 (Read)
+            experimental:expense-category-v2:write: Expense Category Fields v2 (Write)
+            experimental:invoice:read: Invoices (Read) - experimental
+            experimental:intake:read: Intakes (Read)
+            experimental:intake:write: Intakes (Write)
+            experimental:external-reference:read: External References (Read)
+            experimental:external-reference:write: External References (Write)
+x-provenance:
+  method: searched
+  source: https://developer.spendesk.com/reference
+  harvested: '2026-10-14'
+  tool: harvest-readme-openapi.py
+  note: Assembled verbatim from the OpenAPI definition ReadMe embeds in each operation page of the provider's developer portal; paths and components merged by API title, nothing authored.
+  assembled_from:
+  - https://developer.spendesk.com/reference/mcp-authorization-server-metadata.md
+  - https://developer.spendesk.com/reference/mcp-protected-resource-metadata-mcp.md
+  - https://developer.spendesk.com/reference/v1-assign-creditors-to-accounts.md
+  - https://developer.spendesk.com/reference/v1-cancel-purchase-order.md
+  - https://developer.spendesk.com/reference/v1-close-purchase-order.md
+  - https://developer.spendesk.com/reference/v1-create-account.md
+  - https://developer.spendesk.com/reference/v1-create-auth-token.md
+  - https://developer.spendesk.com/reference/v1-create-cost-centers.md
+  - https://developer.spendesk.com/reference/v1-create-journal.md
+  - https://developer.spendesk.com/reference/v1-create-oauth2-token.md
+  - https://developer.spendesk.com/reference/v1-create-payable-attachment-upload.md
+  - https://developer.spendesk.com/reference/v1-create-purchase-order.md
+  - https://developer.spendesk.com/reference/v1-create-snapshot-payables.md
+  - https://developer.spendesk.com/reference/v1-create-suppliers.md
+  - https://developer.spendesk.com/reference/v1-create-webhook.md
+  - https://developer.spendesk.com/reference/v1-delete-account.md
+  - https://developer.spendesk.com/reference/v1-delete-cost-centers.md
+  - https://developer.spendesk.com/reference/v1-delete-mcp.md
+  - https://developer.spendesk.com/reference/v1-delete-webhook.md
+  - https://developer.spendesk.com/reference/v1-get-account-by-id.md
+  - https://developer.spendesk.com/reference/v1-get-accounts.md
+  - https://developer.spendesk.com/reference/v1-get-analytical-field-values.md
+  - https://developer.spendesk.com/reference/v1-get-analytical-fields.md
+  - https://developer.spendesk.com/reference/v1-get-bank-fees.md
+  - https://developer.spendesk.com/reference/v1-get-card-blocking-history.md
+  - https://developer.spendesk.com/reference/v1-get-card-order.md
+  - https://developer.spendesk.com/reference/v1-get-card.md
+  - https://developer.spendesk.com/reference/v1-get-cards.md
+  - https://developer.spendesk.com/reference/v1-get-cost-centers.md
+  - https://developer.spendesk.com/reference/v1-get-expense-categories.md
+  - https://developer.spendesk.com/reference/v1-get-external-references.md
+  - https://developer.spendesk.com/reference/v1-get-failed-transactions.md
+  - https://developer.spendesk.com/reference/v1-get-integrations-export-status.md
+  - https://developer.spendesk.com/reference/v1-get-journal-templates.md
+  - https://developer.spendesk.com/reference/v1-get-journal.md
+  - https://developer.spendesk.com/reference/v1-get-mcp.md
+  - https://developer.spendesk.com/reference/v1-get-payable-attachments.md
+  - https://developer.spendesk.com/reference/v1-get-payable-by-id.md
+  - https://developer.spendesk.com/reference/v1-get-purchase-order-document.md
+  - https://developer.spendesk.com/reference/v1-get-purchase-order.md
+  - https://developer.spendesk.com/reference/v1-get-purchase-orders.md
+  - https://developer.spendesk.com/reference/v1-get-request.md
+  - https://developer.spendesk.com/reference/v1-get-requests.md
+  - https://developer.spendesk.com/reference/v1-get-settlements.md
+  - https://developer.spendesk.com/reference/v1-get-snapshot-payables.md
+  - https://developer.spendesk.com/reference/v1-get-successful-transactions.md
+  - https://developer.spendesk.com/reference/v1-get-supplier-by-id.md
+  - https://developer.spendesk.com/reference/v1-get-suppliers.md
+  - https://developer.spendesk.com/reference/v1-get-transactions.md
+  - https://developer.spendesk.com/reference/v1-get-user-by-id.md
+  - https://developer.spendesk.com/reference/v1-get-users.md
+  - https://developer.spendesk.com/reference/v1-get-wallet-loads.md
+  - https://developer.spendesk.com/reference/v1-get-wallet-summary.md
+  - https://developer.spendesk.com/reference/v1-get-webhook-by-id.md
+  - https://developer.spendesk.com/reference/v1-get-webhook.md
+  - https://developer.spendesk.com/reference/v1-patch-accounts.md
+  - https://developer.spendesk.com/reference/v1-patch-payable-accounting-fields.md
+  - https://developer.spendesk.com/reference/v1-patch-supplier-status.md
+  - https://developer.spendesk.com/reference/v1-patch-suppliers-status.md
+  - https://developer.spendesk.com/reference/v1-post-experimental-integrations-refresh-settings.md
+  - https://developer.spendesk.com/reference/v1-post-mcp.md
+  - https://developer.spendesk.com/reference/v1-post-payable-mark-as-ready.md
+  - https://developer.spendesk.com/reference/v1-put-payables-bookkeeping-status.md
+  - https://developer.spendesk.com/reference/v1-put-settlements-state.md
+  - https://developer.spendesk.com/reference/v1-refresh-oauth2-token.md
+  - https://developer.spendesk.com/reference/v1-register-oauth2-client.md
+  - https://developer.spendesk.com/reference/v1-remove-creditors-from-accounts.md
+  - https://developer.spendesk.com/reference/v1-request-authorization.md
+  - https://developer.spendesk.com/reference/v1-search-creditor-account-assignments.md
+  - https://developer.spendesk.com/reference/v1-search-payables.md
+  - https://developer.spendesk.com/reference/v1-set-account-purpose.md
+  - https://developer.spendesk.com/reference/v1-sync-accounts.md
+  - https://developer.spendesk.com/reference/v1-update-cost-centers.md
+  - https://developer.spendesk.com/reference/v1-update-supplier.md
+  - https://developer.spendesk.com/reference/v1-update-suppliers.md
+  - https://developer.spendesk.com/reference/v1-update-webhook.md
+  - https://developer.spendesk.com/reference/v1-upsert-external-references.md
+  - https://developer.spendesk.com/reference/v2-create-analytical-field-value.md
+  - https://developer.spendesk.com/reference/v2-create-analytical-field.md
+  - https://developer.spendesk.com/reference/v2-create-expense-category-field.md
+  - https://developer.spendesk.com/reference/v2-create-expense-category.md
+  - https://developer.spendesk.com/reference/v2-create-intake-file-upload.md
+  - https://developer.spendesk.com/reference/v2-delete-analytical-field-value.md
+  - https://developer.spendesk.com/reference/v2-delete-analytical-field.md
+  - https://developer.spendesk.com/reference/v2-delete-expense-category-field.md
+  - https://developer.spendesk.com/reference/v2-delete-expense-category.md
+  - https://developer.spendesk.com/reference/v2-get-analytical-field-value.md
+  - https://developer.spendesk.com/reference/v2-get-analytical-field.md
+  - https://developer.spendesk.com/reference/v2-get-companies.md
+  - https://developer.spendesk.com/reference/v2-get-company-intake.md
+  - https://developer.spendesk.com/reference/v2-get-expense-category-field.md
+  - https://developer.spendesk.com/reference/v2-get-expense-category.md
+  - https://developer.spendesk.com/reference/v2-get-intake-file-upload-status.md
+  - https://developer.spendesk.com/reference/v2-get-invoice.md
+  - https://developer.spendesk.com/reference/v2-get-invoices-summary.md
+  - https://developer.spendesk.com/reference/v2-list-analytical-field-values.md
+  - https://developer.spendesk.com/reference/v2-list-analytical-fields.md
+  - https://developer.spendesk.com/reference/v2-list-company-intakes.md
+  - https://developer.spendesk.com/reference/v2-list-expense-categories.md
+  - https://developer.spendesk.com/reference/v2-list-expense-category-fields.md
+  - https://developer.spendesk.com/reference/v2-list-invoices.md
+  - https://developer.spendesk.com/reference/v2-post-company-intakes.md
+  - https://developer.spendesk.com/reference/v2-update-analytical-field-value.md
+  - https://developer.spendesk.com/reference/v2-update-analytical-field.md
+  - https://developer.spendesk.com/reference/v2-update-expense-category-field.md
+  - https://developer.spendesk.com/reference/v2-update-expense-category.md
+  merge:
+    pages: 106
+    deduped: 1705
+    conflicts_kept_first: 0

@@ -1,0 +1,1863 @@
+openapi: 3.2.0
+info:
+  title: Spendesk Public Settlements and wallet API
+  description: Spendesk Public API
+  version: '1.0'
+  summary: Spendesk Public API
+  contact:
+    email: support-public-api@spendesk.com
+    url: https://developer.spendesk.com/
+    name: Spendesk for Developers
+  termsOfService: https://www.spendesk.com/en/legals/terms/api-agreement
+servers:
+- url: https://public-api.spendesk.com
+  description: Production
+- url: https://public-api.demo.spendesk.com
+  description: Sandbox
+tags:
+- name: Settlements and wallet
+  description: 'Money movements on the Spendesk wallet: settlements (payments) and their export state, bank fees, wallet loads and the wallet summary. Part of: What is Spend Data?, Building an accounting integration.'
+paths:
+  /v1/bank-fees:
+    get:
+      operationId: v1-get-bank-fees
+      summary: Get Bank Fees
+      tags:
+      - Settlements and wallet
+      description: '**Allowed Scopes**: _`bank-fee:read`_
+
+
+        Returns bank fees. For more information about bank fees, see this guide. Bank fees data are cached for up to 24 hours. Changes, including those made through the API, can take up to 24 hours to appear.'
+      parameters:
+      - schema:
+          type: integer
+          default: 1
+          minimum: 1
+        in: query
+        name: page
+        required: false
+        description: Page number
+      - schema:
+          type: integer
+          default: 30
+          minimum: 1
+          maximum: 30
+        in: query
+        name: pageSize
+        required: false
+        description: Page size
+      - schema:
+          allOf:
+          - $ref: '#/components/schemas/dateTime'
+        in: query
+        name: from
+        required: false
+        description: Start date of the requested period, with timezone offset (`Z` for UTC).
+      - schema:
+          allOf:
+          - $ref: '#/components/schemas/dateTime'
+        in: query
+        name: to
+        required: false
+        description: End date of the requested period, with timezone offset (`Z` for UTC).
+      - schema:
+          type: array
+          items:
+            type: string
+        in: query
+        name: settlementIds
+        required: false
+        description: An array of settlement IDs, exploded `(settlementIds=1&settlementIds=2)`.
+      - schema:
+          type: string
+        in: header
+        name: X-Company-Id
+        required: false
+        description: ID of the company the request acts on. Required with an organisation-level token; not needed with a company-level token.
+      security:
+      - Authentication:
+        - bank-fee:read
+      x-roles:
+      - controller
+      - admin
+      - accountOwner
+      responses:
+        '200':
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  meta:
+                    $ref: '#/components/schemas/meta'
+                  data:
+                    description: The list of bank fees.
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/bankFee'
+                required:
+                - data
+                - meta
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/badRequest'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/unauthorized'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/forbidden'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/notFound'
+        '429':
+          description: Too Many Requests
+          headers:
+            retry-after:
+              schema:
+                type: integer
+              description: Seconds to wait before retrying the request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/tooManyRequests'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/internalServerError'
+        '503':
+          description: Service Unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/serviceUnavailableError'
+  /v1/settlements:
+    get:
+      operationId: v1-get-settlements
+      summary: Get Settlements
+      tags:
+      - Settlements and wallet
+      description: '**Allowed Scopes**: _`settlement:read`_
+
+
+        Returns settlements. For more information about settlements, see this guide. Settlements data are cached for up to 24 hours. A successful `PUT /v1/settlements/state` clears the cached settlement reads, so the next call is fresh; state changes from accounting exports or made in Spendesk can take up to 24 hours to appear.
+
+
+        This endpoint uses page-based pagination. Use `page` and `pageSize` to retrieve additional results. The maximum `pageSize` is 30. Continue fetching while `page * pageSize < meta.pagination.total`.
+
+
+        To filter by settlement status, use `state` (for example, `/v1/settlements?page=1&pageSize=30&state=created`).
+
+
+        Settlements expose allocation links through `allocations[].payableId`. For accounting export use cases that require payable line amounts, retrieve the related payable and read `lineItems[].financial.netAmount`. Amounts are expressed in the smallest unit of the currency.'
+      parameters:
+      - schema:
+          type: integer
+          default: 1
+          minimum: 1
+        in: query
+        name: page
+        required: false
+        description: Page number
+      - schema:
+          type: integer
+          default: 30
+          minimum: 1
+          maximum: 30
+        in: query
+        name: pageSize
+        required: false
+        description: Page size
+      - schema:
+          allOf:
+          - $ref: '#/components/schemas/dateTime'
+        in: query
+        name: exportedAfter
+        required: false
+        description: The date and time the settlement first got exported to accounting, with timezone offset (use `Z` for UTC).
+      - schema:
+          allOf:
+          - $ref: '#/components/schemas/dateTime'
+        in: query
+        name: exportedBefore
+        required: false
+        description: The date and time before which the settlement was first exported to accounting, with timezone offset (use `Z` for UTC).
+      - schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - externalAccount
+            - spendeskAccount
+        in: query
+        name: paidFrom
+        required: false
+        description: Payment account used for the settlement. Card settlements are always `spendeskAccount`; `externalAccount` matches only wire transfers emitted from an external bank account.
+      - schema:
+          type: array
+          items:
+            $ref: '#/components/schemas/settlement/properties/id'
+          minItems: 1
+          uniqueItems: true
+        in: query
+        name: ids
+        required: false
+        description: An array of settlement IDs, exploded `(ids=1&ids=2)`.
+      - schema:
+          type: array
+          items:
+            allOf:
+            - $ref: '#/components/schemas/settlement/properties/state'
+            description: Status of settlements to filter by.
+        in: query
+        name: state
+        required: false
+      - schema:
+          type: array
+          items:
+            $ref: '#/components/schemas/settlement/properties/type'
+        in: query
+        name: types
+        required: false
+        description: Filter settlements by type.
+      - schema:
+          oneOf:
+          - allOf:
+            - $ref: '#/components/schemas/date'
+            description: Start date of the requested period. String containing a date expressed in [ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) format like `2023-05-12`.
+          - allOf:
+            - $ref: '#/components/schemas/dateTime'
+            description: Start date of the requested period. String containing a UTC datetime expressed in [ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) format like `2023-05-12T14:06:40Z`.
+        in: query
+        name: clearedFrom
+        required: false
+      - schema:
+          oneOf:
+          - allOf:
+            - $ref: '#/components/schemas/date'
+            description: End date of the requested period. String containing a date expressed in [ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) format like `2023-05-12`.
+          - allOf:
+            - $ref: '#/components/schemas/dateTime'
+            description: End date of the requested period. String containing a UTC datetime expressed in [ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) format like `2023-05-12T14:06:40Z`.
+        in: query
+        name: clearedTo
+        required: false
+      - schema:
+          type: string
+        in: query
+        name: supplierId
+        required: false
+        description: The ID of the supplier to filter settlements by.
+      - schema:
+          type: string
+        in: query
+        name: transactionDescription
+        required: false
+        description: Filter settlements by transaction description.
+      - schema:
+          type: string
+        in: header
+        name: X-Company-Id
+        required: false
+        description: ID of the company the request acts on. Required with an organisation-level token; not needed with a company-level token.
+      security:
+      - Authentication:
+        - settlement:read
+      x-roles:
+      - controller
+      - admin
+      - accountOwner
+      responses:
+        '200':
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  meta:
+                    $ref: '#/components/schemas/meta'
+                  data:
+                    description: Settlements list
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/settlement'
+                required:
+                - data
+                - meta
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/badRequest'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/unauthorized'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/forbidden'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/notFound'
+        '429':
+          description: Too Many Requests
+          headers:
+            retry-after:
+              schema:
+                type: integer
+              description: Seconds to wait before retrying the request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/tooManyRequests'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/internalServerError'
+        '503':
+          description: Service Unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/serviceUnavailableError'
+  /v1/settlements/state:
+    put:
+      operationId: v1-put-settlements-state
+      summary: Update settlements state
+      tags:
+      - Settlements and wallet
+      description: '**Allowed Scopes**: _`experimental:accounting:update`_
+
+
+        Mark multiple settlements as manually exported after their accounting entries were created outside Spendesk.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                settlements:
+                  description: Settlements to update
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    properties:
+                      id:
+                        type: string
+                        minLength: 1
+                        description: The ID of the settlement to update
+                        example: bc9cef35-401d-4ea4-b384-ed725e6685cf
+                      version:
+                        type: number
+                        description: The current version of the settlement
+                        example: 1
+                      state:
+                        type: string
+                        description: The new state to set for the settlement
+                        enum:
+                        - exported
+                        example: exported
+                    required:
+                    - id
+                    - version
+                    - state
+                  minItems: 1
+                  maxItems: 50
+                  example:
+                    settlements:
+                    - id: d7b2b353-abcd-4199-ace4-708f28e13ab3
+                      version: 1
+                      state: exported
+              required:
+              - settlements
+      parameters:
+      - schema:
+          type: string
+        in: header
+        name: X-Company-Id
+        required: false
+        description: ID of the company the request acts on. Required with an organisation-level token; not needed with a company-level token.
+      security:
+      - Authentication:
+        - experimental:accounting:update
+      x-roles:
+      - controller
+      - admin
+      - accountOwner
+      responses:
+        '200':
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/bulkUpdateSettlementsStateFullSuccess'
+        '207':
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/bulkUpdateSettlementsStatePartialSuccess'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/badRequest'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/unauthorized'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/forbidden'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/notFound'
+        '413':
+          description: Payload Too Large
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/tooLarge'
+        '415':
+          description: Unsupported Media Type
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/unsupportedMediaType'
+        '429':
+          description: Too Many Requests
+          headers:
+            retry-after:
+              schema:
+                type: integer
+              description: Seconds to wait before retrying the request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/tooManyRequests'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/internalServerError'
+        '503':
+          description: Service Unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/serviceUnavailableError'
+  /v1/wallet-loads:
+    get:
+      operationId: v1-get-wallet-loads
+      summary: Get Wallet Loads
+      tags:
+      - Settlements and wallet
+      description: '**Allowed Scopes**: _`wallet-load:read`_
+
+
+        Returns wallet loads of the Spendesk entity (company), either via wiretransfers to Spendesk or via card payments. On GBP wallets `page` is ignored: while `meta.pagination.hasNextPage` is true, follow `meta.pagination.nextUrl` (or send `meta.pagination.nextCursor` as `cursor` with the same `from` and `to`) to get the next page. There, `meta.pagination.total` counts only the rows on the current page, so stop on `hasNextPage`, not on `total`. Wallet loads data are cached for up to 24 hours. Changes, including those made through the API, can take up to 24 hours to appear.'
+      parameters:
+      - schema:
+          type: integer
+          default: 1
+          minimum: 1
+        in: query
+        name: page
+        required: false
+        description: Page number
+      - schema:
+          type: integer
+          default: 30
+          minimum: 1
+          maximum: 30
+        in: query
+        name: pageSize
+        required: false
+        description: Page size
+      - schema:
+          allOf:
+          - $ref: '#/components/schemas/dateTime'
+        in: query
+        name: from
+        required: false
+        description: Start date of the requested period, with timezone offset (`Z` for UTC).
+      - schema:
+          allOf:
+          - $ref: '#/components/schemas/dateTime'
+        in: query
+        name: to
+        required: false
+        description: End date of the requested period, with timezone offset (`Z` for UTC).
+      - schema:
+          type: string
+        in: query
+        name: cursor
+        required: false
+        description: 'GBP wallets only: `meta.pagination.nextCursor` from the previous page.'
+      - schema:
+          type: string
+        in: header
+        name: X-Company-Id
+        required: false
+        description: ID of the company the request acts on. Required with an organisation-level token; not needed with a company-level token.
+      security:
+      - Authentication:
+        - wallet-load:read
+      x-roles:
+      - controller
+      - admin
+      - accountOwner
+      responses:
+        '200':
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                additionalProperties: false
+                type: object
+                properties:
+                  meta:
+                    description: Meta object describing pagination
+                    type: object
+                    properties:
+                      pagination:
+                        type: object
+                        unevaluatedProperties: false
+                        allOf:
+                        - $ref: '#/components/schemas/pagination'
+                        properties:
+                          hasNextPage:
+                            type: boolean
+                          nextCursor:
+                            type: string
+                            nullable: true
+                          nextUrl:
+                            type: string
+                            nullable: true
+                    required:
+                    - pagination
+                  data:
+                    description: Wallet loads list
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/walletLoad'
+                required:
+                - meta
+                - data
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/badRequest'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/unauthorized'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/forbidden'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/notFound'
+        '429':
+          description: Too Many Requests
+          headers:
+            retry-after:
+              schema:
+                type: integer
+              description: Seconds to wait before retrying the request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/tooManyRequests'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/internalServerError'
+        '503':
+          description: Service Unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/serviceUnavailableError'
+  /v1/wallet-summary:
+    get:
+      operationId: v1-get-wallet-summary
+      summary: Get Wallet Summary
+      tags:
+      - Settlements and wallet
+      description: '**Allowed Scopes**: _`wallet-summary:read`_
+
+
+        Return the details of the wallet (Spendesk entity), such as company name, remaining amounts, etc. Wallet summary data is cached for up to 20 minutes. Changes, including those made through the API, can take up to 20 minutes to appear.'
+      parameters:
+      - schema:
+          type: string
+        in: header
+        name: X-Company-Id
+        required: false
+        description: ID of the company the request acts on. Required with an organisation-level token; not needed with a company-level token.
+      security:
+      - Authentication:
+        - wallet-summary:read
+      x-roles:
+      - controller
+      - admin
+      - accountOwner
+      responses:
+        '200':
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/walletSummary'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/badRequest'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/unauthorized'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/forbidden'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/notFound'
+        '429':
+          description: Too Many Requests
+          headers:
+            retry-after:
+              schema:
+                type: integer
+              description: Seconds to wait before retrying the request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/tooManyRequests'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/internalServerError'
+        '503':
+          description: Service Unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/serviceUnavailableError'
+components:
+  schemas:
+    settlement:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          minLength: 1
+          description: The ID of the settlement.
+        version:
+          type: number
+          description: Version of the settlement.
+        type:
+          type: string
+          enum:
+          - payment
+          - refund
+          - advance
+          - cashReturn
+          - chargeback
+          - reimbursement
+          description: "Indicates the type of the settlement. \n\nType | Description |\n---------|----------|\n `payment` | A payment to a supplier | \n `reimbursement` | A payment to an employee | \n `refund` | A refund |\n  `advance` | A cash advance |\n  `cashReturn` | A cash return |\n  `chargeback` | A card disputes/chargeback |\""
+        medium:
+          type: string
+          enum:
+          - card
+          - wiretransfer
+          description: The medium as through which this settlement is processed.
+        paidFrom:
+          type: string
+          enum:
+          - spendeskAccount
+          - externalAccount
+          description: The bank account the wire transfer is emitted from (Spendesk or external). For card payments the value is always `spendeskAccount`.
+        transactionDescription:
+          type: string
+          description: Description of the transaction.
+        clearedAt:
+          allOf:
+          - $ref: '#/components/schemas/dateTime'
+          description: Time and date that the transaction cleared. In the [ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) date format.
+        amount:
+          allOf:
+          - $ref: '#/components/schemas/priceAmount'
+          description: If the payment was made in a foreign currency, this amount is in the foreign currency. Expressed in smallest units of the currency (e.g. cents for EUR and USD, but yen for JPY). Contains negative values for refunds.
+        currency:
+          $ref: '#/components/schemas/currency'
+        billingAmount:
+          allOf:
+          - $ref: '#/components/schemas/priceAmount'
+          description: Amount is in the account's currency. Expressed in smallest units of the currency (e.g. cents for EUR and USD, but yen for JPY).
+        billingCurrency:
+          $ref: '#/components/schemas/currency'
+        billingExchangeRate:
+          type: number
+          description: If the payment was made in a foreign currency, this is the exchange rate between the two currencies at the time of the payment.
+        state:
+          type: string
+          enum:
+          - created
+          - exported
+          - failedToExport
+          description: "Indicates the current state of the settlement: created, exported, or failed to export. \n\nType | Description |\n---------|----------|\n `created` | Created but not exported | \n `exported` | Exported | \n `failedToExport` | Tried to export but failed |\""
+        exportedAt:
+          oneOf:
+          - $ref: '#/components/schemas/dateTime'
+          - type: object
+            nullable: true
+          description: The date and time the settlement was exported at.
+        statusUpdatedAt:
+          oneOf:
+          - $ref: '#/components/schemas/dateTime'
+          - type: object
+            nullable: true
+          description: The date and time the settlement status was updated.
+        allocations:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            properties:
+              amount:
+                $ref: '#/components/schemas/priceAmount'
+              currency:
+                $ref: '#/components/schemas/currency'
+              payableId:
+                allOf:
+                - $ref: '#/components/schemas/payable/properties/id'
+                description: The ID of the associated payable.
+            required:
+            - amount
+            - currency
+            - payableId
+          description: 'Allocations this settlement is part of, with at most one entry per payableId: if a settlement has several allocations to the same payable only one is returned, so allocation amounts may not add up to the settlement amount.'
+      required:
+      - id
+      - version
+      - type
+      - medium
+      - paidFrom
+      - transactionDescription
+      - clearedAt
+      - amount
+      - currency
+      - billingAmount
+      - billingCurrency
+      - billingExchangeRate
+      - state
+      - exportedAt
+      - statusUpdatedAt
+      - allocations
+      title: settlement
+    currency:
+      type: string
+      pattern: ^[A-Z]{3}$
+      description: If the payment was made in a foreign currency, this amount will be the one in the payment currency. Three-letter [ISO currency codes](https://www.iso.org/iso-4217-currency-codes.html).
+      title: currency
+    unauthorized:
+      type: object
+      description: Unauthorized
+      additionalProperties: false
+      properties:
+        correlationId:
+          type: string
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              code:
+                type: string
+                enum:
+                - AUTHENTICATION_ERROR
+              detail:
+                type: string
+            required:
+            - code
+            - detail
+      required:
+      - errors
+      title: unauthorized
+    serviceUnavailableError:
+      type: object
+      description: Service Unavailable
+      additionalProperties: false
+      properties:
+        correlationId:
+          type: string
+        errors:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            properties:
+              code:
+                type: string
+                enum:
+                - SERVICE_UNAVAILABLE_ERROR
+              detail:
+                type: string
+            required:
+            - code
+            - detail
+      required:
+      - errors
+      title: serviceUnavailableError
+    tooManyRequests:
+      type: object
+      description: Too Many Requests
+      additionalProperties: false
+      properties:
+        correlationId:
+          type: string
+        errors:
+          type: array
+          items:
+            additionalProperties: false
+            type: object
+            properties:
+              code:
+                type: string
+                enum:
+                - TOO_MANY_REQUESTS
+              detail:
+                type: string
+            required:
+            - code
+            - detail
+      required:
+      - errors
+      title: tooManyRequests
+    internalServerError:
+      type: object
+      description: Internal Server Error
+      additionalProperties: false
+      properties:
+        correlationId:
+          type: string
+        errors:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            properties:
+              code:
+                type: string
+                enum:
+                - INTERNAL_SERVER_ERROR
+              detail:
+                type: string
+                enum:
+                - Sorry, something has gone wrong at our end. If this persists please contact support.
+            required:
+            - code
+            - detail
+      required:
+      - errors
+      title: internalServerError
+    meta:
+      description: Meta object describing pagination
+      type: object
+      properties:
+        pagination:
+          type: object
+          unevaluatedProperties: false
+          allOf:
+          - $ref: '#/components/schemas/pagination'
+      required:
+      - pagination
+      title: meta
+    updateSettlementStateFailure:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          minLength: 1
+          description: The ID of the settlement.
+        outcome:
+          type: string
+          enum:
+          - notUpdated
+          example: notUpdated
+        reason:
+          type: string
+          description: The settlement or its accounting export state could not be found.
+          enum:
+          - notFound
+          example: notFound
+      required:
+      - id
+      - outcome
+      - reason
+      title: updateSettlementStateFailure
+    forbidden:
+      type: object
+      description: Forbidden
+      additionalProperties: false
+      properties:
+        correlationId:
+          type: string
+        errors:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            properties:
+              code:
+                type: string
+                enum:
+                - FORBIDDEN_ERROR
+              detail:
+                type: string
+            required:
+            - code
+            - detail
+      required:
+      - errors
+      title: forbidden
+    notFound:
+      type: object
+      description: Not Found
+      additionalProperties: false
+      properties:
+        correlationId:
+          type: string
+        errors:
+          type: array
+          items:
+            additionalProperties: false
+            type: object
+            properties:
+              code:
+                type: string
+                enum:
+                - NOT_FOUND
+              detail:
+                type: string
+            required:
+            - code
+            - detail
+      required:
+      - errors
+      title: notFound
+    payable:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: The ID of the Payable
+          pattern: ^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$
+          example: bc9cef35-401d-4ea4-b384-ed725e6685cf
+        type:
+          type: string
+          enum:
+          - expenseClaim
+          - invoicePurchase
+          - creditNote
+          - singlePurchaseCard
+          - multiUseCard
+          - subscriptionCard
+          - physicalCard
+          - mileageAllowance
+          - perDiemAllowance
+          - reverseBill
+          description: "Indicates the type of the payable. \n\nType | Description |\n---------|----------|\n `expenseClaim` | An expense claim submitted and approved | \n `invoicePurchase` | An invoice to pay submitted and approved | \n `creditNote` | A credit note submitted and approved |\n  `singlePurchaseCard` | A purchase made with a single-use virtual card |\n  `multiUseCard` | A purchase made with a multi-use virtual card | \n  `subscriptionCard` | A purchase made with a subscription virtual card |\n  `physicalCard` | A purchase made with a physical card |\n  `mileageAllowance` | A mileage expense submitted and approved |\n  `perDiemAllowance` | A per diem expense submitted and approved |\n  `reverseBill` | A refund or a late return (aka cash return) |\""
+        version:
+          type: number
+          description: The current version of this payable. This is incremented every time the payable is modified.
+        userId:
+          type: string
+          description: The ID of the Spendesk user who created this payable.
+        bookkeepingStatus:
+          $ref: '#/components/schemas/bookkeepingStatus'
+        companyId:
+          type: string
+          description: The ID of the company (this could be a wallet or an entity).
+        appUrl:
+          type: string
+          description: Link to this payable in the Spendesk web app.
+          example: https://app.spendesk.com/app/RRbRgeIB7X/payables/bc9cef35-401d-4ea4-b384-ed725e6685cf
+        costCenterId:
+          type: string
+          nullable: true
+          description: The ID of the cost center, if available.
+        costCenterName:
+          type: string
+          nullable: true
+          description: The name of the cost center, if available.
+        teamId:
+          type: string
+          nullable: true
+          description: The ID of the team.
+        teamName:
+          type: string
+          nullable: true
+          description: The name of the team.
+        analyticalProperties:
+          type: array
+          items:
+            $ref: '#/components/schemas/analyticalProperties'
+        payableDate:
+          type: string
+          format: date
+          description: 'For expenses - this is the date of the expense.
+
+            For reversals - this is the date of the reversal.
+
+            In the `YYYY-MM-DD` format.'
+        accountingDate:
+          type: string
+          nullable: true
+          format: date
+          description: 'This feature is not activated by default.
+
+            If activated, `accounting date` field allows accountants to override the original expense date.
+
+            In the `YYYY-MM-DD` format.'
+        invoiceDueDate:
+          type: string
+          nullable: true
+          format: date
+          description: The date the invoice is due. In the `YYYY-MM-DD` format.
+        amount:
+          $ref: '#/components/schemas/priceAmount'
+        currency:
+          $ref: '#/components/schemas/currency'
+        functionalAmount:
+          $ref: '#/components/schemas/priceAmount'
+        functionalCurrency:
+          $ref: '#/components/schemas/currency'
+        functionalExchangeRate:
+          type: number
+          description: If the payment was made in a foreign currency, this will be the exchange rate that was applied when the payment was made.
+        outstandingAmount:
+          allOf:
+          - $ref: '#/components/schemas/priceAmount'
+          description: Portion of the payable amount not yet covered by allocations, in the payable currency minor units (e.g. cents for EUR and USD, but yen for JPY). Zero means fully allocated. Absent if allocation tracking is unavailable for this payable.
+        outstandingFunctionalAmount:
+          allOf:
+          - $ref: '#/components/schemas/priceAmount'
+          description: Same as `outstandingAmount` but expressed in the company's functional currency minor units.
+        invoiceNumber:
+          type: string
+          nullable: true
+          description: Invoice number, if available.
+        purchaseOrderNumber:
+          type: string
+          nullable: true
+          description: Purchase order number linked to this invoice payable, if available.
+        creditNoteNumber:
+          type: string
+          nullable: true
+          description: Credit Note number, if available.
+        referenceInvoiceNumber:
+          type: string
+          nullable: true
+          description: Invoice number of an invoice that resulted in a credit note, if available.
+        description:
+          type: string
+          nullable: true
+          description: Description of the payable.
+        exportedAt:
+          type: string
+          nullable: true
+          format: date-time
+          description: The date this payable was first exported via an accounting export. In the [ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) date format.
+        createdAt:
+          type: string
+          format: date-time
+          description: The timestamp of the creation of this payable. String containing a UTC datetime expressed in ISO 8601 format like `2023-05-12T14:06:40Z` (source `https://en.wikipedia.org/wiki/ISO_8601`).
+        commitmentCounterparty:
+          type: object
+          nullable: true
+          additionalProperties: false
+          properties:
+            type:
+              type: string
+              enum:
+              - supplier
+              - employee
+            name:
+              type: string
+          required:
+          - type
+          - name
+          description: The counterparty associated with the spending commitment, or null when unavailable. For expense claims, use its name as the merchant name only when type is supplier. counterparty is the employee being reimbursed; their accountPayable must not be used as a merchant creditor account.
+        counterparty:
+          type: object
+          additionalProperties: false
+          properties:
+            id:
+              type: string
+              description: The ID of this counterparty.
+            type:
+              type: string
+              enum:
+              - supplier
+              - employee
+              description: The type of this counterparty.
+            name:
+              type: string
+              nullable: true
+              description: The name of this counterparty.
+            accountPayable:
+              type: object
+              nullable: true
+              additionalProperties: false
+              properties:
+                id:
+                  type: string
+                  description: Internal Spendesk ID of the account payable.
+                generalAccountCode:
+                  type: string
+                  description: Accounting code of the account payable.
+                auxiliaryAccountCode:
+                  type: string
+                  nullable: true
+                  description: Auxiliary code of the account payable, if available.
+              required:
+              - id
+              - generalAccountCode
+              - auxiliaryAccountCode
+          required:
+          - id
+          - type
+          - name
+          - accountPayable
+          description: A payable is due to either a supplier or an employee.
+        lineItems:
+          type: array
+          items:
+            $ref: '#/components/schemas/payableLineItem'
+          description: Line items of the payable.
+        allocations:
+          type: array
+          items:
+            oneOf:
+            - type: object
+              additionalProperties: false
+              properties:
+                type:
+                  enum:
+                  - settlement
+                allocatedAmount:
+                  allOf:
+                  - $ref: '#/components/schemas/priceAmount'
+                  description: Payable amount allocated to this settlement. Expressed in smallest units of the currency (e.g. cents for EUR and USD, but yen for JPY).
+                settlementId:
+                  type: string
+                  description: The ID of the allocated settlement.
+              required:
+              - type
+              - allocatedAmount
+              - settlementId
+            - type: object
+              additionalProperties: false
+              properties:
+                type:
+                  enum:
+                  - expense
+                allocatedAmount:
+                  allOf:
+                  - $ref: '#/components/schemas/priceAmount'
+                  description: Payable amount allocated to expenses. Expressed in smallest units of the currency (e.g. cents for EUR and USD, but yen for JPY).
+                payableId:
+                  type: string
+                  format: uuid
+                  description: The ID of the Payable
+                  examples:
+                  - bc9cef35-401d-4ea4-b384-ed725e6685cf
+                  pattern: ^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$
+              required:
+              - type
+              - allocatedAmount
+              - payableId
+            - type: object
+              additionalProperties: false
+              properties:
+                type:
+                  enum:
+                  - reversal
+                allocatedAmount:
+                  allOf:
+                  - $ref: '#/components/schemas/priceAmount'
+                  description: Payable amount allocated to reversals. Expressed in smallest units of the currency (e.g. cents for EUR and USD, but yen for JPY).
+                payableId:
+                  type: string
+                  format: uuid
+                  description: The ID of the Payable
+                  examples:
+                  - bc9cef35-401d-4ea4-b384-ed725e6685cf
+                  pattern: ^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$
+              required:
+              - type
+              - allocatedAmount
+              - payableId
+          description: An array of allocations for the payable. An expense payable can have a settlement or a reversal payable allocated to it. A reversal payable can have a settlement or an expense payable allocated to it.
+        amortisation:
+          type: object
+          nullable: true
+          additionalProperties: false
+          properties:
+            date:
+              type: object
+              additionalProperties: false
+              properties:
+                from:
+                  type: string
+                  format: date-time
+                  description: Start date of the amortisation period. In the ISO 8601 date-time format.
+                to:
+                  type: string
+                  format: date-time
+                  description: End date of the amortisation period. In the ISO 8601 date-time format.
+              required:
+              - from
+              - to
+          required:
+          - date
+          description: Amortisation details for the payable, if applicable.
+      required:
+      - id
+      - version
+      - type
+      - userId
+      - bookkeepingStatus
+      - companyId
+      - teamId
+      - teamName
+      - payableDate
+      - accountingDate
+      - invoiceDueDate
+      - amount
+      - currency
+      - functionalAmount
+      - functionalCurrency
+      - functionalExchangeRate
+      - invoiceNumber
+      - purchaseOrderNumber
+      - creditNoteNumber
+      - referenceInvoiceNumber
+      - description
+      - exportedAt
+      - createdAt
+      - counterparty
+      - lineItems
+      - analyticalProperties
+      - allocations
+      description: A payable is a short-term liability owed by a company to its creditors (suppliers or employees). Several types of payables are supported by Spendesk, e.g. Invoices, Credit Notes, Expense Claims, Physical card purchases, Single Use card purchases, Subscription card purchases, etc.
+      title: payable
+    walletSummary:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          description: The wallet ID.
+        name:
+          type: string
+          description: The wallet name.
+        status:
+          type: string
+          enum:
+          - active
+          description: The status of the wallet.
+        currency:
+          $ref: '#/components/schemas/currency'
+        totalAmount:
+          allOf:
+          - $ref: '#/components/schemas/priceAmount'
+          description: The total amount currently loaded on the wallet. Card settlements can be delayed in which case totalAmount may differ from (wallet loads - sum of settlements). Expressed in smallest units of the currency (e.g. cents for EUR and USD, but yen for JPY).
+        totalAvailableAmount:
+          allOf:
+          - $ref: '#/components/schemas/priceAmount'
+          description: The total amount currently available for spend. Expressed in smallest units of the currency (e.g. cents for EUR and USD, but yen for JPY).
+        totalAllocatedAmount:
+          allOf:
+          - $ref: '#/components/schemas/priceAmount'
+          description: The total amount allocated on cards & scheduled transfers. Expressed in smallest units of the currency (e.g. cents for EUR and USD, but yen for JPY).
+        allocatedOnCards:
+          type: object
+          additionalProperties: false
+          properties:
+            subscriptionAmount:
+              allOf:
+              - $ref: '#/components/schemas/priceAmount'
+              description: Amount allocated on card to subscription. Expressed in smallest units of the currency (e.g. cents for EUR and USD, but yen for JPY).
+            physicalAmount:
+              allOf:
+              - $ref: '#/components/schemas/priceAmount'
+              description: Amount allocated on card to physical. Expressed in smallest units of the currency (e.g. cents for EUR and USD, but yen for JPY).
+            singlePurchaseAmount:
+              allOf:
+              - $ref: '#/components/schemas/priceAmount'
+              description: Amount allocated on card to single purchase. Expressed in smallest units of the currency (e.g. cents for EUR and USD, but yen for JPY).
+            totalAllocatedAmount:
+              allOf:
+              - $ref: '#/components/schemas/priceAmount'
+              description: Total amount allocated on card. Expressed in smallest units of the currency (e.g. cents for EUR and USD, but yen for JPY).
+          required:
+          - subscriptionAmount
+          - physicalAmount
+          - singlePurchaseAmount
+          - totalAllocatedAmount
+        scheduledTransfersAmount:
+          type: object
+          additionalProperties: false
+          properties:
+            scheduledExpenseClaimsAmount:
+              allOf:
+              - $ref: '#/components/schemas/priceAmount'
+              description: Amount allocated to scheduled transfers. Expressed in smallest units of the currency (e.g. cents for EUR and USD, but yen for JPY).
+            scheduledInvoicesAmount:
+              allOf:
+              - $ref: '#/components/schemas/priceAmount'
+              description: Amount allocated to scheduled transfers. Expressed in smallest units of the currency (e.g. cents for EUR and USD, but yen for JPY).
+            totalScheduledTransferAmount:
+              allOf:
+              - $ref: '#/components/schemas/priceAmount'
+              description: Amount allocated to scheduled transfers. Expressed in smallest units of the currency (e.g. cents for EUR and USD, but yen for JPY).
+          required:
+          - scheduledExpenseClaimsAmount
+          - scheduledInvoicesAmount
+          - totalScheduledTransferAmount
+      required:
+      - id
+      - name
+      - status
+      - currency
+      - totalAmount
+      - totalAvailableAmount
+      - totalAllocatedAmount
+      - allocatedOnCards
+      - scheduledTransfersAmount
+      title: walletSummary
+    tooLarge:
+      type: object
+      description: Payload Too Large
+      additionalProperties: false
+      properties:
+        correlationId:
+          type: string
+        errors:
+          type: array
+          items:
+            additionalProperties: false
+            type: object
+            properties:
+              code:
+                type: string
+                enum:
+                - LARGE_BODY_ERROR
+              detail:
+                type: string
+                enum:
+                - 'The request is too large for this endpoint: send a smaller body or a smaller file.'
+            required:
+            - code
+            - detail
+      required:
+      - errors
+      title: tooLarge
+    updateSettlementStateSuccess:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          minLength: 1
+          description: The ID of the settlement.
+        outcome:
+          type: string
+          enum:
+          - updated
+          example: updated
+      required:
+      - id
+      - outcome
+      title: updateSettlementStateSuccess
+    pagination:
+      type: object
+      properties:
+        page:
+          type: integer
+          default: 1
+          minimum: 1
+          description: Page number
+        pageSize:
+          type: integer
+          default: 30
+          minimum: 1
+          maximum: 30
+          description: Page size
+        total:
+          type: integer
+          minimum: 0
+          description: Total amount of records for this collection
+      required:
+      - page
+      - pageSize
+      - total
+      title: pagination
+    bulkUpdateSettlementsStatePartialSuccess:
+      type: object
+      additionalProperties: false
+      properties:
+        updatedSettlements:
+          type: array
+          description: List of settlements with their update outcomes.
+          items:
+            anyOf:
+            - $ref: '#/components/schemas/updateSettlementStateSuccess'
+            - $ref: '#/components/schemas/updateSettlementStateFailure'
+      required:
+      - updatedSettlements
+      title: bulkUpdateSettlementsStatePartialSuccess
+    unsupportedMediaType:
+      type: object
+      description: Unsupported Media Type
+      additionalProperties: false
+      properties:
+        correlationId:
+          type: string
+        errors:
+          type: array
+          items:
+            additionalProperties: false
+            type: object
+            properties:
+              code:
+                type: string
+                enum:
+                - UNSUPPORTED_MEDIA_TYPE_ERROR
+              detail:
+                type: string
+                enum:
+                - 'The Content-Type of the request is not supported: send application/json, or application/x-www-form-urlencoded where the endpoint documents it.'
+            required:
+            - code
+            - detail
+      required:
+      - errors
+      title: unsupportedMediaType
+    dateTime:
+      type: string
+      format: date-time
+      description: String containing a UTC datetime expressed in [ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) format like `2023-05-12T14:06:40Z`.
+      title: dateTime
+    bulkUpdateSettlementsStateFullSuccess:
+      type: object
+      additionalProperties: false
+      properties:
+        updatedSettlements:
+          type: array
+          description: List of settlements with their update outcomes.
+          items:
+            $ref: '#/components/schemas/updateSettlementStateSuccess'
+      required:
+      - updatedSettlements
+      title: bulkUpdateSettlementsStateFullSuccess
+    date:
+      type: string
+      format: date
+      description: String containing a date expressed in [ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) format like `2023-05-12`.
+      title: date
+    badRequest:
+      type: object
+      description: Bad request
+      additionalProperties: false
+      properties:
+        correlationId:
+          type: string
+        errors:
+          type: array
+          items:
+            additionalProperties: false
+            type: object
+            properties:
+              code:
+                type: string
+                enum:
+                - BAD_REQUEST_INCORRECT_OR_MISSING_FIELD
+                - RESPONSE_TOO_LARGE
+              detail:
+                type: string
+              source:
+                type: string
+            required:
+            - code
+            - detail
+            - source
+      required:
+      - errors
+      title: badRequest
+    walletLoad:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          description: Wallet load ID
+        amount:
+          allOf:
+          - $ref: '#/components/schemas/priceAmount'
+          description: Amount of the wallet load. Always in wallet currency. Expressed in smallest units of the currency (e.g. cents for EUR and USD, but yen for JPY).
+        currency:
+          $ref: '#/components/schemas/currency'
+        createdAt:
+          allOf:
+          - $ref: '#/components/schemas/dateTime'
+          description: The date the banking provider booked the wallet load (accounting date on SFS EEA accounts, value date on SFS GBP accounts, entry date on legacy accounts), not a record-creation timestamp.
+        type:
+          type: string
+          enum:
+          - card
+          - wireTransfer
+          description: The type of wallet load.
+        bankName:
+          type: string
+          enum:
+          - sfs
+          - adyen
+          - other
+          description: The name of the payment institution holding the account.
+      required:
+      - id
+      - amount
+      - currency
+      - createdAt
+      - type
+      title: walletLoad
+    bankFee:
+      additionalProperties: false
+      type: object
+      properties:
+        id:
+          type: string
+          description: ID of this bank fee entry. One bank fee can have several entries; group them with bankFeeId.
+        bankFeeId:
+          type: string
+          description: ID of the bank fee this entry belongs to.
+        kind:
+          type: string
+          enum:
+          - fxFee
+          - atmFee
+          - otherFee
+          description: '`fxFee` refers to fees incurred by a payment in a foreign currency, and `atmFee` refers to fees incurred at an atm, e.g. to withdraw cash.'
+        settlementId:
+          type: string
+          description: The ID of the Settlement related to this bank fee.
+        amount:
+          allOf:
+          - $ref: '#/components/schemas/priceAmount'
+          description: Amount of the fee, always in wallet currency. Expressed in smallest units of the currency (e.g. cents for EUR and USD, but yen for JPY).
+        currency:
+          $ref: '#/components/schemas/currency'
+        chargedAt:
+          allOf:
+          - $ref: '#/components/schemas/dateTime'
+          description: 'Date and time of this entry: when the bank fee was incurred for its first entry, and when it was corrected for a correction entry.'
+      required:
+      - id
+      - bankFeeId
+      - kind
+      - amount
+      - currency
+      - chargedAt
+      - settlementId
+      description: 'When money moves via a card being charged or with a wire-transfer, a Settlement is be created. If there were any fees for this transaction, such as FX fees, they will be recorded as a Bank fee. Each item is an append-only entry: a correction adds an entry for the difference, which can be zero or negative, so the amount of a fee is the sum of the amounts of its entries.'
+      title: bankFee
+    priceAmount:
+      type: number
+      description: 'If the payment was made in a foreign currency, this amount will be the one in the payment currency.
+
+        Can contain a negative value in case of refunds.
+
+        Expressed in smallest units of the currency (e.g. cents for EUR and USD, but yen for JPY).'
+      title: priceAmount
+  securitySchemes:
+    Authentication:
+      type: oauth2
+      description: 'A company-level token acts on the company it was issued for. An organisation-level token (experimental) acts on the companies of an organisation: send the target company in the `X-Company-Id` header on every call, except on `GET /v2/companies` and on `/v2/companies/{companyId}/…` routes, which carry the company in the path. See [Organisation-level access](/reference/organisation-level-access).'
+      flows:
+        clientCredentials:
+          tokenUrl: /v1/auth/token
+          scopes:
+            analytical-field:read: Analytical Fields (Read)
+            bank-fee:read: Spending Bank Fees (Read)
+            cost-center:read: Cost Center (Read)
+            cost-center:manage: Cost Center (Manage)
+            expense-category:read: Expense Category (Read)
+            payable:read: Spending Payables (Read)
+            payable-attachment:read: Spending Payable Attachments (Read)
+            settlement:read: Spending Settlements (Read)
+            supplier:read: Suppliers (Read)
+            user:read: Users (Read)
+            experimental:user:manage: Users (Manage)
+            wallet-load:read: Spending Wallet Loads (Read)
+            wallet-summary:read: Spending Wallet Summary (Read)
+            experimental:accounting-export:read: Accounting exports (Read)
+            experimental:accounting-export:write: Accounting exports (Write)
+            experimental:accounting:update: Accounting (Update)
+            experimental:chart-of-accounts:read: Chart of Accounts (Read)
+            experimental:chart-of-accounts:write: Chart of Accounts (Write)
+            experimental:purchase-order:read: Purchase Orders (Read)
+            experimental:purchase-order:write: Purchase Orders (Write)
+            experimental:webhooks:read: Webhooks (Read)
+            experimental:webhooks:write: Webhooks (Write)
+            experimental:supplier:manage: Suppliers (Manage)
+            experimental:company:read: Companies (Read)
+            experimental:payable-search:read: Payable Search (Read)
+            experimental:payable-attachment:write: Payable Attachments (Write)
+            experimental:card:read: Cards (Read)
+            experimental:card:write: Cards (Write)
+            experimental:request:read: Requests (Read)
+            experimental:transaction:read: Transactions (Read)
+            experimental:analytical-field-v2:read: Analytical Fields v2 (Read)
+            experimental:analytical-field-v2:write: Analytical Fields v2 (Write)
+            experimental:expense-category-v2:read: Expense Category Fields v2 (Read)
+            experimental:expense-category-v2:write: Expense Category Fields v2 (Write)
+            experimental:invoice:read: Invoices (Read) - experimental
+            experimental:intake:read: Intakes (Read)
+            experimental:intake:write: Intakes (Write)
+            experimental:external-reference:read: External References (Read)
+            experimental:external-reference:write: External References (Write)
+        authorizationCode:
+          authorizationUrl: /v1/oauth2/authorize
+          tokenUrl: /v1/oauth2/token/create
+          scopes:
+            analytical-field:read: Analytical Fields (Read)
+            bank-fee:read: Spending Bank Fees (Read)
+            cost-center:read: Cost Center (Read)
+            cost-center:manage: Cost Center (Manage)
+            expense-category:read: Expense Category (Read)
+            payable:read: Spending Payables (Read)
+            payable-attachment:read: Spending Payable Attachments (Read)
+            settlement:read: Spending Settlements (Read)
+            supplier:read: Suppliers (Read)
+            user:read: Users (Read)
+            experimental:user:manage: Users (Manage)
+            wallet-load:read: Spending Wallet Loads (Read)
+            wallet-summary:read: Spending Wallet Summary (Read)
+            experimental:accounting-export:read: Accounting exports (Read)
+            experimental:accounting-export:write: Accounting exports (Write)
+            experimental:accounting:update: Accounting (Update)
+            experimental:chart-of-accounts:read: Chart of Accounts (Read)
+            experimental:chart-of-accounts:write: Chart of Accounts (Write)
+            experimental:purchase-order:read: Purchase Orders (Read)
+            experimental:purchase-order:write: Purchase Orders (Write)
+            experimental:webhooks:read: Webhooks (Read)
+            experimental:webhooks:write: Webhooks (Write)
+            experimental:supplier:manage: Suppliers (Manage)
+            experimental:company:read: Companies (Read)
+            experimental:payable-search:read: Payable Search (Read)
+            experimental:payable-attachment:write: Payable Attachments (Write)
+            experimental:card:read: Cards (Read)
+            experimental:card:write: Cards (Write)
+            experimental:request:read: Requests (Read)
+            experimental:transaction:read: Transactions (Read)
+            experimental:analytical-field-v2:read: Analytical Fields v2 (Read)
+            experimental:analytical-field-v2:write: Analytical Fields v2 (Write)
+            experimental:expense-category-v2:read: Expense Category Fields v2 (Read)
+            experimental:expense-category-v2:write: Expense Category Fields v2 (Write)
+            experimental:invoice:read: Invoices (Read) - experimental
+            experimental:intake:read: Intakes (Read)
+            experimental:intake:write: Intakes (Write)
+            experimental:external-reference:read: External References (Read)
+            experimental:external-reference:write: External References (Write)
+x-provenance:
+  method: searched
+  source: https://developer.spendesk.com/reference
+  harvested: '2026-10-14'
+  tool: harvest-readme-openapi.py
+  note: Assembled verbatim from the OpenAPI definition ReadMe embeds in each operation page of the provider's developer portal; paths and components merged by API title, nothing authored.
+  assembled_from:
+  - https://developer.spendesk.com/reference/mcp-authorization-server-metadata.md
+  - https://developer.spendesk.com/reference/mcp-protected-resource-metadata-mcp.md
+  - https://developer.spendesk.com/reference/v1-assign-creditors-to-accounts.md
+  - https://developer.spendesk.com/reference/v1-cancel-purchase-order.md
+  - https://developer.spendesk.com/reference/v1-close-purchase-order.md
+  - https://developer.spendesk.com/reference/v1-create-account.md
+  - https://developer.spendesk.com/reference/v1-create-auth-token.md
+  - https://developer.spendesk.com/reference/v1-create-cost-centers.md
+  - https://developer.spendesk.com/reference/v1-create-journal.md
+  - https://developer.spendesk.com/reference/v1-create-oauth2-token.md
+  - https://developer.spendesk.com/reference/v1-create-payable-attachment-upload.md
+  - https://developer.spendesk.com/reference/v1-create-purchase-order.md
+  - https://developer.spendesk.com/reference/v1-create-snapshot-payables.md
+  - https://developer.spendesk.com/reference/v1-create-suppliers.md
+  - https://developer.spendesk.com/reference/v1-create-webhook.md
+  - https://developer.spendesk.com/reference/v1-delete-account.md
+  - https://developer.spendesk.com/reference/v1-delete-cost-centers.md
+  - https://developer.spendesk.com/reference/v1-delete-mcp.md
+  - https://developer.spendesk.com/reference/v1-delete-webhook.md
+  - https://developer.spendesk.com/reference/v1-get-account-by-id.md
+  - https://developer.spendesk.com/reference/v1-get-accounts.md
+  - https://developer.spendesk.com/reference/v1-get-analytical-field-values.md
+  - https://developer.spendesk.com/reference/v1-get-analytical-fields.md
+  - https://developer.spendesk.com/reference/v1-get-bank-fees.md
+  - https://developer.spendesk.com/reference/v1-get-card-blocking-history.md
+  - https://developer.spendesk.com/reference/v1-get-card-order.md
+  - https://developer.spendesk.com/reference/v1-get-card.md
+  - https://developer.spendesk.com/reference/v1-get-cards.md
+  - https://developer.spendesk.com/reference/v1-get-cost-centers.md
+  - https://developer.spendesk.com/reference/v1-get-expense-categories.md
+  - https://developer.spendesk.com/reference/v1-get-external-references.md
+  - https://developer.spendesk.com/reference/v1-get-failed-transactions.md
+  - https://developer.spendesk.com/reference/v1-get-integrations-export-status.md
+  - https://developer.spendesk.com/reference/v1-get-journal-templates.md
+  - https://developer.spendesk.com/reference/v1-get-journal.md
+  - https://developer.spendesk.com/reference/v1-get-mcp.md
+  - https://developer.spendesk.com/reference/v1-get-payable-attachments.md
+  - https://developer.spendesk.com/reference/v1-get-payable-by-id.md
+  - https://developer.spendesk.com/reference/v1-get-purchase-order-document.md
+  - https://developer.spendesk.com/reference/v1-get-purchase-order.md
+  - https://developer.spendesk.com/reference/v1-get-purchase-orders.md
+  - https://developer.spendesk.com/reference/v1-get-request.md
+  - https://developer.spendesk.com/reference/v1-get-requests.md
+  - https://developer.spendesk.com/reference/v1-get-settlements.md
+  - https://developer.spendesk.com/reference/v1-get-snapshot-payables.md
+  - https://developer.spendesk.com/reference/v1-get-successful-transactions.md
+  - https://developer.spendesk.com/reference/v1-get-supplier-by-id.md
+  - https://developer.spendesk.com/reference/v1-get-suppliers.md
+  - https://developer.spendesk.com/reference/v1-get-transactions.md
+  - https://developer.spendesk.com/reference/v1-get-user-by-id.md
+  - https://developer.spendesk.com/reference/v1-get-users.md
+  - https://developer.spendesk.com/reference/v1-get-wallet-loads.md
+  - https://developer.spendesk.com/reference/v1-get-wallet-summary.md
+  - https://developer.spendesk.com/reference/v1-get-webhook-by-id.md
+  - https://developer.spendesk.com/reference/v1-get-webhook.md
+  - https://developer.spendesk.com/reference/v1-patch-accounts.md
+  - https://developer.spendesk.com/reference/v1-patch-payable-accounting-fields.md
+  - https://developer.spendesk.com/reference/v1-patch-supplier-status.md
+  - https://developer.spendesk.com/reference/v1-patch-suppliers-status.md
+  - https://developer.spendesk.com/reference/v1-post-experimental-integrations-refresh-settings.md
+  - https://developer.spendesk.com/reference/v1-post-mcp.md
+  - https://developer.spendesk.com/reference/v1-post-payable-mark-as-ready.md
+  - https://developer.spendesk.com/reference/v1-put-payables-bookkeeping-status.md
+  - https://developer.spendesk.com/reference/v1-put-settlements-state.md
+  - https://developer.spendesk.com/reference/v1-refresh-oauth2-token.md
+  - https://developer.spendesk.com/reference/v1-register-oauth2-client.md
+  - https://developer.spendesk.com/reference/v1-remove-creditors-from-accounts.md
+  - https://developer.spendesk.com/reference/v1-request-authorization.md
+  - https://developer.spendesk.com/reference/v1-search-creditor-account-assignments.md
+  - https://developer.spendesk.com/reference/v1-search-payables.md
+  - https://developer.spendesk.com/reference/v1-set-account-purpose.md
+  - https://developer.spendesk.com/reference/v1-sync-accounts.md
+  - https://developer.spendesk.com/reference/v1-update-cost-centers.md
+  - https://developer.spendesk.com/reference/v1-update-supplier.md
+  - https://developer.spendesk.com/reference/v1-update-suppliers.md
+  - https://developer.spendesk.com/reference/v1-update-webhook.md
+  - https://developer.spendesk.com/reference/v1-upsert-external-references.md
+  - https://developer.spendesk.com/reference/v2-create-analytical-field-value.md
+  - https://developer.spendesk.com/reference/v2-create-analytical-field.md
+  - https://developer.spendesk.com/reference/v2-create-expense-category-field.md
+  - https://developer.spendesk.com/reference/v2-create-expense-category.md
+  - https://developer.spendesk.com/reference/v2-create-intake-file-upload.md
+  - https://developer.spendesk.com/reference/v2-delete-analytical-field-value.md
+  - https://developer.spendesk.com/reference/v2-delete-analytical-field.md
+  - https://developer.spendesk.com/reference/v2-delete-expense-category-field.md
+  - https://developer.spendesk.com/reference/v2-delete-expense-category.md
+  - https://developer.spendesk.com/reference/v2-get-analytical-field-value.md
+  - https://developer.spendesk.com/reference/v2-get-analytical-field.md
+  - https://developer.spendesk.com/reference/v2-get-companies.md
+  - https://developer.spendesk.com/reference/v2-get-company-intake.md
+  - https://developer.spendesk.com/reference/v2-get-expense-category-field.md
+  - https://developer.spendesk.com/reference/v2-get-expense-category.md
+  - https://developer.spendesk.com/reference/v2-get-intake-file-upload-status.md
+  - https://developer.spendesk.com/reference/v2-get-invoice.md
+  - https://developer.spendesk.com/reference/v2-get-invoices-summary.md
+  - https://developer.spendesk.com/reference/v2-list-analytical-field-values.md
+  - https://developer.spendesk.com/reference/v2-list-analytical-fields.md
+  - https://developer.spendesk.com/reference/v2-list-company-intakes.md
+  - https://developer.spendesk.com/reference/v2-list-expense-categories.md
+  - https://developer.spendesk.com/reference/v2-list-expense-category-fields.md
+  - https://developer.spendesk.com/reference/v2-list-invoices.md
+  - https://developer.spendesk.com/reference/v2-post-company-intakes.md
+  - https://developer.spendesk.com/reference/v2-update-analytical-field-value.md
+  - https://developer.spendesk.com/reference/v2-update-analytical-field.md
+  - https://developer.spendesk.com/reference/v2-update-expense-category-field.md
+  - https://developer.spendesk.com/reference/v2-update-expense-category.md
+  merge:
+    pages: 106
+    deduped: 1705
+    conflicts_kept_first: 0

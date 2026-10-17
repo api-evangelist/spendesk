@@ -1,0 +1,997 @@
+openapi: 3.2.0
+info:
+  title: Spendesk Public External references API
+  description: Spendesk Public API
+  version: '1.0'
+  summary: Spendesk Public API
+  contact:
+    email: support-public-api@spendesk.com
+    url: https://developer.spendesk.com/
+    name: Spendesk for Developers
+  termsOfService: https://www.spendesk.com/en/legals/terms/api-agreement
+servers:
+- url: https://public-api.spendesk.com
+  description: Production
+- url: https://public-api.demo.spendesk.com
+  description: Sandbox
+tags:
+- name: External references
+  description: 'Experimental: store and look up the IDs your ERP gives to Spendesk objects — suppliers, cost centers, expense categories, analytical fields and values, accounts — per provider. Part of: Building an accounting integration.'
+paths:
+  /v1/experimental/external-references:
+    get:
+      operationId: v1-get-external-references
+      summary: Get external references
+      tags:
+      - External references
+      description: '**Allowed Scopes**: _`experimental:external-reference:read`_
+
+
+        Returns the IDs Spendesk entities have in an external system (ERP), as one entry per
+
+        (entity, external ID) pair. Filter by `entityIds` to get the external IDs of entities you
+
+        already know, or by `externalIds` to resolve external IDs back to Spendesk entities — at
+
+        least one of the two is required.
+
+
+        Where the reference is stored is an implementation detail. Reference entities (`supplier`,
+
+        `employee`, `analyticalField`, `analyticalFieldValue`, `costCenter`, `expenseCategory`,
+
+        `customField`) are served from the entity registry; exportable entities (`payable`,
+
+        `settlementAllocation`, `walletLoad`, `bankFee`, `documentaryEvidenceAttachment`,
+
+        `creditNoteAllocation`) from the export state, where only exported entities carry an external
+
+        ID; and the account kinds from the chart of accounts.
+
+
+        The chart of accounts is addressed one account type at a time — `bankAccount`,
+
+        `expenseAccount`, `taxAccount`, `supplierAccount`, `employeeAccount` or
+
+        `reverseChargeAccount` — each returning only accounts of that type. An account''s type is
+
+        part of what identifies it, so there is no unqualified spelling. The suffix is required
+
+        because `supplier` and `employee` already name reference entities. For these, `entityId` is the
+
+        account id and `externalName` is the account name; archived accounts and accounts without an
+
+        external ID are never returned, and `provider` and `source` are always null because an
+
+        account row records no provenance — so filtering by either returns no accounts.
+
+
+        `source` tells you who recorded the mapping: `native_integration` means a native ERP sync
+
+        owns it and keeps it up to date, `public_api` means it was set through this API.
+
+
+        Cached for up to 24 hours. Changes made through the API are returned by subsequent reads; changes made in Spendesk can take up to 24 hours to appear.'
+      parameters:
+      - schema:
+          type: string
+          enum:
+          - supplier
+          - employee
+          - analyticalField
+          - analyticalFieldValue
+          - costCenter
+          - expenseCategory
+          - customField
+          - bankAccount
+          - expenseAccount
+          - taxAccount
+          - supplierAccount
+          - employeeAccount
+          - reverseChargeAccount
+          - payable
+          - settlementAllocation
+          - walletLoad
+          - bankFee
+          - documentaryEvidenceAttachment
+          - creditNoteAllocation
+        in: query
+        name: entityType
+        required: true
+        description: 'Kind of Spendesk entity. Reference entities: `supplier`, `employee`, `analyticalField`, `analyticalFieldValue`, `costCenter`, `expenseCategory`, `customField`. Chart of accounts, one account type at a time: `bankAccount`, `expenseAccount`, `taxAccount`, `supplierAccount`, `employeeAccount`, `reverseChargeAccount` — each also asserts the target account''s own type. Exportable entities: `payable`, `settlementAllocation`, `walletLoad`, `bankFee`, `documentaryEvidenceAttachment`, `creditNoteAllocation`.'
+      - schema:
+          anyOf:
+          - type: string
+          - type: array
+            items:
+              type: string
+        in: query
+        name: entityIds
+        required: false
+        description: Filter by Spendesk entity ids (comma-separated).
+      - schema:
+          anyOf:
+          - type: string
+          - type: array
+            items:
+              type: string
+        in: query
+        name: externalIds
+        required: false
+        description: Filter by external ids (comma-separated).
+      - schema:
+          type: string
+          minLength: 1
+        in: query
+        name: provider
+        required: false
+        description: Filter by external system.
+      - schema:
+          type: string
+          enum:
+          - native_integration
+          - public_api
+        in: query
+        name: source
+        required: false
+        description: Filter by who recorded the mapping.
+      - schema:
+          type: integer
+          minimum: 1
+        in: query
+        name: first
+        required: false
+        description: Cap the number of returned references. Not a paging cursor.
+      - schema:
+          type: string
+        in: header
+        name: X-Company-Id
+        required: false
+        description: ID of the company the request acts on. Required with an organisation-level token; not needed with a company-level token.
+      security:
+      - Authentication:
+        - experimental:external-reference:read
+      x-roles:
+      - controller
+      - admin
+      - accountOwner
+      responses:
+        '200':
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      additionalProperties: false
+                      properties:
+                        entityType:
+                          type: string
+                        entityId:
+                          type: string
+                        componentId:
+                          type:
+                          - 'null'
+                          - string
+                          description: Set only for exportable entities addressed per component, such as a documentary-evidence attachment.
+                        externalId:
+                          type: string
+                        externalName:
+                          type:
+                          - 'null'
+                          - string
+                          description: Null for exportable entities — the export state records no name.
+                        provider:
+                          type:
+                          - 'null'
+                          - string
+                        source:
+                          type:
+                          - 'null'
+                          - string
+                        updatedAt:
+                          type:
+                          - 'null'
+                          - string
+                      required:
+                      - entityType
+                      - entityId
+                      - externalId
+                required:
+                - data
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/badRequest'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/unauthorized'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/forbidden'
+        '429':
+          description: Too Many Requests
+          headers:
+            retry-after:
+              schema:
+                type: integer
+              description: Seconds to wait before retrying the request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/tooManyRequests'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/internalServerError'
+        '503':
+          description: Service Unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/serviceUnavailableError'
+    post:
+      operationId: v1-upsert-external-references
+      summary: Upsert external references
+      tags:
+      - External references
+      description: '**Allowed Scopes**: _`experimental:external-reference:write`_
+
+
+        Records the ID a Spendesk entity has in an external system (ERP), namespaced by `provider`.
+
+        Re-sending the same `(entityType, provider, externalId)` updates the existing record.
+
+
+        **Recording an external ID for an exportable entity** (payable, settlementAllocation,
+
+        walletLoad, bankFee, documentaryEvidenceAttachment, creditNoteAllocation) **also records that
+
+        entity as exported** to the given provider, and it will then appear under
+
+        `GET /v1/experimental/integrations/export-status?status=exported`. Use it when you have
+
+        genuinely exported the entity to your own system. For reference entities (`supplier`,
+
+        `employee`, `analyticalField`, `analyticalFieldValue`, `costCenter`, `expenseCategory`,
+
+        `customField`) the write only stores the mapping and has no export side effect.
+
+
+        **For the account kinds** the external ID is set on the account itself, so `entityId` is the
+
+        account id — never the id of the supplier or employee an account of that type points at — and
+
+        `provider`, `externalName` and `componentId` are ignored, since an account row has nowhere
+
+        to keep them. `provider` is still required because the other kinds need it; send any non-empty
+
+        value. The account kinds are `bankAccount`, `expenseAccount`, `taxAccount`,
+
+        `supplierAccount`, `employeeAccount` and `reverseChargeAccount`; each asserts the target
+
+        account''s own type, and the write is refused if it disagrees rather than applied to the wrong
+
+        account. There is no unqualified spelling, since an account''s type is part of what identifies
+
+        it. An external ID must identify a
+
+        single account, so a write is also refused when another active account of the same type and
+
+        purpose already holds the value, and when a second reference in the same request gives one
+
+        account a different external ID.
+
+
+        Companies whose ERP is connected through a **native** integration cannot set external IDs at all:
+
+        Spendesk talks to that ERP directly and owns the mappings end to end. For accounts that is what
+
+        keeps the chart of accounts safe — it is synced from the ERP, and `externalId` is the ERP''s own
+
+        key, so an API value there would be overwritten by the next sync.
+
+
+        Two exportable cases behave differently. While a **native** integration is mid-export for the
+
+        entity the write is refused: that integration owns the export it is running and records its own
+
+        external ID when the ERP answers. While a **file-based** export is mid-flight the external ID is
+
+        stored but the export state is left untouched, since that export is not ours to complete.
+
+
+        A native integration always takes precedence, and an API write never overwrites a value it owns.
+
+        For a reference entity the write is refused when a native sync already records an external ID for
+
+        that entity under the same `provider`, or when the external ID itself already belongs to a
+
+        natively synced entity — a different `provider` is still accepted, since references are
+
+        namespaced per ERP. For an exportable entity the write is refused whenever a native external ID
+
+        is already recorded, whatever `provider` you send, because there is a single external ID per
+
+        entity and component. Values you recorded through this API can be corrected freely.
+
+
+        Purchase orders are not accepted: `externalPONumber` is set on the purchase order itself at
+
+        creation time, so a second copy here would compete with it.
+
+
+        Each reference gets its own `outcome`, in request order — `exported` when the entity is now
+
+        recorded as exported, `recorded` when the external ID was stored but the export state was left
+
+        alone, `mapped` for a reference-entity or account write, and `failed` with a `reason`
+
+        otherwise. A batch may
+
+        mix entity kinds, so it can partially succeed: check every entry rather than the status code alone.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                references:
+                  type: array
+                  minItems: 1
+                  maxItems: 500
+                  items:
+                    type: object
+                    additionalProperties: false
+                    properties:
+                      entityType:
+                        type: string
+                        enum:
+                        - supplier
+                        - employee
+                        - analyticalField
+                        - analyticalFieldValue
+                        - costCenter
+                        - expenseCategory
+                        - customField
+                        - bankAccount
+                        - expenseAccount
+                        - taxAccount
+                        - supplierAccount
+                        - employeeAccount
+                        - reverseChargeAccount
+                        - payable
+                        - settlementAllocation
+                        - walletLoad
+                        - bankFee
+                        - documentaryEvidenceAttachment
+                        - creditNoteAllocation
+                        description: 'Kind of Spendesk entity. Reference entities: `supplier`, `employee`, `analyticalField`, `analyticalFieldValue`, `costCenter`, `expenseCategory`, `customField`. Chart of accounts, one account type at a time: `bankAccount`, `expenseAccount`, `taxAccount`, `supplierAccount`, `employeeAccount`, `reverseChargeAccount` — each also asserts the target account''s own type. Exportable entities: `payable`, `settlementAllocation`, `walletLoad`, `bankFee`, `documentaryEvidenceAttachment`, `creditNoteAllocation`.'
+                      entityId:
+                        type: string
+                        minLength: 1
+                        description: The Spendesk entity id the external ID maps to.
+                      provider:
+                        type: string
+                        minLength: 1
+                        description: The external system the external ID belongs to (e.g. Netsuite, Xero).
+                      externalId:
+                        type: string
+                        minLength: 1
+                        description: The ID of the entity in the external system.
+                      externalName:
+                        type: string
+                        description: Human-readable name of the external entity. Reference entities only; defaults to `externalId`.
+                      componentId:
+                        type: string
+                        minLength: 1
+                        description: Exportable entities only. Required when an entity has more than one exportable component, such as a documentary-evidence attachment, otherwise the write is refused as ambiguous.
+                    required:
+                    - entityType
+                    - entityId
+                    - provider
+                    - externalId
+              required:
+              - references
+      parameters:
+      - schema:
+          type: string
+        in: header
+        name: X-Company-Id
+        required: false
+        description: ID of the company the request acts on. Required with an organisation-level token; not needed with a company-level token.
+      security:
+      - Authentication:
+        - experimental:external-reference:write
+      x-roles:
+      - controller
+      - admin
+      - accountOwner
+      responses:
+        '200':
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      additionalProperties: false
+                      properties:
+                        entityType:
+                          type: string
+                        entityId:
+                          type: string
+                        externalId:
+                          type: string
+                        outcome:
+                          type: string
+                          enum:
+                          - exported
+                          - recorded
+                          - mapped
+                          - failed
+                        reason:
+                          type: string
+                          description: Set when `outcome` is `failed`.
+                      required:
+                      - entityType
+                      - entityId
+                      - externalId
+                      - outcome
+                required:
+                - data
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/badRequest'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/unauthorized'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/forbidden'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/notFound'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/conflict'
+        '413':
+          description: Payload Too Large
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/tooLarge'
+        '415':
+          description: Unsupported Media Type
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/unsupportedMediaType'
+        '429':
+          description: Too Many Requests
+          headers:
+            retry-after:
+              schema:
+                type: integer
+              description: Seconds to wait before retrying the request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/tooManyRequests'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/internalServerError'
+        '503':
+          description: Service Unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/serviceUnavailableError'
+components:
+  schemas:
+    tooLarge:
+      type: object
+      description: Payload Too Large
+      additionalProperties: false
+      properties:
+        correlationId:
+          type: string
+        errors:
+          type: array
+          items:
+            additionalProperties: false
+            type: object
+            properties:
+              code:
+                type: string
+                enum:
+                - LARGE_BODY_ERROR
+              detail:
+                type: string
+                enum:
+                - 'The request is too large for this endpoint: send a smaller body or a smaller file.'
+            required:
+            - code
+            - detail
+      required:
+      - errors
+      title: tooLarge
+    forbidden:
+      type: object
+      description: Forbidden
+      additionalProperties: false
+      properties:
+        correlationId:
+          type: string
+        errors:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            properties:
+              code:
+                type: string
+                enum:
+                - FORBIDDEN_ERROR
+              detail:
+                type: string
+            required:
+            - code
+            - detail
+      required:
+      - errors
+      title: forbidden
+    unauthorized:
+      type: object
+      description: Unauthorized
+      additionalProperties: false
+      properties:
+        correlationId:
+          type: string
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              code:
+                type: string
+                enum:
+                - AUTHENTICATION_ERROR
+              detail:
+                type: string
+            required:
+            - code
+            - detail
+      required:
+      - errors
+      title: unauthorized
+    notFound:
+      type: object
+      description: Not Found
+      additionalProperties: false
+      properties:
+        correlationId:
+          type: string
+        errors:
+          type: array
+          items:
+            additionalProperties: false
+            type: object
+            properties:
+              code:
+                type: string
+                enum:
+                - NOT_FOUND
+              detail:
+                type: string
+            required:
+            - code
+            - detail
+      required:
+      - errors
+      title: notFound
+    unsupportedMediaType:
+      type: object
+      description: Unsupported Media Type
+      additionalProperties: false
+      properties:
+        correlationId:
+          type: string
+        errors:
+          type: array
+          items:
+            additionalProperties: false
+            type: object
+            properties:
+              code:
+                type: string
+                enum:
+                - UNSUPPORTED_MEDIA_TYPE_ERROR
+              detail:
+                type: string
+                enum:
+                - 'The Content-Type of the request is not supported: send application/json, or application/x-www-form-urlencoded where the endpoint documents it.'
+            required:
+            - code
+            - detail
+      required:
+      - errors
+      title: unsupportedMediaType
+    serviceUnavailableError:
+      type: object
+      description: Service Unavailable
+      additionalProperties: false
+      properties:
+        correlationId:
+          type: string
+        errors:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            properties:
+              code:
+                type: string
+                enum:
+                - SERVICE_UNAVAILABLE_ERROR
+              detail:
+                type: string
+            required:
+            - code
+            - detail
+      required:
+      - errors
+      title: serviceUnavailableError
+    tooManyRequests:
+      type: object
+      description: Too Many Requests
+      additionalProperties: false
+      properties:
+        correlationId:
+          type: string
+        errors:
+          type: array
+          items:
+            additionalProperties: false
+            type: object
+            properties:
+              code:
+                type: string
+                enum:
+                - TOO_MANY_REQUESTS
+              detail:
+                type: string
+            required:
+            - code
+            - detail
+      required:
+      - errors
+      title: tooManyRequests
+    internalServerError:
+      type: object
+      description: Internal Server Error
+      additionalProperties: false
+      properties:
+        correlationId:
+          type: string
+        errors:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            properties:
+              code:
+                type: string
+                enum:
+                - INTERNAL_SERVER_ERROR
+              detail:
+                type: string
+                enum:
+                - Sorry, something has gone wrong at our end. If this persists please contact support.
+            required:
+            - code
+            - detail
+      required:
+      - errors
+      title: internalServerError
+    conflict:
+      type: object
+      description: Conflict
+      additionalProperties: false
+      properties:
+        correlationId:
+          type: string
+        errors:
+          type: array
+          items:
+            additionalProperties: false
+            type: object
+            properties:
+              code:
+                type: string
+                enum:
+                - CONFLICT_ERROR
+              detail:
+                type: string
+            required:
+            - code
+            - detail
+      required:
+      - errors
+      title: conflict
+    badRequest:
+      type: object
+      description: Bad request
+      additionalProperties: false
+      properties:
+        correlationId:
+          type: string
+        errors:
+          type: array
+          items:
+            additionalProperties: false
+            type: object
+            properties:
+              code:
+                type: string
+                enum:
+                - BAD_REQUEST_INCORRECT_OR_MISSING_FIELD
+                - RESPONSE_TOO_LARGE
+              detail:
+                type: string
+              source:
+                type: string
+            required:
+            - code
+            - detail
+            - source
+      required:
+      - errors
+      title: badRequest
+  securitySchemes:
+    Authentication:
+      type: oauth2
+      description: 'A company-level token acts on the company it was issued for. An organisation-level token (experimental) acts on the companies of an organisation: send the target company in the `X-Company-Id` header on every call, except on `GET /v2/companies` and on `/v2/companies/{companyId}/…` routes, which carry the company in the path. See [Organisation-level access](/reference/organisation-level-access).'
+      flows:
+        clientCredentials:
+          tokenUrl: /v1/auth/token
+          scopes:
+            analytical-field:read: Analytical Fields (Read)
+            bank-fee:read: Spending Bank Fees (Read)
+            cost-center:read: Cost Center (Read)
+            cost-center:manage: Cost Center (Manage)
+            expense-category:read: Expense Category (Read)
+            payable:read: Spending Payables (Read)
+            payable-attachment:read: Spending Payable Attachments (Read)
+            settlement:read: Spending Settlements (Read)
+            supplier:read: Suppliers (Read)
+            user:read: Users (Read)
+            experimental:user:manage: Users (Manage)
+            wallet-load:read: Spending Wallet Loads (Read)
+            wallet-summary:read: Spending Wallet Summary (Read)
+            experimental:accounting-export:read: Accounting exports (Read)
+            experimental:accounting-export:write: Accounting exports (Write)
+            experimental:accounting:update: Accounting (Update)
+            experimental:chart-of-accounts:read: Chart of Accounts (Read)
+            experimental:chart-of-accounts:write: Chart of Accounts (Write)
+            experimental:purchase-order:read: Purchase Orders (Read)
+            experimental:purchase-order:write: Purchase Orders (Write)
+            experimental:webhooks:read: Webhooks (Read)
+            experimental:webhooks:write: Webhooks (Write)
+            experimental:supplier:manage: Suppliers (Manage)
+            experimental:company:read: Companies (Read)
+            experimental:payable-search:read: Payable Search (Read)
+            experimental:payable-attachment:write: Payable Attachments (Write)
+            experimental:card:read: Cards (Read)
+            experimental:card:write: Cards (Write)
+            experimental:request:read: Requests (Read)
+            experimental:transaction:read: Transactions (Read)
+            experimental:analytical-field-v2:read: Analytical Fields v2 (Read)
+            experimental:analytical-field-v2:write: Analytical Fields v2 (Write)
+            experimental:expense-category-v2:read: Expense Category Fields v2 (Read)
+            experimental:expense-category-v2:write: Expense Category Fields v2 (Write)
+            experimental:invoice:read: Invoices (Read) - experimental
+            experimental:intake:read: Intakes (Read)
+            experimental:intake:write: Intakes (Write)
+            experimental:external-reference:read: External References (Read)
+            experimental:external-reference:write: External References (Write)
+        authorizationCode:
+          authorizationUrl: /v1/oauth2/authorize
+          tokenUrl: /v1/oauth2/token/create
+          scopes:
+            analytical-field:read: Analytical Fields (Read)
+            bank-fee:read: Spending Bank Fees (Read)
+            cost-center:read: Cost Center (Read)
+            cost-center:manage: Cost Center (Manage)
+            expense-category:read: Expense Category (Read)
+            payable:read: Spending Payables (Read)
+            payable-attachment:read: Spending Payable Attachments (Read)
+            settlement:read: Spending Settlements (Read)
+            supplier:read: Suppliers (Read)
+            user:read: Users (Read)
+            experimental:user:manage: Users (Manage)
+            wallet-load:read: Spending Wallet Loads (Read)
+            wallet-summary:read: Spending Wallet Summary (Read)
+            experimental:accounting-export:read: Accounting exports (Read)
+            experimental:accounting-export:write: Accounting exports (Write)
+            experimental:accounting:update: Accounting (Update)
+            experimental:chart-of-accounts:read: Chart of Accounts (Read)
+            experimental:chart-of-accounts:write: Chart of Accounts (Write)
+            experimental:purchase-order:read: Purchase Orders (Read)
+            experimental:purchase-order:write: Purchase Orders (Write)
+            experimental:webhooks:read: Webhooks (Read)
+            experimental:webhooks:write: Webhooks (Write)
+            experimental:supplier:manage: Suppliers (Manage)
+            experimental:company:read: Companies (Read)
+            experimental:payable-search:read: Payable Search (Read)
+            experimental:payable-attachment:write: Payable Attachments (Write)
+            experimental:card:read: Cards (Read)
+            experimental:card:write: Cards (Write)
+            experimental:request:read: Requests (Read)
+            experimental:transaction:read: Transactions (Read)
+            experimental:analytical-field-v2:read: Analytical Fields v2 (Read)
+            experimental:analytical-field-v2:write: Analytical Fields v2 (Write)
+            experimental:expense-category-v2:read: Expense Category Fields v2 (Read)
+            experimental:expense-category-v2:write: Expense Category Fields v2 (Write)
+            experimental:invoice:read: Invoices (Read) - experimental
+            experimental:intake:read: Intakes (Read)
+            experimental:intake:write: Intakes (Write)
+            experimental:external-reference:read: External References (Read)
+            experimental:external-reference:write: External References (Write)
+x-provenance:
+  method: searched
+  source: https://developer.spendesk.com/reference
+  harvested: '2026-10-14'
+  tool: harvest-readme-openapi.py
+  note: Assembled verbatim from the OpenAPI definition ReadMe embeds in each operation page of the provider's developer portal; paths and components merged by API title, nothing authored.
+  assembled_from:
+  - https://developer.spendesk.com/reference/mcp-authorization-server-metadata.md
+  - https://developer.spendesk.com/reference/mcp-protected-resource-metadata-mcp.md
+  - https://developer.spendesk.com/reference/v1-assign-creditors-to-accounts.md
+  - https://developer.spendesk.com/reference/v1-cancel-purchase-order.md
+  - https://developer.spendesk.com/reference/v1-close-purchase-order.md
+  - https://developer.spendesk.com/reference/v1-create-account.md
+  - https://developer.spendesk.com/reference/v1-create-auth-token.md
+  - https://developer.spendesk.com/reference/v1-create-cost-centers.md
+  - https://developer.spendesk.com/reference/v1-create-journal.md
+  - https://developer.spendesk.com/reference/v1-create-oauth2-token.md
+  - https://developer.spendesk.com/reference/v1-create-payable-attachment-upload.md
+  - https://developer.spendesk.com/reference/v1-create-purchase-order.md
+  - https://developer.spendesk.com/reference/v1-create-snapshot-payables.md
+  - https://developer.spendesk.com/reference/v1-create-suppliers.md
+  - https://developer.spendesk.com/reference/v1-create-webhook.md
+  - https://developer.spendesk.com/reference/v1-delete-account.md
+  - https://developer.spendesk.com/reference/v1-delete-cost-centers.md
+  - https://developer.spendesk.com/reference/v1-delete-mcp.md
+  - https://developer.spendesk.com/reference/v1-delete-webhook.md
+  - https://developer.spendesk.com/reference/v1-get-account-by-id.md
+  - https://developer.spendesk.com/reference/v1-get-accounts.md
+  - https://developer.spendesk.com/reference/v1-get-analytical-field-values.md
+  - https://developer.spendesk.com/reference/v1-get-analytical-fields.md
+  - https://developer.spendesk.com/reference/v1-get-bank-fees.md
+  - https://developer.spendesk.com/reference/v1-get-card-blocking-history.md
+  - https://developer.spendesk.com/reference/v1-get-card-order.md
+  - https://developer.spendesk.com/reference/v1-get-card.md
+  - https://developer.spendesk.com/reference/v1-get-cards.md
+  - https://developer.spendesk.com/reference/v1-get-cost-centers.md
+  - https://developer.spendesk.com/reference/v1-get-expense-categories.md
+  - https://developer.spendesk.com/reference/v1-get-external-references.md
+  - https://developer.spendesk.com/reference/v1-get-failed-transactions.md
+  - https://developer.spendesk.com/reference/v1-get-integrations-export-status.md
+  - https://developer.spendesk.com/reference/v1-get-journal-templates.md
+  - https://developer.spendesk.com/reference/v1-get-journal.md
+  - https://developer.spendesk.com/reference/v1-get-mcp.md
+  - https://developer.spendesk.com/reference/v1-get-payable-attachments.md
+  - https://developer.spendesk.com/reference/v1-get-payable-by-id.md
+  - https://developer.spendesk.com/reference/v1-get-purchase-order-document.md
+  - https://developer.spendesk.com/reference/v1-get-purchase-order.md
+  - https://developer.spendesk.com/reference/v1-get-purchase-orders.md
+  - https://developer.spendesk.com/reference/v1-get-request.md
+  - https://developer.spendesk.com/reference/v1-get-requests.md
+  - https://developer.spendesk.com/reference/v1-get-settlements.md
+  - https://developer.spendesk.com/reference/v1-get-snapshot-payables.md
+  - https://developer.spendesk.com/reference/v1-get-successful-transactions.md
+  - https://developer.spendesk.com/reference/v1-get-supplier-by-id.md
+  - https://developer.spendesk.com/reference/v1-get-suppliers.md
+  - https://developer.spendesk.com/reference/v1-get-transactions.md
+  - https://developer.spendesk.com/reference/v1-get-user-by-id.md
+  - https://developer.spendesk.com/reference/v1-get-users.md
+  - https://developer.spendesk.com/reference/v1-get-wallet-loads.md
+  - https://developer.spendesk.com/reference/v1-get-wallet-summary.md
+  - https://developer.spendesk.com/reference/v1-get-webhook-by-id.md
+  - https://developer.spendesk.com/reference/v1-get-webhook.md
+  - https://developer.spendesk.com/reference/v1-patch-accounts.md
+  - https://developer.spendesk.com/reference/v1-patch-payable-accounting-fields.md
+  - https://developer.spendesk.com/reference/v1-patch-supplier-status.md
+  - https://developer.spendesk.com/reference/v1-patch-suppliers-status.md
+  - https://developer.spendesk.com/reference/v1-post-experimental-integrations-refresh-settings.md
+  - https://developer.spendesk.com/reference/v1-post-mcp.md
+  - https://developer.spendesk.com/reference/v1-post-payable-mark-as-ready.md
+  - https://developer.spendesk.com/reference/v1-put-payables-bookkeeping-status.md
+  - https://developer.spendesk.com/reference/v1-put-settlements-state.md
+  - https://developer.spendesk.com/reference/v1-refresh-oauth2-token.md
+  - https://developer.spendesk.com/reference/v1-register-oauth2-client.md
+  - https://developer.spendesk.com/reference/v1-remove-creditors-from-accounts.md
+  - https://developer.spendesk.com/reference/v1-request-authorization.md
+  - https://developer.spendesk.com/reference/v1-search-creditor-account-assignments.md
+  - https://developer.spendesk.com/reference/v1-search-payables.md
+  - https://developer.spendesk.com/reference/v1-set-account-purpose.md
+  - https://developer.spendesk.com/reference/v1-sync-accounts.md
+  - https://developer.spendesk.com/reference/v1-update-cost-centers.md
+  - https://developer.spendesk.com/reference/v1-update-supplier.md
+  - https://developer.spendesk.com/reference/v1-update-suppliers.md
+  - https://developer.spendesk.com/reference/v1-update-webhook.md
+  - https://developer.spendesk.com/reference/v1-upsert-external-references.md
+  - https://developer.spendesk.com/reference/v2-create-analytical-field-value.md
+  - https://developer.spendesk.com/reference/v2-create-analytical-field.md
+  - https://developer.spendesk.com/reference/v2-create-expense-category-field.md
+  - https://developer.spendesk.com/reference/v2-create-expense-category.md
+  - https://developer.spendesk.com/reference/v2-create-intake-file-upload.md
+  - https://developer.spendesk.com/reference/v2-delete-analytical-field-value.md
+  - https://developer.spendesk.com/reference/v2-delete-analytical-field.md
+  - https://developer.spendesk.com/reference/v2-delete-expense-category-field.md
+  - https://developer.spendesk.com/reference/v2-delete-expense-category.md
+  - https://developer.spendesk.com/reference/v2-get-analytical-field-value.md
+  - https://developer.spendesk.com/reference/v2-get-analytical-field.md
+  - https://developer.spendesk.com/reference/v2-get-companies.md
+  - https://developer.spendesk.com/reference/v2-get-company-intake.md
+  - https://developer.spendesk.com/reference/v2-get-expense-category-field.md
+  - https://developer.spendesk.com/reference/v2-get-expense-category.md
+  - https://developer.spendesk.com/reference/v2-get-intake-file-upload-status.md
+  - https://developer.spendesk.com/reference/v2-get-invoice.md
+  - https://developer.spendesk.com/reference/v2-get-invoices-summary.md
+  - https://developer.spendesk.com/reference/v2-list-analytical-field-values.md
+  - https://developer.spendesk.com/reference/v2-list-analytical-fields.md
+  - https://developer.spendesk.com/reference/v2-list-company-intakes.md
+  - https://developer.spendesk.com/reference/v2-list-expense-categories.md
+  - https://developer.spendesk.com/reference/v2-list-expense-category-fields.md
+  - https://developer.spendesk.com/reference/v2-list-invoices.md
+  - https://developer.spendesk.com/reference/v2-post-company-intakes.md
+  - https://developer.spendesk.com/reference/v2-update-analytical-field-value.md
+  - https://developer.spendesk.com/reference/v2-update-analytical-field.md
+  - https://developer.spendesk.com/reference/v2-update-expense-category-field.md
+  - https://developer.spendesk.com/reference/v2-update-expense-category.md
+  merge:
+    pages: 106
+    deduped: 1705
+    conflicts_kept_first: 0

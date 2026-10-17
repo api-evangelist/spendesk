@@ -1,0 +1,3569 @@
+openapi: 3.2.0
+info:
+  title: Spendesk Public Invoices and intakes API
+  description: Spendesk Public API
+  version: '1.0'
+  summary: Spendesk Public API
+  contact:
+    email: support-public-api@spendesk.com
+    url: https://developer.spendesk.com/
+    name: Spendesk for Developers
+  termsOfService: https://www.spendesk.com/en/legals/terms/api-agreement
+servers:
+- url: https://public-api.spendesk.com
+  description: Production
+- url: https://public-api.demo.spendesk.com
+  description: Sandbox
+tags:
+- name: Invoices and intakes
+  description: 'Experimental supplier invoices and invoice intake: send invoices and credit notes to a company''s inbox by uploading their file, track the intakes, then list, summarise and retrieve the invoices.'
+paths:
+  /v2/companies/{companyId}/intakes:
+    post:
+      operationId: v2-post-company-intakes
+      summary: Create an intake
+      tags:
+      - Invoices and intakes
+      description: '**Allowed Scopes**: _`experimental:intake:write`_
+
+
+        Create a new incoming invoice or credit note for a company''s invoice inbox. This is step 3 of 3 in creating an intake from a document.
+
+
+        `documentId` is required and comes from an earlier upload: create one with Create an intake file upload, send the file to the presigned URL, then poll Get an intake file upload status until it reports `ready` and returns the `documentId`.
+
+
+        **Idempotent retries.** Send an optional `Idempotency-Key` header, any string of 1 to 255 characters such as your own system or ERP reference, to make a retry safe. Repeating a request with the same key for the same company returns `201` with the original intake and `alreadyExisted: true`, and creates nothing. The key is scoped to the company, so the same key sent by two companies creates two intakes, and it never expires. Once an intake is deleted, its key stays spent: retrying with it returns `409` rather than recreating the intake.
+
+
+        Note that **the request body is ignored when a key is reused**: if you send the same key with a different invoice, you receive the first intake back and the new body is discarded. Use a new key for each genuinely different invoice.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+              - type: object
+                additionalProperties: false
+                properties:
+                  type:
+                    type: string
+                    enum:
+                    - forwarded_invoice
+                  assigneeId:
+                    type: string
+                    minLength: 1
+                    description: ID of the user to assign the intake to.
+                  documentId:
+                    type: string
+                    description: ID of the uploaded document, returned by a `ready` intake file upload.
+                  currency:
+                    type: string
+                    description: Invoice currency.
+                  dueDate:
+                    type: string
+                    format: date-time
+                    description: Invoice due date. In the ISO 8601 date-time format.
+                  grossAmount:
+                    type: number
+                    description: Invoice gross amount, as a decimal in `currency` (12.5 means 12.50), not minor units. Reading the intake back returns it in minor units (or null when `currency` is missing or unsupported).
+                  invoiceNumber:
+                    type: string
+                    description: Invoice number.
+                  issueDate:
+                    type: string
+                    format: date-time
+                    description: Invoice issue date. In the ISO 8601 date-time format.
+                  purchaseOrderId:
+                    type: string
+                    minLength: 1
+                    description: ID of the purchase order to link. Takes precedence over `purchaseOrderNumber`. The purchase order must exist, be open, and be visible to the assignee, otherwise the request is rejected.
+                  purchaseOrderNumber:
+                    type: string
+                    maxLength: 30
+                    pattern: ^([Pp][Oo]-)?\d+$
+                    description: 'Related purchase order number, in the format: `PO-123` or `123` (case insensitive). Ignored when `purchaseOrderId` is provided.'
+                  supplier:
+                    type: object
+                    additionalProperties: false
+                    properties:
+                      name:
+                        type: string
+                        description: Supplier name.
+                      bic:
+                        type: string
+                        description: Supplier BIC.
+                      iban:
+                        type: string
+                        description: Supplier IBAN.
+                      registrationNumber:
+                        type: string
+                        description: Supplier registration number.
+                      vatNumber:
+                        type: string
+                        description: Supplier VAT number.
+                    required:
+                    - name
+                  description:
+                    type: string
+                    description: Free-text description.
+                  costCenterId:
+                    type: string
+                    description: ID of the cost center to associate with the intake.
+                  netAmount:
+                    type: number
+                    description: Net amount, as a decimal in `currency` (12.5 means 12.50), not minor units. Reading the intake back returns it in minor units (or null when `currency` is missing or unsupported).
+                  customFieldsAssociations:
+                    type: array
+                    description: Custom field associations to apply to the intake.
+                    items:
+                      type: object
+                      additionalProperties: false
+                      properties:
+                        customFieldId:
+                          type: string
+                          description: Custom field ID.
+                        customFieldValueId:
+                          type:
+                          - string
+                          - 'null'
+                          description: Custom field value ID, or null.
+                        value:
+                          type: string
+                          description: Free-text value for the custom field.
+                      required:
+                      - customFieldId
+                      - customFieldValueId
+                  lineItems:
+                    type: array
+                    maxItems: 1000
+                    description: Line items extracted from the invoice. Amounts are decimals in `currency`, as they appear on the document, not minor units.
+                    items:
+                      type: object
+                      additionalProperties: false
+                      properties:
+                        description:
+                          type: string
+                          minLength: 1
+                          maxLength: 500
+                          description: Line item description.
+                        quantity:
+                          type:
+                          - number
+                          - 'null'
+                          description: Quantity.
+                        unitPriceWithoutTax:
+                          type:
+                          - number
+                          - 'null'
+                          description: Unit price, excluding tax.
+                        totalAmountWithoutTax:
+                          type:
+                          - number
+                          - 'null'
+                          description: Total amount, excluding tax.
+                        taxAmount:
+                          type:
+                          - number
+                          - 'null'
+                          description: Tax amount.
+                        taxRate:
+                          type:
+                          - number
+                          - 'null'
+                          minimum: 0
+                          maximum: 100
+                          description: Tax rate, as a percentage between 0 and 100.
+                      required:
+                      - description
+                required:
+                - type
+                - documentId
+                - supplier
+              - type: object
+                additionalProperties: false
+                properties:
+                  type:
+                    type: string
+                    enum:
+                    - forwarded_credit_note
+                  assigneeId:
+                    type: string
+                    minLength: 1
+                    description: ID of the user to assign the intake to.
+                  documentId:
+                    type: string
+                    description: ID of the uploaded document, returned by a `ready` intake file upload.
+                  creditNoteNumber:
+                    type: string
+                    description: Credit note number.
+                  currency:
+                    type: string
+                    description: Credit note currency.
+                  grossAmount:
+                    type: number
+                    description: Credit note gross amount, as a decimal in `currency` (12.5 means 12.50), not minor units. Reading the intake back returns it in minor units (or null when `currency` is missing or unsupported).
+                  issueDate:
+                    type: string
+                    format: date-time
+                    description: Credit note issue date. In the ISO 8601 date-time format.
+                  supplier:
+                    type: object
+                    additionalProperties: false
+                    properties:
+                      name:
+                        type: string
+                        description: Supplier name.
+                      bic:
+                        type: string
+                        description: Supplier BIC.
+                      iban:
+                        type: string
+                        description: Supplier IBAN.
+                      registrationNumber:
+                        type: string
+                        description: Supplier registration number.
+                      vatNumber:
+                        type: string
+                        description: Supplier VAT number.
+                    required:
+                    - name
+                  description:
+                    type: string
+                    description: Free-text description.
+                  costCenterId:
+                    type: string
+                    description: ID of the cost center to associate with the intake.
+                  netAmount:
+                    type: number
+                    description: Net amount, as a decimal in `currency` (12.5 means 12.50), not minor units. Reading the intake back returns it in minor units (or null when `currency` is missing or unsupported).
+                  customFieldsAssociations:
+                    type: array
+                    description: Custom field associations to apply to the intake.
+                    items:
+                      type: object
+                      additionalProperties: false
+                      properties:
+                        customFieldId:
+                          type: string
+                          description: Custom field ID.
+                        customFieldValueId:
+                          type:
+                          - string
+                          - 'null'
+                          description: Custom field value ID, or null.
+                        value:
+                          type: string
+                          description: Free-text value for the custom field.
+                      required:
+                      - customFieldId
+                      - customFieldValueId
+                required:
+                - type
+                - documentId
+                - supplier
+      parameters:
+      - schema:
+          type: string
+        in: path
+        name: companyId
+        required: true
+        description: Company ID.
+      - schema:
+          type: string
+          minLength: 1
+          maxLength: 255
+        in: header
+        name: idempotency-key
+        required: false
+        description: Optional idempotency key. Repeating a request with the same key for the same company returns the original resource instead of creating a second one. Any string of 1 to 255 characters, for example your own system or ERP reference.
+      security:
+      - Authentication:
+        - experimental:intake:write
+      x-roles:
+      - controller
+      - admin
+      - accountOwner
+      responses:
+        '201':
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  data:
+                    type: object
+                    additionalProperties: false
+                    properties:
+                      id:
+                        type: string
+                        description: Intake ID.
+                      companyId:
+                        type: string
+                        description: Company ID.
+                      status:
+                        type: string
+                        description: Intake status.
+                      type:
+                        type: string
+                        description: Intake type.
+                      assigneeId:
+                        type:
+                        - 'null'
+                        - string
+                        description: ID of the assigned user, or null if unassigned.
+                      purchaseOrderId:
+                        type:
+                        - 'null'
+                        - string
+                        description: ID of the linked purchase order, or null if none was linked.
+                      alreadyExisted:
+                        type: boolean
+                        description: True when an Idempotency-Key was reused and this intake already existed, so nothing was created. False on every fresh intake.
+                    required:
+                    - id
+                    - companyId
+                    - status
+                    - type
+                    - assigneeId
+                    - purchaseOrderId
+                    - alreadyExisted
+                required:
+                - data
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/badRequest'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/unauthorized'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/forbidden'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/notFound'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/conflict'
+        '413':
+          description: Payload Too Large
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/tooLarge'
+        '415':
+          description: Unsupported Media Type
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/unsupportedMediaType'
+        '429':
+          description: Too Many Requests
+          headers:
+            retry-after:
+              schema:
+                type: integer
+              description: Seconds to wait before retrying the request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/tooManyRequests'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/internalServerError'
+        '503':
+          description: Service Unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/serviceUnavailableError'
+    get:
+      operationId: v2-list-company-intakes
+      summary: List intakes
+      tags:
+      - Invoices and intakes
+      description: '**Allowed Scopes**: _`experimental:intake:read`_
+
+
+        Returns the company''s intakes — supplier documents (invoices, credit notes, receipts) received by the company and being reviewed and processed — newest `createdAt` first, using forward-only cursor pagination: follow `meta.pagination.nextCursor` (or `nextUrl`) until `hasNextPage` is `false`.
+
+
+        Filter by `ids`, by lifecycle (`stage` for the coarse view, `status` for the fine-grained one), and by created, updated, issued or due date ranges. Filters combine with AND; `stage` and `status` intersect. Deleted intakes only appear when asked for: include `deleted` in `status`, or `processed` in `stage`, which covers it. A combination that cannot match anything, such as `stage=linked` with `status=received`, returns an empty page rather than an error.
+
+
+        The date filters come in two formats and are not interchangeable:
+
+
+        - `createdAfter`, `createdBefore`, `updatedAfter` and `updatedBefore` select on an instant, so they take a full ISO 8601 date-time such as `2026-08-01T09:30:00Z`.
+
+        - `issuedAfter`, `issuedBefore`, `dueAfter` and `dueBefore` select on a calendar date printed on the document, so they take `YYYY-MM-DD` such as `2026-08-01`, and include the whole of the day at each end.
+
+
+        Sending one form where the other is expected fails validation with a 400.
+
+
+        There is no filter on `type`. To list only invoices, or to leave receipts out, read `type` on each result and filter on your side.
+
+
+        Each result is a summary without the received files. Get an intake returns the same fields plus `documents`. Intake data is cached for up to 2 hours. Changes made through the API are returned by subsequent reads; changes made in Spendesk can take up to 2 hours to appear.
+
+
+        A 403 means either the token is not for `companyId`, or the Spendesk user the API key was created by is not a Controller, Administrator or Account Owner of that company.'
+      parameters:
+      - schema:
+          type: array
+          maxItems: 50
+          items:
+            $ref: '#/components/schemas/intakeId'
+        in: query
+        name: ids
+        required: false
+        description: Fetch a known set of intakes by id.
+      - schema:
+          type: array
+          items:
+            $ref: '#/components/schemas/intakeStage'
+        in: query
+        name: stage
+        required: false
+        description: Filter by lifecycle stage. Each stage matches its underlying statuses (see `stage`). Combined with `status` the two filters intersect.
+      - schema:
+          type: array
+          items:
+            $ref: '#/components/schemas/intakeStatus'
+        in: query
+        name: status
+        required: false
+        description: Filter by fine-grained status.
+      - schema:
+          allOf:
+          - $ref: '#/components/schemas/dateTime'
+          type: string
+          pattern: ^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:[0-5]\d(\.\d+)?(Z|[+-]\d{2}:?\d{2})$
+        in: query
+        name: createdAfter
+        required: false
+        description: Only intakes with `createdAt` at or after this instant. An ISO 8601 date-time, e.g. `2026-08-01T09:30:00Z` — not a plain `YYYY-MM-DD`.
+      - schema:
+          allOf:
+          - $ref: '#/components/schemas/dateTime'
+          type: string
+          pattern: ^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:[0-5]\d(\.\d+)?(Z|[+-]\d{2}:?\d{2})$
+        in: query
+        name: createdBefore
+        required: false
+        description: Only intakes with `createdAt` at or before this instant. An ISO 8601 date-time, e.g. `2026-08-31T23:59:59Z` — not a plain `YYYY-MM-DD`.
+      - schema:
+          allOf:
+          - $ref: '#/components/schemas/dateTime'
+          type: string
+          pattern: ^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:[0-5]\d(\.\d+)?(Z|[+-]\d{2}:?\d{2})$
+        in: query
+        name: updatedAfter
+        required: false
+        description: Only intakes with `updatedAt` at or after this instant. An ISO 8601 date-time, e.g. `2026-08-01T09:30:00Z` — not a plain `YYYY-MM-DD`.
+      - schema:
+          allOf:
+          - $ref: '#/components/schemas/dateTime'
+          type: string
+          pattern: ^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:[0-5]\d(\.\d+)?(Z|[+-]\d{2}:?\d{2})$
+        in: query
+        name: updatedBefore
+        required: false
+        description: Only intakes with `updatedAt` at or before this instant. An ISO 8601 date-time, e.g. `2026-08-31T23:59:59Z` — not a plain `YYYY-MM-DD`.
+      - schema:
+          allOf:
+          - $ref: '#/components/schemas/date'
+        in: query
+        name: issuedAfter
+        required: false
+        description: Only intakes with `issueDate` on or after this date. A calendar date, `YYYY-MM-DD`, e.g. `2026-08-01` — not a date-time.
+      - schema:
+          allOf:
+          - $ref: '#/components/schemas/date'
+        in: query
+        name: issuedBefore
+        required: false
+        description: Only intakes with `issueDate` on or before this date, the whole day included. A calendar date, `YYYY-MM-DD`, e.g. `2026-08-31` — not a date-time.
+      - schema:
+          allOf:
+          - $ref: '#/components/schemas/date'
+        in: query
+        name: dueAfter
+        required: false
+        description: Only intakes with `dueDate` on or after this date. A calendar date, `YYYY-MM-DD`, e.g. `2026-08-01` — not a date-time.
+      - schema:
+          allOf:
+          - $ref: '#/components/schemas/date'
+        in: query
+        name: dueBefore
+        required: false
+        description: Only intakes with `dueDate` on or before this date, the whole day included. A calendar date, `YYYY-MM-DD`, e.g. `2026-08-31` — not a date-time.
+      - schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+        in: query
+        name: limit
+        required: false
+        description: Maximum number of intakes to return in one page.
+      - schema:
+          type: string
+        in: query
+        name: cursor
+        required: false
+        description: Opaque pagination cursor returned as `meta.pagination.nextCursor` by a previous call. Omit to fetch the first page.
+      - schema:
+          type: string
+        in: path
+        name: companyId
+        required: true
+        description: Company ID.
+      security:
+      - Authentication:
+        - experimental:intake:read
+      x-roles:
+      - controller
+      - admin
+      - accountOwner
+      responses:
+        '200':
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  data:
+                    description: A page of intakes.
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/intakeSummary'
+                  meta:
+                    $ref: '#/components/schemas/intakesMeta'
+                required:
+                - data
+                - meta
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/badRequest'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/unauthorized'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/forbidden'
+        '429':
+          description: Too Many Requests
+          headers:
+            retry-after:
+              schema:
+                type: integer
+              description: Seconds to wait before retrying the request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/tooManyRequests'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/internalServerError'
+        '503':
+          description: Service Unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/serviceUnavailableError'
+  /v2/companies/{companyId}/intakes/files/upload:
+    post:
+      operationId: v2-create-intake-file-upload
+      summary: Create an intake file upload
+      tags:
+      - Invoices and intakes
+      description: '**Allowed Scopes**: _`experimental:intake:write`_
+
+
+        Creates a presigned upload target for an intake file. This is step 1 of 3 in creating an intake from a document:
+
+
+        1. Create an upload with this endpoint to get a presigned URL and an `uploadId`.
+
+        2. Send the file to that URL, then poll Get an intake file upload status until it returns a `documentId`.
+
+        3. Pass that `documentId` to Create an intake.
+
+
+        `contentLength` must be the exact byte size of the file you are about to send. The presigned policy pins that size, so an approximate value makes the upload in step 2 fail rather than this call.
+
+
+        To send the file, make a `multipart/form-data` request to `upload.url` using `upload.method`. Include every entry of `upload.fields` as a form field, then add the file itself as a field named `file`, last. The URL points to our storage provider and not to the Spendesk API, so do not send your access token with it. Upload before `upload.expiresAt`; once the URL has expired, call this endpoint again for a fresh one.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                mimeType:
+                  type: string
+                  minLength: 1
+                  description: 'Media type of the file. Allowed types: application/pdf, image/png, image/jpeg, application/xml, text/xml.'
+                contentLength:
+                  type: integer
+                  minimum: 1
+                  maximum: 10485760
+                  description: 'Exact size of the file in bytes. The presigned upload rejects a file whose size differs from this value. Maximum: 10485760 (10 MB).'
+              required:
+              - mimeType
+              - contentLength
+      parameters:
+      - schema:
+          type: string
+        in: path
+        name: companyId
+        required: true
+        description: The company ID.
+      security:
+      - Authentication:
+        - experimental:intake:write
+      x-roles:
+      - controller
+      - admin
+      - accountOwner
+      responses:
+        '201':
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  uploadId:
+                    type: string
+                    description: Unique identifier for the file upload. Use it to poll the upload status once the file has been sent.
+                  upload:
+                    type: object
+                    additionalProperties: false
+                    properties:
+                      method:
+                        type: string
+                        enum:
+                        - POST
+                        description: HTTP method to use when uploading the file.
+                      url:
+                        type: string
+                        description: Presigned URL where the file must be uploaded. It points to our storage provider rather than the Spendesk API, so send it no access token.
+                      fields:
+                        type: object
+                        additionalProperties:
+                          type: string
+                        description: Form fields that must all be sent with the file upload, as multipart/form-data. Send them first, then the file itself as a field named `file`.
+                      expiresAt:
+                        type: string
+                        description: ISO 8601 timestamp when the presigned URL expires. Create a new upload once it has passed.
+                    required:
+                    - method
+                    - url
+                    - fields
+                    - expiresAt
+                required:
+                - uploadId
+                - upload
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/badRequest'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/unauthorized'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/forbidden'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/notFound'
+        '413':
+          description: Payload Too Large
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/tooLarge'
+        '415':
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      additionalProperties: false
+                      properties:
+                        code:
+                          type: string
+                          enum:
+                          - UNSUPPORTED_MEDIA_TYPE
+                        detail:
+                          type: string
+                      required:
+                      - code
+                      - detail
+                required:
+                - errors
+        '429':
+          description: Too Many Requests
+          headers:
+            retry-after:
+              schema:
+                type: integer
+              description: Seconds to wait before retrying the request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/tooManyRequests'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/internalServerError'
+        '503':
+          description: Service Unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/serviceUnavailableError'
+  /v2/companies/{companyId}/intakes/files/upload/{uploadId}:
+    get:
+      operationId: v2-get-intake-file-upload-status
+      summary: Get an intake file upload status
+      tags:
+      - Invoices and intakes
+      description: '**Allowed Scopes**: _`experimental:intake:write`_
+
+
+        Returns the status of an intake file upload. This is step 2 of 3 in creating an intake from a document, after Create an intake file upload.
+
+
+        A file is processed asynchronously once you have sent it to the presigned URL, so poll this endpoint until it leaves the `pending` state:
+
+
+        - `pending`: the file has not been processed yet. Poll again after a few seconds.
+
+        - `ready`: processing succeeded and `documentId` is returned. Pass it to Create an intake.
+
+        - `failed`: processing failed and `reason` explains why. Create a new upload to try again.
+
+
+        `documentId` is only present on a `ready` upload.'
+      parameters:
+      - schema:
+          type: string
+        in: path
+        name: companyId
+        required: true
+        description: The company ID.
+      - schema:
+          type: string
+        in: path
+        name: uploadId
+        required: true
+        description: The upload ID.
+      security:
+      - Authentication:
+        - experimental:intake:write
+      x-roles:
+      - controller
+      - admin
+      - accountOwner
+      responses:
+        '200':
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                oneOf:
+                - type: object
+                  additionalProperties: false
+                  properties:
+                    status:
+                      type: string
+                      enum:
+                      - pending
+                    uploadId:
+                      type: string
+                  required:
+                  - status
+                  - uploadId
+                - type: object
+                  additionalProperties: false
+                  properties:
+                    status:
+                      type: string
+                      enum:
+                      - ready
+                    uploadId:
+                      type: string
+                    documentId:
+                      type: string
+                      description: ID of the processed document. Pass it as `documentId` when creating an intake.
+                  required:
+                  - status
+                  - uploadId
+                  - documentId
+                - type: object
+                  additionalProperties: false
+                  properties:
+                    status:
+                      type: string
+                      enum:
+                      - failed
+                    uploadId:
+                      type: string
+                    reason:
+                      type: string
+                      description: Why the file could not be processed.
+                  required:
+                  - status
+                  - uploadId
+                  - reason
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/badRequest'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/unauthorized'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/forbidden'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/notFound'
+        '429':
+          description: Too Many Requests
+          headers:
+            retry-after:
+              schema:
+                type: integer
+              description: Seconds to wait before retrying the request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/tooManyRequests'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/internalServerError'
+        '503':
+          description: Service Unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/serviceUnavailableError'
+  /v2/companies/{companyId}/intakes/{id}:
+    get:
+      operationId: v2-get-company-intake
+      summary: Get an intake
+      tags:
+      - Invoices and intakes
+      description: '**Allowed Scopes**: _`experimental:intake:read`_
+
+
+        Returns a single intake by id: everything List intakes returns for it, plus the received files in `documents` — the invoice, credit note or receipt itself, and any companion file that arrived with it. This is the only endpoint that returns `documents`.
+
+
+        Each `downloadUrl` is pre-signed and expires at most 3 hours after the response was issued. Intake data is cached for up to 55 minutes, so a link you receive may already be part-way through those 3 hours. Download promptly, and fetch the intake again for a fresh link rather than storing one. Changes made through the API are returned by subsequent reads; changes made in Spendesk can take up to 55 minutes to appear.
+
+
+        A deleted intake is not a 404: it is still returned, with status `deleted`, and its documents can still be downloaded. A 404 means this company has no intake with that id. A 403 means either the token is not for `companyId`, or the Spendesk user the API key was created by is not a Controller, Administrator or Account Owner of that company.'
+      parameters:
+      - schema:
+          type: string
+        in: path
+        name: companyId
+        required: true
+        description: Company ID.
+      - schema:
+          type: string
+        in: path
+        name: id
+        required: true
+        description: Intake ID.
+      security:
+      - Authentication:
+        - experimental:intake:read
+      x-roles:
+      - controller
+      - admin
+      - accountOwner
+      responses:
+        '200':
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  data:
+                    $ref: '#/components/schemas/intake'
+                required:
+                - data
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/badRequest'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/unauthorized'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/forbidden'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/notFound'
+        '429':
+          description: Too Many Requests
+          headers:
+            retry-after:
+              schema:
+                type: integer
+              description: Seconds to wait before retrying the request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/tooManyRequests'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/internalServerError'
+        '503':
+          description: Service Unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/serviceUnavailableError'
+  /v2/companies/{companyId}/invoices:
+    get:
+      operationId: v2-list-invoices
+      summary: List invoices
+      tags:
+      - Invoices and intakes
+      description: '**Allowed Scopes**: _`experimental:invoice:read`_
+
+
+        Returns supplier invoices for the company, most-recent first by default, using forward-only cursor pagination. The `createdAfter`, `createdBefore`, `updatedAfter` and `updatedBefore` filters use only the UTC date of the value: After includes that day, Before excludes it. Invoice data is cached for up to 20 minutes. Changes, including those made through the API, can take up to 20 minutes to appear.'
+      parameters:
+      - schema:
+          type: array
+          maxItems: 50
+          items:
+            $ref: '#/components/schemas/invoiceId'
+        in: query
+        name: ids
+        required: false
+      - schema:
+          type: string
+        in: query
+        name: invoiceNumber
+        required: false
+        description: Filter by the supplier's invoice number (case-insensitive exact match). Ignored with type=creditNote; use search to find a credit note by its number.
+      - schema:
+          type: array
+          maxItems: 50
+          items:
+            type: string
+        in: query
+        name: supplierId
+        required: false
+      - schema:
+          type: array
+          maxItems: 50
+          items:
+            type: string
+        in: query
+        name: buyerId
+        required: false
+      - schema:
+          type: array
+          maxItems: 50
+          items:
+            type: string
+        in: query
+        name: purchaseOrderId
+        required: false
+      - schema:
+          type: array
+          maxItems: 50
+          items:
+            type: string
+        in: query
+        name: costCenterId
+        required: false
+      - schema:
+          type: array
+          maxItems: 50
+          items:
+            type: string
+        in: query
+        name: expenseCategoryId
+        required: false
+        description: Filter by expense category, matching the ids in the invoice `expenseCategories`. A split invoice matches if any of its categories does.
+      - schema:
+          $ref: '#/components/schemas/invoiceType'
+        in: query
+        name: type
+        required: false
+      - schema:
+          type: array
+          items:
+            $ref: '#/components/schemas/invoiceStage'
+        in: query
+        name: stage
+        required: false
+        description: Filter by stage; any of the listed values matches. When omitted, every stage except `cancelled` is returned; pass `cancelled` to get cancelled invoices. Draft and incomplete invoices are never listed here, not even under `pendingApproval`; fetch one by ID instead, which fails while it still lacks a supplier, issue date or currency. A credit note in dispute with the supplier is never returned or counted, under any stage.
+      - schema:
+          type: array
+          items:
+            $ref: '#/components/schemas/paymentStatus'
+        in: query
+        name: paymentStatus
+        required: false
+      - schema:
+          type: array
+          items:
+            $ref: '#/components/schemas/paymentSource'
+        in: query
+        name: paymentSource
+        required: false
+        description: 'Not applied yet: results are not filtered by payment source.'
+      - schema:
+          type: array
+          items:
+            $ref: '#/components/schemas/paymentMethod'
+        in: query
+        name: paymentMethod
+        required: false
+        description: 'Not applied yet: results are not filtered by payment method.'
+      - schema:
+          type: array
+          items:
+            $ref: '#/components/schemas/exportStatus'
+        in: query
+        name: exportStatus
+        required: false
+      - schema:
+          type: array
+          items:
+            $ref: '#/components/schemas/documentaryEvidenceStatus'
+        in: query
+        name: documentaryEvidenceStatus
+        required: false
+      - schema:
+          type: boolean
+        in: query
+        name: isDisputed
+        required: false
+        description: '`true`: only invoices currently in dispute with the supplier, the same as `stage` `disputed`; `false`: all others. Combined with `stage`, both must match. An invoice archived after a dispute is `cancelled`, not disputed, and credit notes are never returned as disputed.'
+      - schema:
+          $ref: '#/components/schemas/currency'
+        in: query
+        name: currency
+        required: false
+      - schema:
+          type: integer
+        in: query
+        name: minGrossAmount
+        required: false
+      - schema:
+          type: integer
+        in: query
+        name: maxGrossAmount
+        required: false
+      - schema:
+          $ref: '#/components/schemas/date'
+        in: query
+        name: issuedAfter
+        required: false
+      - schema:
+          $ref: '#/components/schemas/date'
+        in: query
+        name: issuedBefore
+        required: false
+      - schema:
+          $ref: '#/components/schemas/date'
+        in: query
+        name: dueAfter
+        required: false
+      - schema:
+          $ref: '#/components/schemas/date'
+        in: query
+        name: dueBefore
+        required: false
+      - schema:
+          $ref: '#/components/schemas/dateTime'
+        in: query
+        name: createdAfter
+        required: false
+      - schema:
+          $ref: '#/components/schemas/dateTime'
+        in: query
+        name: createdBefore
+        required: false
+      - schema:
+          $ref: '#/components/schemas/dateTime'
+        in: query
+        name: updatedAfter
+        required: false
+      - schema:
+          $ref: '#/components/schemas/dateTime'
+        in: query
+        name: updatedBefore
+        required: false
+      - schema:
+          type: string
+        in: query
+        name: search
+        required: false
+      - schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+        in: query
+        name: limit
+        required: false
+        description: Maximum number of invoices to return in one page.
+      - schema:
+          type: string
+        in: query
+        name: cursor
+        required: false
+        description: Opaque pagination cursor returned as `meta.pagination.nextCursor` by a previous call. Omit to fetch the first page.
+      - schema:
+          type: string
+          enum:
+          - createdAt
+          - updatedAt
+          - issueDate
+          - dueDate
+          - grossAmount
+          default: createdAt
+        in: query
+        name: sortBy
+        required: false
+        description: Field to sort by. Combined with `sort` to set direction.
+      - schema:
+          type: string
+          enum:
+          - asc
+          - desc
+          default: desc
+        in: query
+        name: sort
+        required: false
+        description: Sort direction.
+      - schema:
+          type: string
+        in: path
+        name: companyId
+        required: true
+        description: Company ID.
+      security:
+      - Authentication:
+        - experimental:invoice:read
+      x-roles:
+      - controller
+      - admin
+      - accountOwner
+      responses:
+        '200':
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  meta:
+                    $ref: '#/components/schemas/invoicesMeta'
+                  data:
+                    description: A page of invoices.
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/invoiceSummary'
+                required:
+                - data
+                - meta
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/badRequest'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/unauthorized'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/forbidden'
+        '429':
+          description: Too Many Requests
+          headers:
+            retry-after:
+              schema:
+                type: integer
+              description: Seconds to wait before retrying the request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/tooManyRequests'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/internalServerError'
+        '503':
+          description: Service Unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/serviceUnavailableError'
+  /v2/companies/{companyId}/invoices/summary:
+    get:
+      operationId: v2-get-invoices-summary
+      summary: Summarise invoices
+      tags:
+      - Invoices and intakes
+      description: '**Allowed Scopes**: _`experimental:invoice:read`_
+
+
+        Returns aggregate figures (count + amount totals by currency) over all invoices matching the filters. With no `type` filter, only invoices are included — credit notes are neither counted nor netted off. The `createdAfter`, `createdBefore`, `updatedAfter` and `updatedBefore` filters use only the UTC date of the value: After includes that day, Before excludes it.
+
+        Invoice summary data is cached for up to 20 minutes. Changes, including those made through the API, can take up to 20 minutes to appear.'
+      parameters:
+      - schema:
+          type: string
+        in: query
+        name: invoiceNumber
+        required: false
+        description: Filter by the supplier's invoice number (case-insensitive exact match). Ignored with type=creditNote; use search to find a credit note by its number.
+      - schema:
+          type: array
+          maxItems: 50
+          items:
+            type: string
+        in: query
+        name: supplierId
+        required: false
+      - schema:
+          type: array
+          maxItems: 50
+          items:
+            type: string
+        in: query
+        name: buyerId
+        required: false
+      - schema:
+          type: array
+          maxItems: 50
+          items:
+            type: string
+        in: query
+        name: purchaseOrderId
+        required: false
+      - schema:
+          type: array
+          maxItems: 50
+          items:
+            type: string
+        in: query
+        name: costCenterId
+        required: false
+      - schema:
+          type: array
+          maxItems: 50
+          items:
+            type: string
+        in: query
+        name: expenseCategoryId
+        required: false
+        description: Filter by expense category, matching the ids in the invoice `expenseCategories`. A split invoice matches if any of its categories does.
+      - schema:
+          $ref: '#/components/schemas/invoiceType'
+        in: query
+        name: type
+        required: false
+      - schema:
+          type: array
+          items:
+            $ref: '#/components/schemas/invoiceStage'
+        in: query
+        name: stage
+        required: false
+        description: Filter by stage; any of the listed values matches. When omitted, every stage except `cancelled` is returned; pass `cancelled` to get cancelled invoices. Draft and incomplete invoices are never listed here, not even under `pendingApproval`; fetch one by ID instead, which fails while it still lacks a supplier, issue date or currency. A credit note in dispute with the supplier is never returned or counted, under any stage.
+      - schema:
+          type: array
+          items:
+            $ref: '#/components/schemas/paymentStatus'
+        in: query
+        name: paymentStatus
+        required: false
+      - schema:
+          type: array
+          items:
+            $ref: '#/components/schemas/paymentSource'
+        in: query
+        name: paymentSource
+        required: false
+        description: 'Not applied yet: results are not filtered by payment source.'
+      - schema:
+          type: array
+          items:
+            $ref: '#/components/schemas/paymentMethod'
+        in: query
+        name: paymentMethod
+        required: false
+        description: 'Not applied yet: results are not filtered by payment method.'
+      - schema:
+          type: array
+          items:
+            $ref: '#/components/schemas/exportStatus'
+        in: query
+        name: exportStatus
+        required: false
+      - schema:
+          type: array
+          items:
+            $ref: '#/components/schemas/documentaryEvidenceStatus'
+        in: query
+        name: documentaryEvidenceStatus
+        required: false
+      - schema:
+          type: boolean
+        in: query
+        name: isDisputed
+        required: false
+        description: '`true`: only invoices currently in dispute with the supplier, the same as `stage` `disputed`; `false`: all others. Combined with `stage`, both must match. An invoice archived after a dispute is `cancelled`, not disputed, and credit notes are never returned as disputed.'
+      - schema:
+          $ref: '#/components/schemas/currency'
+        in: query
+        name: currency
+        required: false
+      - schema:
+          type: integer
+        in: query
+        name: minGrossAmount
+        required: false
+      - schema:
+          type: integer
+        in: query
+        name: maxGrossAmount
+        required: false
+      - schema:
+          $ref: '#/components/schemas/date'
+        in: query
+        name: issuedAfter
+        required: false
+      - schema:
+          $ref: '#/components/schemas/date'
+        in: query
+        name: issuedBefore
+        required: false
+      - schema:
+          $ref: '#/components/schemas/date'
+        in: query
+        name: dueAfter
+        required: false
+      - schema:
+          $ref: '#/components/schemas/date'
+        in: query
+        name: dueBefore
+        required: false
+      - schema:
+          $ref: '#/components/schemas/dateTime'
+        in: query
+        name: createdAfter
+        required: false
+      - schema:
+          $ref: '#/components/schemas/dateTime'
+        in: query
+        name: createdBefore
+        required: false
+      - schema:
+          $ref: '#/components/schemas/dateTime'
+        in: query
+        name: updatedAfter
+        required: false
+      - schema:
+          $ref: '#/components/schemas/dateTime'
+        in: query
+        name: updatedBefore
+        required: false
+      - schema:
+          type: string
+        in: query
+        name: search
+        required: false
+      - schema:
+          type: string
+        in: path
+        name: companyId
+        required: true
+        description: Company ID.
+      security:
+      - Authentication:
+        - experimental:invoice:read
+      x-roles:
+      - controller
+      - admin
+      - accountOwner
+      responses:
+        '200':
+          description: Aggregate figures over all invoices matching the filters, returned by `GET /v2/companies/:companyId/invoices/summary`.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/invoicesSummary'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/badRequest'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/unauthorized'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/forbidden'
+        '429':
+          description: Too Many Requests
+          headers:
+            retry-after:
+              schema:
+                type: integer
+              description: Seconds to wait before retrying the request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/tooManyRequests'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/internalServerError'
+        '503':
+          description: Service Unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/serviceUnavailableError'
+  /v2/companies/{companyId}/invoices/{id}:
+    get:
+      operationId: v2-get-invoice
+      summary: Get an invoice
+      tags:
+      - Invoices and intakes
+      description: '**Allowed Scopes**: _`experimental:invoice:read`_
+
+
+        Returns a single supplier invoice by id. Invoice data is cached for up to 20 minutes. Changes, including those made through the API, can take up to 20 minutes to appear.'
+      parameters:
+      - schema:
+          type: string
+        in: path
+        name: companyId
+        required: true
+        description: Company ID.
+      - schema:
+          $ref: '#/components/schemas/invoiceId'
+        in: path
+        name: id
+        required: true
+      security:
+      - Authentication:
+        - experimental:invoice:read
+      x-roles:
+      - controller
+      - admin
+      - accountOwner
+      responses:
+        '200':
+          description: Full representation of an invoice, returned by the detail endpoint. A superset of `invoiceSummary`, adding line items, the tax breakdown, currency conversion (FX), the payment history, the approval chain, accounting links, attachments and custom fields.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/invoice'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/badRequest'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/unauthorized'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/forbidden'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/notFound'
+        '429':
+          description: Too Many Requests
+          headers:
+            retry-after:
+              schema:
+                type: integer
+              description: Seconds to wait before retrying the request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/tooManyRequests'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/internalServerError'
+        '503':
+          description: Service Unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/serviceUnavailableError'
+components:
+  schemas:
+    approverType:
+      type: string
+      enum:
+      - reportingManager
+      - costCenterOwner
+      - accountOwner
+      - user
+      description: "The role by which a person is entitled to approve a step. \n\n| Type | Description |\n| --- | --- |\n| `reportingManager` | The buyer's reporting manager. |\n| `costCenterOwner` | The owner of the invoice's cost center. |\n| `accountOwner` | The company's account owner. |\n| `user` | A specific named user, assigned directly by an approval rule. |"
+      title: approverType
+    paymentState:
+      type: string
+      enum:
+      - scheduled
+      - confirmed
+      - executing
+      - paid
+      - failed
+      - cancelled
+      - returned
+      description: "State of a single payment (see `paymentStatus` for the invoice-level settlement aggregate). Spendesk-executed payments (`source: spendesk`) traverse the full lifecycle; externally-recorded payments (`source: external`) are typically created directly as `paid`. \n\n| State | Description |\n| --- | --- |\n| `scheduled` | Planned for a date but not yet confirmed; no money has moved (Spendesk only). |\n| `confirmed` | Approved for release by the account owner via Strong Customer Authentication (SCA); the transfer is mandated and will be executed on the scheduled date (Spendesk only). |\n| `executing` | The transfer has been sent and is in flight at the bank (Spendesk only). |\n| `paid` | Executed and settled. Not necessarily terminal — a settled payment can later become `returned`. |\n| `failed` | The transfer was rejected or failed before settling; see `statusReason`. A retry is a new payment entry (Spendesk only). |\n| `cancelled` | A scheduled payment was cancelled before execution; no money moved. |\n| `returned` | The payment had settled but the funds were later returned/clawed back by the bank (e.g. an ACH return or recall); see `statusReason`. Its amount is removed from the invoice's `amountPaid`. |"
+      title: paymentState
+    currency:
+      type: string
+      pattern: ^[A-Z]{3}$
+      description: If the payment was made in a foreign currency, this amount will be the one in the payment currency. Three-letter [ISO currency codes](https://www.iso.org/iso-4217-currency-codes.html).
+      title: currency
+    invoiceDispute:
+      type: object
+      additionalProperties: false
+      description: 'Details of a dispute on the invoice (contested amount, duplicate, goods/services not received, quality issue…), overlaying whatever approval/payment state the invoice holds. Not populated yet: the invoice `dispute` field is always null for now, even on an invoice in dispute with the supplier (which reports `stage` `disputed`).'
+      properties:
+        reasonCode:
+          type: string
+          nullable: true
+          description: Machine-readable reason the invoice is disputed (e.g. a standard dispute-reason code). Not enumerated — treat as an opaque, extensible code. Null when only a free-text reason exists.
+        reason:
+          type: string
+          nullable: true
+          description: Human-readable reason/comment for the dispute, if recorded.
+        disputedBy:
+          type: string
+          description: Member who raised the dispute.
+        disputedAt:
+          allOf:
+          - $ref: '#/components/schemas/dateTime'
+          description: When the dispute was raised.
+      required:
+      - reasonCode
+      - reason
+      - disputedBy
+      - disputedAt
+      title: invoiceDispute
+    unauthorized:
+      type: object
+      description: Unauthorized
+      additionalProperties: false
+      properties:
+        correlationId:
+          type: string
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              code:
+                type: string
+                enum:
+                - AUTHENTICATION_ERROR
+              detail:
+                type: string
+            required:
+            - code
+            - detail
+      required:
+      - errors
+      title: unauthorized
+    serviceUnavailableError:
+      type: object
+      description: Service Unavailable
+      additionalProperties: false
+      properties:
+        correlationId:
+          type: string
+        errors:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            properties:
+              code:
+                type: string
+                enum:
+                - SERVICE_UNAVAILABLE_ERROR
+              detail:
+                type: string
+            required:
+            - code
+            - detail
+      required:
+      - errors
+      title: serviceUnavailableError
+    tooManyRequests:
+      type: object
+      description: Too Many Requests
+      additionalProperties: false
+      properties:
+        correlationId:
+          type: string
+        errors:
+          type: array
+          items:
+            additionalProperties: false
+            type: object
+            properties:
+              code:
+                type: string
+                enum:
+                - TOO_MANY_REQUESTS
+              detail:
+                type: string
+            required:
+            - code
+            - detail
+      required:
+      - errors
+      title: tooManyRequests
+    invoiceId:
+      type: string
+      description: Opaque unique identifier of an invoice.
+      title: invoiceId
+      example: bc9cef35-401d-4ea4-b384-ed725e6685cf
+    intakeLineItem:
+      type: object
+      additionalProperties: false
+      description: A single line of the invoice. Amounts are decimals in the intake's `currency`, not minor units, because they are transcribed as they appear on the document.
+      properties:
+        description:
+          type: string
+          description: Line description.
+        quantity:
+          type:
+          - 'null'
+          - number
+          description: Quantity.
+        unitPriceWithoutTax:
+          type:
+          - 'null'
+          - number
+          description: Unit price, excluding tax.
+        totalAmountWithoutTax:
+          type:
+          - 'null'
+          - number
+          description: Line total, excluding tax.
+        taxAmount:
+          type:
+          - 'null'
+          - number
+          description: Tax amount.
+        taxRate:
+          type:
+          - 'null'
+          - number
+          description: Tax rate, as a percentage between 0 and 100.
+      required:
+      - description
+      title: intakeLineItem
+    internalServerError:
+      type: object
+      description: Internal Server Error
+      additionalProperties: false
+      properties:
+        correlationId:
+          type: string
+        errors:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            properties:
+              code:
+                type: string
+                enum:
+                - INTERNAL_SERVER_ERROR
+              detail:
+                type: string
+                enum:
+                - Sorry, something has gone wrong at our end. If this persists please contact support.
+            required:
+            - code
+            - detail
+      required:
+      - errors
+      title: internalServerError
+    intakeResultingDocument:
+      type: object
+      additionalProperties: false
+      description: The document the intake produced or was linked to once processing completed. Use `type` to pick the API to resolve `id` against. `invoice` and `creditNote` ids both resolve through the invoice detail endpoint, which returns credit notes with `type` `creditNote`; a `creditNote` id can occasionally return 404 — then list credit notes on the invoices endpoint with `type` `creditNote`.
+      properties:
+        type:
+          type: string
+          enum:
+          - invoice
+          - creditNote
+          - expenseClaim
+          - cardPayment
+          description: "Kind of resulting document. \n\n| Type | Description |\n| --- | --- |\n| `invoice` | A supplier invoice to pay. |\n| `creditNote` | A supplier credit note. |\n| `expenseClaim` | An employee expense claim. |\n| `cardPayment` | An existing card payment the document was attached to as its receipt. |"
+        id:
+          type: string
+          description: Id of the resulting document.
+      required:
+      - type
+      - id
+      title: intakeResultingDocument
+    approval:
+      type: object
+      additionalProperties: false
+      description: Detail of the approval workflow — the effective approval chain for this invoice's amount, with its completed, current and upcoming steps. The overall outcome shows in the invoice's `stage`; this object is the breakdown. Only the applicable chain is returned (amount-bracket internals are not exposed).
+      properties:
+        isAutoApproved:
+          type: boolean
+          description: Whether the invoice was approved automatically by a rule rather than by approvers. When true, `steps` is empty.
+        autoApprovalReason:
+          type: string
+          nullable: true
+          description: Why the invoice was auto-approved, or null when it was not.
+        steps:
+          type: array
+          items:
+            $ref: '#/components/schemas/approvalStep'
+          description: The approval steps in execution order. Empty when the invoice was auto-approved.
+      required:
+      - isAutoApproved
+      - autoApprovalReason
+      - steps
+      title: approval
+    intakeStage:
+      type: string
+      enum:
+      - inInbox
+      - linked
+      - processed
+      description: "Coarse lifecycle stage of the intake, derived from `status`. \n\n| Stage | Statuses | Description |\n| --- | --- | --- |\n| `inInbox` | `received`, `assigned`, `disputed`, `assignation_rejected`, `supplier_disputed`, `validating` | Awaiting action in the invoice inbox, or submitted and still under review. |\n| `linked` | `auto_linked`, `manually_linked` | Done — it was attached to an existing document as its receipt (see `resultingDocument`). |\n| `processed` | `validated`, `refused`, `deleted`, `processed` | Terminal — it was refused, deleted, or finished processing (see `resultingDocument`; status `processed` itself never sets one). |"
+      title: intakeStage
+    supplierRef:
+      type: object
+      additionalProperties: false
+      description: Reference to the supplier (counterparty) of the invoice.
+      properties:
+        id:
+          type: string
+          description: Supplier id. Fetch full supplier details from `GET /v1/suppliers/{id}`.
+        name:
+          type: string
+          description: Supplier's current display name.
+      required:
+      - id
+      - name
+      title: supplierRef
+    intake:
+      type: object
+      additionalProperties: false
+      description: Full representation of an intake, returned by the detail endpoint. A superset of `intakeSummary`, adding the received documents and line items.
+      properties:
+        id:
+          $ref: '#/components/schemas/intakeId'
+        companyId:
+          type: string
+          description: Id of the company entity that received the document.
+        type:
+          $ref: '#/components/schemas/intakeType'
+        source:
+          oneOf:
+          - $ref: '#/components/schemas/intakeSource'
+          - type: 'null'
+          description: How the document reached Spendesk, or null when not recorded.
+        status:
+          $ref: '#/components/schemas/intakeStatus'
+        stage:
+          $ref: '#/components/schemas/intakeStage'
+        supplier:
+          oneOf:
+          - $ref: '#/components/schemas/intakeSupplier'
+          - type: 'null'
+          description: The supplier that issued the document. Null when no supplier has been identified yet.
+        assigneeId:
+          type: string
+          nullable: true
+          description: 'Id of the member the intake is assigned to — the person expected to complete and submit it. An id, not a name: resolve it with [Get Users](/reference/v1-get-users), which needs the `user:read` scope in addition to the intake read scope. Null while unassigned.'
+        invoiceNumber:
+          type: string
+          nullable: true
+          description: The supplier's invoice number as printed on the document. Null if not captured or the document is not an invoice.
+          example: FA17273
+        creditNoteNumber:
+          type: string
+          nullable: true
+          description: The supplier's credit-note number as printed on the document. Null if not captured or the document is not a credit note.
+        currency:
+          oneOf:
+          - $ref: '#/components/schemas/currency'
+          - type: 'null'
+          description: Currency the document is denominated in. Null until captured, and also null when the captured value is not a three-letter code.
+        grossAmount:
+          oneOf:
+          - $ref: '#/components/schemas/priceAmount'
+          - type: 'null'
+          description: Total amount including tax, in `currency`'s smallest unit. Null until captured, and also null, even once captured, whenever `currency` is null or a code Spendesk does not support.
+        netAmount:
+          oneOf:
+          - $ref: '#/components/schemas/priceAmount'
+          - type: 'null'
+          description: Total amount before tax, in `currency`'s smallest unit. Null until captured, and also null, even once captured, whenever `currency` is null or a code Spendesk does not support.
+        netPayableAmount:
+          oneOf:
+          - $ref: '#/components/schemas/priceAmount'
+          - type: 'null'
+          description: 'Amount actually left to pay the supplier after deductions recorded on the document (e.g. an advance already paid, or an applied credit note), in `currency`''s smallest unit. Equals `grossAmount` when there are none. Only ever populated for intakes ingested through e-invoicing: it is always null for intakes created through this API and for intakes forwarded by email, where the null is permanent rather than capture-pending.'
+        issueDate:
+          oneOf:
+          - $ref: '#/components/schemas/date'
+          - type: 'null'
+          description: Date the supplier issued the document, as printed on it (emission date). Null until captured.
+        dueDate:
+          oneOf:
+          - $ref: '#/components/schemas/date'
+          - type: 'null'
+          description: Date by which the document must be paid, per the supplier's payment terms. Null until captured or when no due date applies.
+        resultingDocument:
+          oneOf:
+          - $ref: '#/components/schemas/intakeResultingDocument'
+          - type: 'null'
+          description: 'The document the intake produced or was linked to. Null while the intake is in progress, and stays null for an intake that ends `refused` or `deleted` without producing one. Always null at `status: processed`, which records a controller clearing the to-process queue rather than a document being produced. A null can also mean the lookup failed rather than that none exists, on both List intakes and Get an intake.'
+        payableId:
+          type: string
+          format: uuid
+          description: 'Id of the accounting payable the intake ultimately produced, resolvable via the payables API. Null whenever none is known, which is common even at `stage: processed` — that stage also holds refused and deleted intakes, which never produce one. On [List intakes](/reference/v2-list-company-intakes) a null is "unknown" rather than "none"; [Get an intake](/reference/v2-get-company-intake) is authoritative.'
+          pattern: ^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$
+          nullable: true
+          example: bc9cef35-401d-4ea4-b384-ed725e6685cf
+        purchaseOrderId:
+          type: string
+          nullable: true
+          description: Id of the purchase order the intake is matched against. Null when none.
+        correctsIntakeId:
+          type: string
+          nullable: true
+          description: 'For a corrective document (e.g. a credit note cancelling or amending an earlier invoice): id of the intake it corrects. Null otherwise.'
+        appUrl:
+          type: string
+          description: Link to this intake in the Spendesk invoice inbox.
+          example: https://app.spendesk.com/app/RRbRgeIB7X/requests/inbox/shared/d967b168-0fad-5310-bf96-ca1858ff7da2
+        createdAt:
+          allOf:
+          - $ref: '#/components/schemas/dateTime'
+          description: When the intake was received by Spendesk (ingestion time, not `issueDate`).
+        updatedAt:
+          oneOf:
+          - $ref: '#/components/schemas/dateTime'
+          - type: 'null'
+          description: When any field on the intake last changed. Null when never updated.
+        documents:
+          type: array
+          items:
+            $ref: '#/components/schemas/intakeDocument'
+          description: Files received as part of the intake. Empty when no file is available. Download links are short-lived — see `downloadUrl`.
+        lineItems:
+          type:
+          - 'null'
+          - array
+          items:
+            $ref: '#/components/schemas/intakeLineItem'
+          description: 'Lines of the invoice, when any are held. Null when none were extracted or supplied, and always null on receipts and on e-invoiced intakes (`source` `eInvoice`): line items are only held for invoices and credit notes received by email or API, so a null there does not mean the document has no lines. Only the detail endpoint returns these — a full page of them would be too large.'
+        lineItemsSource:
+          type:
+          - 'null'
+          - string
+          enum:
+          - ocr
+          - facturX
+          - eInvoice
+          - api
+          - userEdited
+          - null
+          description: How the line items were obtained. Null when none are held, or when they predate this field being recorded.
+      required:
+      - id
+      - companyId
+      - type
+      - source
+      - status
+      - stage
+      - supplier
+      - assigneeId
+      - invoiceNumber
+      - creditNoteNumber
+      - currency
+      - grossAmount
+      - netAmount
+      - netPayableAmount
+      - issueDate
+      - dueDate
+      - resultingDocument
+      - payableId
+      - purchaseOrderId
+      - correctsIntakeId
+      - appUrl
+      - createdAt
+      - updatedAt
+      - documents
+      - lineItems
+      - lineItemsSource
+      title: intake
+    paymentFee:
+      type: object
+      additionalProperties: false
+      description: A fee incurred on the payment (deducted from the transfer or billed alongside it).
+      properties:
+        type:
+          type: string
+          enum:
+          - transfer
+          - fx
+          - intermediary
+          - other
+          description: Kind of fee — `transfer` (bank/rail fee), `fx` (currency-conversion fee/spread), `intermediary` (correspondent-bank fee on international transfers), or `other`.
+        amount:
+          allOf:
+          - $ref: '#/components/schemas/priceAmount'
+          description: Fee amount, in `currency`'s smallest unit.
+        currency:
+          $ref: '#/components/schemas/currency'
+      required:
+      - type
+      - amount
+      - currency
+      title: paymentFee
+    approvalStepState:
+      type: string
+      enum:
+      - approved
+      - current
+      - upcoming
+      - rejected
+      description: "State of a single step within the approval chain. \n\n| State | Description |\n| --- | --- |\n| `approved` | This step was approved. |\n| `current` | This step is the one awaiting a decision now. |\n| `upcoming` | A later step, not yet reached. |\n| `rejected` | This step was declined (stops the chain). |"
+      title: approvalStepState
+    buyerRef:
+      type: object
+      additionalProperties: false
+      description: 'The internal Spendesk member the invoice is assigned to — the "buyer", i.e. the person the spend is for and who is accountable for it. Distinct from the supplier (the external counterparty). This holds however the invoice was created: a member who submitted it, or the member an automatically-ingested invoice (shared mailbox, API) was assigned to. Name and email may be null for service accounts.'
+      properties:
+        id:
+          type: string
+        firstName:
+          type: string
+          nullable: true
+        lastName:
+          type: string
+          nullable: true
+        email:
+          type: string
+          format: email
+          nullable: true
+      required:
+      - id
+      - firstName
+      - lastName
+      - email
+      title: buyerRef
+    documentaryEvidenceStatus:
+      type: string
+      enum:
+      - provided
+      - missing
+      - cannotBeProvided
+      - declaredAsInvalid
+      description: "Status of the supporting document — the supplier's invoice or credit-note file — that justifies the payable for audit and tax purposes. Only meaningful once the invoice has an accounting payable — the invoice's `documentaryEvidenceStatus` field itself is null for invoices that don't have one yet. \n\n| Status | Description |\n| --- | --- |\n| `provided` | A document is attached. |\n| `missing` | No document is attached yet. |\n| `cannotBeProvided` | The buyer declared that no document can be provided; a signed affidavit stands in its place. |\n| `declaredAsInvalid` | An attached document was reviewed and marked invalid (e.g. wrong file or unreadable). |\n\nCertification/compliance details (e.g. the Spanish \"Digitised Paper Receipt\") are intentionally out of scope of this field and will be exposed via a dedicated compliance field once its format is finalised."
+      title: documentaryEvidenceStatus
+    invoicesCursorPagination:
+      type: object
+      additionalProperties: false
+      description: Forward-only cursor pagination metadata.
+      properties:
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Page size that was applied.
+        hasNextPage:
+          type: boolean
+          description: Whether more results exist after this page. Convenience for `nextCursor != null`.
+        nextCursor:
+          type:
+          - 'null'
+          - string
+          description: Cursor for the next page, or null when there are no more results.
+        nextUrl:
+          type:
+          - 'null'
+          - string
+          format: uri
+          description: Ready-to-follow URL for the next page (same filters + `cursor`), or null.
+      required:
+      - limit
+      - hasNextPage
+      - nextCursor
+      - nextUrl
+      title: invoicesCursorPagination
+    forbidden:
+      type: object
+      description: Forbidden
+      additionalProperties: false
+      properties:
+        correlationId:
+          type: string
+        errors:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            properties:
+              code:
+                type: string
+                enum:
+                - FORBIDDEN_ERROR
+              detail:
+                type: string
+            required:
+            - code
+            - detail
+      required:
+      - errors
+      title: forbidden
+    notFound:
+      type: object
+      description: Not Found
+      additionalProperties: false
+      properties:
+        correlationId:
+          type: string
+        errors:
+          type: array
+          items:
+            additionalProperties: false
+            type: object
+            properties:
+              code:
+                type: string
+                enum:
+                - NOT_FOUND
+              detail:
+                type: string
+            required:
+            - code
+            - detail
+      required:
+      - errors
+      title: notFound
+    approver:
+      type: object
+      additionalProperties: false
+      description: A person entitled to act on an approval step.
+      properties:
+        type:
+          $ref: '#/components/schemas/approverType'
+        userId:
+          type: string
+          description: 'Member who nominally owns this approval slot (e.g. the reporting manager or cost-center owner). For `type: user` this is the directly-assigned approver.'
+        actingUserId:
+          type: string
+          nullable: true
+          description: Member acting on the nominal approver's behalf via a delegation. Null when the approval is not delegated (then the acting approver is `userId`).
+        isDelegated:
+          type: boolean
+          description: Whether this approval is delegated (`actingUserId` differs from `userId`).
+      required:
+      - type
+      - userId
+      - actingUserId
+      - isDelegated
+      title: approver
+    exportStatus:
+      type: string
+      enum:
+      - pending
+      - exported
+      - failed
+      description: "Accounting-export state — whether the invoice has been exported to the customer's accounting system or ERP. Independent of `stage` and `paymentStatus`. The ledger posting date is `accountingDate`; the export timestamp is `exportedAt`. Only meaningful once the invoice has an accounting payable — the invoice's `exportStatus` field itself is null for invoices that don't have one yet. \n\n| Status | Description |\n| --- | --- |\n| `pending` | Not yet exported. |\n| `exported` | Successfully exported to the accounting system. |\n| `failed` | An export attempt failed and needs attention. |"
+      title: exportStatus
+    intakeStatus:
+      type: string
+      enum:
+      - received
+      - assigned
+      - disputed
+      - refused
+      - deleted
+      - validating
+      - validated
+      - processed
+      - auto_linked
+      - manually_linked
+      - assignation_rejected
+      - supplier_disputed
+      description: "Fine-grained processing status of the intake — the raw underlying status values, exposed verbatim (hence the snake_case). For most integrations the coarser `stage` is easier to work with. \n\n| Status | Description |\n| --- | --- |\n| `received` | Landed in the invoice inbox, not yet assigned to a member. |\n| `assigned` | Assigned to a member (see `assigneeId`) who must complete and submit it. |\n| `supplier_disputed` | The intake was contested with the supplier and awaits their response. |\n| `assignation_rejected` | The assignee rejected the assignment; the intake is back in the inbox for reassignment. |\n| `disputed` | Legacy predecessor of `assignation_rejected`; may still appear on historical records. |\n| `validating` | Submitted and going through review. |\n| `validated` | Review complete; about to produce its resulting document. |\n| `processed` | Done — a controller cleared it from the to-process queue (e-invoicing only); it does not produce a document, so `resultingDocument` is always null. |\n| `auto_linked` | Done — automatically matched and attached to an existing document. |\n| `manually_linked` | Done — manually attached to an existing document. |\n| `refused` | Rejected by the company; it will not be processed. |\n| `deleted` | Removed from the inbox. |\n\nNew statuses may be added over time — treat unknown values defensively."
+      title: intakeStatus
+    expenseCategoryRef:
+      type: object
+      additionalProperties: false
+      description: Reference to an expense category — the customer's spend taxonomy (e.g. Software, Travel, Meals) used for accounting and analytics. Distinct from the cost center (which bears the cost) and from analytical fields (free custom dimensions).
+      properties:
+        id:
+          type: string
+          description: Expense-category id. Use `GET /v1/expense-categories` to resolve full details.
+        name:
+          type: string
+          description: Expense-category display name.
+      required:
+      - id
+      - name
+      title: expenseCategoryRef
+    purchaseOrderRef:
+      type: object
+      additionalProperties: false
+      description: Reference to a purchase order the invoice is matched against (two/three-way match).
+      properties:
+        id:
+          type: string
+          description: Purchase-order id.
+      required:
+      - id
+      title: purchaseOrderRef
+    invoiceStage:
+      type: string
+      enum:
+      - pendingApproval
+      - inReview
+      - disputed
+      - toSettle
+      - settled
+      - rejected
+      - cancelled
+      description: "Where the invoice or credit note is in its lifecycle; exactly one value at a time. `paymentStatus` and `exportStatus` move in parallel. \n\n| Stage | Description |\n| --- | --- |\n| `pendingApproval` | Awaiting a decision in the approval workflow. |\n| `inReview` | Approved, waiting for the controller review. |\n| `disputed` | Approved, then put in dispute with the supplier. Invoices only. |\n| `toSettle` | Reviewed. An invoice is waiting for payment, fully or in part (`paymentStatus` tells which); a credit note is partially allocated. |\n| `settled` | An invoice is fully paid; a credit note is fully allocated or reimbursed. |\n| `rejected` | Declined by an approver, rejected in controller review, or expired. |\n| `cancelled` | Withdrawn by the company: archived after a supplier dispute, or replaced by a corrective invoice. Invoices withdrawn by their submitter are never returned. |"
+      title: invoiceStage
+    intakeId:
+      type: string
+      description: Opaque unique identifier of an intake.
+      title: intakeId
+      example: bc9cef35-401d-4ea4-b384-ed725e6685cf
+    paymentFx:
+      type: object
+      additionalProperties: false
+      description: Currency conversion for this payment. Present only when the money actually moved in a currency different from the payment `currency`; null otherwise. The payment `amount`/`currency` are the invoice-side figures; these are the settlement side (what actually left the paying account).
+      properties:
+        settlementCurrency:
+          allOf:
+          - $ref: '#/components/schemas/currency'
+          description: Currency actually debited from the paying account.
+        settlementAmount:
+          allOf:
+          - $ref: '#/components/schemas/priceAmount'
+          description: Amount actually moved, in `settlementCurrency`'s smallest unit.
+        rate:
+          type: number
+          description: Exchange rate applied, such that `settlementAmount` is approximately `amount x rate` (units of `settlementCurrency` per one unit of the payment `currency`).
+      required:
+      - settlementCurrency
+      - settlementAmount
+      - rate
+      title: paymentFx
+    invoicesMeta:
+      type: object
+      additionalProperties: false
+      description: Meta object describing the invoice list pagination.
+      properties:
+        pagination:
+          $ref: '#/components/schemas/invoicesCursorPagination'
+      required:
+      - pagination
+      title: invoicesMeta
+    intakeSupplier:
+      type: object
+      additionalProperties: false
+      description: The supplier (counterparty) that issued the document, as identified on the intake. `id` and `name` are independently nullable — the object may be present with either field null.
+      properties:
+        id:
+          type: string
+          nullable: true
+          description: Supplier id, resolvable via `GET /v1/suppliers/{id}`. Null when the supplier named on the document has not been matched to a supplier record yet.
+        name:
+          type: string
+          nullable: true
+          description: Supplier name as identified on the document. Null when no name has been captured yet.
+      required:
+      - id
+      - name
+      title: intakeSupplier
+    tooLarge:
+      type: object
+      description: Payload Too Large
+      additionalProperties: false
+      properties:
+        correlationId:
+          type: string
+        errors:
+          type: array
+          items:
+            additionalProperties: false
+            type: object
+            properties:
+              code:
+                type: string
+                enum:
+                - LARGE_BODY_ERROR
+              detail:
+                type: string
+                enum:
+                - 'The request is too large for this endpoint: send a smaller body or a smaller file.'
+            required:
+            - code
+            - detail
+      required:
+      - errors
+      title: tooLarge
+    currencyTotal:
+      type: object
+      additionalProperties: false
+      description: Count and amount totals for the matching invoices in a single currency. `amountDue` is not computed yet and is always 0; it is not the outstanding balance.
+      properties:
+        currency:
+          $ref: '#/components/schemas/currency'
+        count:
+          type: integer
+          description: Number of matching invoices denominated in this currency.
+        grossAmount:
+          allOf:
+          - $ref: '#/components/schemas/priceAmount'
+          description: Sum of `grossAmount` over the matching invoices in this currency.
+        netAmount:
+          allOf:
+          - $ref: '#/components/schemas/priceAmount'
+          description: Sum of `netAmount` over the matching invoices in this currency. Invoices with a null `netAmount` (older invoices with no recorded net amount, and every credit note) add 0, so this is a lower bound and `grossAmount` minus `netAmount` is not the tax total.
+        amountDue:
+          allOf:
+          - $ref: '#/components/schemas/priceAmount'
+          description: 'Not computed yet: always 0. Not the outstanding balance of the matching invoices.'
+      required:
+      - currency
+      - count
+      - grossAmount
+      - netAmount
+      - amountDue
+      title: currencyTotal
+    unsupportedMediaType:
+      type: object
+      description: Unsupported Media Type
+      additionalProperties: false
+      properties:
+        correlationId:
+          type: string
+        errors:
+          type: array
+          items:
+            additionalProperties: false
+            type: object
+            properties:
+              code:
+                type: string
+                enum:
+                - UNSUPPORTED_MEDIA_TYPE_ERROR
+              detail:
+                type: string
+                enum:
+                - 'The Content-Type of the request is not supported: send application/json, or application/x-www-form-urlencoded where the endpoint documents it.'
+            required:
+            - code
+            - detail
+      required:
+      - errors
+      title: unsupportedMediaType
+    paymentStatusReason:
+      type: object
+      additionalProperties: false
+      description: Why a payment failed or was returned. Present for those states; null otherwise.
+      properties:
+        code:
+          type: string
+          nullable: true
+          description: Machine-readable reason/return code (e.g. an ACH return code like `R01`, or a bank rejection code). Opaque and extensible; null when only a message is available.
+        message:
+          type: string
+          description: Human-readable explanation (e.g. "Rejected", "Insufficient funds", "Invalid IBAN").
+      required:
+      - code
+      - message
+      title: paymentStatusReason
+    intakeType:
+      type: string
+      enum:
+      - invoice
+      - creditNote
+      - receipt
+      description: "Kind of document the intake carries. \n\n| Type | Description |\n| --- | --- |\n| `invoice` | A supplier invoice: an amount the company owes the supplier for goods or services. |\n| `creditNote` | A supplier credit note: a document that reduces an amount owed to the supplier (a refund, cancellation, or correction of a prior invoice). |\n| `receipt` | A receipt for a payment already made (e.g. a card payment), to be linked to that payment as documentary evidence. |\n\nForwarded documents are folded into their base type — a forwarded invoice is `invoice` and a forwarded credit note is `creditNote`; how the document arrived is expressed by `source`."
+      title: intakeType
+    dateTime:
+      type: string
+      format: date-time
+      description: String containing a UTC datetime expressed in [ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) format like `2023-05-12T14:06:40Z`.
+      title: dateTime
+    lineItem:
+      type: object
+      additionalProperties: false
+      description: A single line of the invoice, with its amounts and tax. Accounting coding is set on the whole invoice (see the invoice `costCenter`, `analyticalSplits` and `expenseCategories`), not per line.
+      properties:
+        description:
+          type: string
+          description: What the line is for.
+        quantity:
+          type: number
+          description: Quantity billed (may be fractional).
+        unitPrice:
+          oneOf:
+          - $ref: '#/components/schemas/priceAmount'
+          - type: 'null'
+          description: Price per unit before tax, in `currency`'s smallest unit. Null when no net amount was captured, which can happen in any state (e.g. the single header-derived line of a credit note or of an older invoice whose net was never recorded).
+        netAmount:
+          oneOf:
+          - $ref: '#/components/schemas/priceAmount'
+          - type: 'null'
+          description: Line amount before tax (`quantity` x `unitPrice`), in `currency`'s smallest unit. Null when no net amount was captured, which can happen in any state (e.g. the single header-derived line of a credit note or of an older invoice whose net was never recorded).
+        taxRate:
+          $ref: '#/components/schemas/taxRate'
+        taxAmount:
+          oneOf:
+          - $ref: '#/components/schemas/priceAmount'
+          - type: 'null'
+          description: Tax charged on this line, in `currency`'s smallest unit. Null when no net amount was captured, which can happen in any state (e.g. the single header-derived line of a credit note or of an older invoice whose net was never recorded), or when the gross amount is not known yet.
+        grossAmount:
+          oneOf:
+          - $ref: '#/components/schemas/priceAmount'
+          - type: 'null'
+          description: Line amount including tax (`netAmount` + `taxAmount`), in `currency`'s smallest unit. Null when the invoice has no gross amount yet (draft/incomplete).
+        costCenter:
+          oneOf:
+          - $ref: '#/components/schemas/costCenterRef'
+          - type: 'null'
+          description: 'Always null: cost centers are set on the whole invoice, see the invoice `costCenter` and `analyticalSplits`.'
+        expenseCategory:
+          oneOf:
+          - $ref: '#/components/schemas/expenseCategoryRef'
+          - type: 'null'
+          description: 'Always null: expense categories are set on the whole invoice, see the invoice `expenseCategories`.'
+        analyticalProperties:
+          type: array
+          items:
+            $ref: '#/components/schemas/analyticalProperty'
+          description: 'Always empty: analytical-field values are set on the whole invoice, see the invoice `analyticalSplits`.'
+      required:
+      - description
+      - quantity
+      - unitPrice
+      - netAmount
+      - taxRate
+      - taxAmount
+      - grossAmount
+      - costCenter
+      - expenseCategory
+      - analyticalProperties
+      title: lineItem
+    intakeSource:
+      type: string
+      enum:
+      - eInvoice
+      - email
+      - api
+      description: "How the document reached Spendesk. \n\n| Source | Description |\n| --- | --- |\n| `eInvoice` | Delivered through an e-invoicing network (e.g. Peppol or a French PDP). |\n| `email` | Sent or forwarded to the company's invoice inbox email address. |\n| `api` | Created programmatically via this API. |"
+      title: intakeSource
+    intakesCursorPagination:
+      type: object
+      additionalProperties: false
+      description: Forward-only cursor pagination metadata.
+      properties:
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Page size that was applied.
+        hasNextPage:
+          type: boolean
+          description: Whether more results exist after this page. Convenience for `nextCursor != null`.
+        nextCursor:
+          type:
+          - 'null'
+          - string
+          description: Cursor for the next page, or null when there are no more results.
+        nextUrl:
+          type:
+          - 'null'
+          - string
+          format: uri
+          description: Ready-to-follow URL for the next page (same filters + `cursor`), or null.
+      required:
+      - limit
+      - hasNextPage
+      - nextCursor
+      - nextUrl
+      title: intakesCursorPagination
+    conflict:
+      type: object
+      description: Conflict
+      additionalProperties: false
+      properties:
+        correlationId:
+          type: string
+        errors:
+          type: array
+          items:
+            additionalProperties: false
+            type: object
+            properties:
+              code:
+                type: string
+                enum:
+                - CONFLICT_ERROR
+              detail:
+                type: string
+            required:
+            - code
+            - detail
+      required:
+      - errors
+      title: conflict
+    paymentSource:
+      type: string
+      enum:
+      - spendesk
+      - external
+      description: "Who executed the payment. \n\n| Source | Description |\n| --- | --- |\n| `spendesk` | Orchestrated and executed through Spendesk (scheduled, confirmed, transferred). |\n| `external` | Happened outside Spendesk (own bank, cash, another tool) and is recorded here for reporting/bookkeeping. External payments have no Spendesk orchestration. |"
+      title: paymentSource
+    payment:
+      type: object
+      additionalProperties: false
+      description: A single payment settling (or scheduled to settle) the invoice. An invoice may be settled by one or several payments — a Spendesk instalment plan, or one or more payments recorded as made outside Spendesk. `source` distinguishes the two. A failed/cancelled attempt and its retry appear as separate entries.
+      properties:
+        id:
+          type: string
+          description: Unique identifier of the payment.
+        source:
+          $ref: '#/components/schemas/paymentSource'
+        method:
+          oneOf:
+          - $ref: '#/components/schemas/paymentMethod'
+          - type: 'null'
+          description: Means of payment, or null if not yet determined.
+        amount:
+          allOf:
+          - $ref: '#/components/schemas/priceAmount'
+          description: Amount of this payment, in `currency`'s smallest unit. Settled (`paid`) payments in the invoice `currency` sum to the invoice `amountPaid`, except on credit notes, whose `amountPaid` is always 0 (null while `grossAmount` is unknown); a single payment may be a partial instalment.
+        currency:
+          allOf:
+          - $ref: '#/components/schemas/currency'
+          description: Currency this payment is made in — normally the invoice `currency`.
+        reference:
+          type: string
+          nullable: true
+          description: Remittance reference sent with this payment so the supplier can reconcile it (often the supplier's payment reference or the invoice number). Null if none.
+        scheduledDate:
+          oneOf:
+          - $ref: '#/components/schemas/date'
+          - type: 'null'
+          description: Date the payment is scheduled to be executed. Null for externally-recorded payments that were never scheduled through Spendesk.
+        paidDate:
+          oneOf:
+          - $ref: '#/components/schemas/date'
+          - type: 'null'
+          description: Date the payment settled, or null if not yet settled.
+        status:
+          $ref: '#/components/schemas/paymentState'
+        statusReason:
+          oneOf:
+          - $ref: '#/components/schemas/paymentStatusReason'
+          - type: 'null'
+          description: Why the payment failed or was returned; null for other states.
+        fx:
+          oneOf:
+          - $ref: '#/components/schemas/paymentFx'
+          - type: 'null'
+          description: Currency conversion applied; null when paid in the payment `currency`.
+        fees:
+          type: array
+          items:
+            $ref: '#/components/schemas/paymentFee'
+          description: Fees incurred on this payment (transfer, FX, intermediary…). Empty when none.
+      required:
+      - id
+      - source
+      - method
+      - amount
+      - currency
+      - reference
+      - scheduledDate
+      - paidDate
+      - status
+      - statusReason
+      - fx
+      - fees
+      title: payment
+    review:
+      type: object
+      additionalProperties: false
+      description: Finance/controller review that validates the invoice's data (amounts, coding, documentary evidence) for accounting. Distinct from `approval`, which authorises the spend — this checks the booking data. Null on the invoice when no review has been recorded.
+      properties:
+        validatedBy:
+          type: string
+          description: Member who validated the invoice.
+        validatedAt:
+          allOf:
+          - $ref: '#/components/schemas/dateTime'
+          description: When the review was completed.
+      required:
+      - validatedBy
+      - validatedAt
+      title: review
+    invoiceType:
+      type: string
+      enum:
+      - invoice
+      - creditNote
+      description: "Kind of document the record represents. \n\n| Type | Description |\n| --- | --- |\n| `invoice` | A supplier invoice: an amount the company owes the supplier for goods or services. Amounts are positive. |\n| `creditNote` | A supplier credit note: a document from the same supplier that reduces an amount owed (a refund, cancellation, or correction of a prior invoice). Amounts are negative. |"
+      title: invoiceType
+    approvalStep:
+      type: object
+      additionalProperties: false
+      description: One step in the approval chain. Steps are returned in execution order (the array index is the position); each must be approved for the invoice to advance to the next.
+      properties:
+        state:
+          $ref: '#/components/schemas/approvalStepState'
+        approvers:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/approver'
+          description: Members who may act on this step. Usually one; when several are listed, any one of them acting resolves the step.
+        decision:
+          oneOf:
+          - $ref: '#/components/schemas/approvalDecision'
+          - type: 'null'
+          description: The decision recorded on this step, or null while it is `upcoming`/`current`.
+      required:
+      - state
+      - approvers
+      - decision
+      title: approvalStep
+    approvalDecision:
+      type: object
+      additionalProperties: false
+      description: Who acted on a step, when, and why. Null on a step until it has been acted on. The outcome (approved vs rejected) is given by the step's `state`.
+      properties:
+        byUserId:
+          type: string
+          description: Member who took the decision (the acting approver, i.e. the delegate when delegated).
+        at:
+          allOf:
+          - $ref: '#/components/schemas/dateTime'
+          description: When the decision was taken.
+        reason:
+          type: string
+          nullable: true
+          description: Optional note left with the decision (e.g. a denial reason). Null when none.
+      required:
+      - byUserId
+      - at
+      - reason
+      title: approvalDecision
+    date:
+      type: string
+      format: date
+      description: String containing a date expressed in [ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) format like `2023-05-12`.
+      title: date
+    badRequest:
+      type: object
+      description: Bad request
+      additionalProperties: false
+      properties:
+        correlationId:
+          type: string
+        errors:
+          type: array
+          items:
+            additionalProperties: false
+            type: object
+            properties:
+              code:
+                type: string
+                enum:
+                - BAD_REQUEST_INCORRECT_OR_MISSING_FIELD
+                - RESPONSE_TOO_LARGE
+              detail:
+                type: string
+              source:
+                type: string
+            required:
+            - code
+            - detail
+            - source
+      required:
+      - errors
+      title: badRequest
+    costCenterRef:
+      type: object
+      additionalProperties: false
+      description: Reference to a cost center (the internal unit that bears the cost).
+      properties:
+        id:
+          type: string
+          description: Cost-center id. Use `GET /v1/cost-centers` to resolve full details.
+        name:
+          type: string
+          description: Cost-center display name.
+      required:
+      - id
+      - name
+      title: costCenterRef
+    intakeSummary:
+      type: object
+      additionalProperties: false
+      description: A received supplier document (invoice, credit note or receipt) being reviewed and processed — compact representation returned by the list endpoint. Fields extracted from the document (amounts, dates, numbers, supplier) are null until captured. New fields may be added over time.
+      properties:
+        id:
+          $ref: '#/components/schemas/intakeId'
+        companyId:
+          type: string
+          description: Id of the company entity that received the document.
+        type:
+          $ref: '#/components/schemas/intakeType'
+        source:
+          oneOf:
+          - $ref: '#/components/schemas/intakeSource'
+          - type: 'null'
+          description: How the document reached Spendesk, or null when not recorded.
+        status:
+          $ref: '#/components/schemas/intakeStatus'
+        stage:
+          $ref: '#/components/schemas/intakeStage'
+        supplier:
+          oneOf:
+          - $ref: '#/components/schemas/intakeSupplier'
+          - type: 'null'
+          description: The supplier that issued the document. Null when no supplier has been identified yet.
+        assigneeId:
+          type: string
+          nullable: true
+          description: 'Id of the member the intake is assigned to — the person expected to complete and submit it. An id, not a name: resolve it with [Get Users](/reference/v1-get-users), which needs the `user:read` scope in addition to the intake read scope. Null while unassigned.'
+        invoiceNumber:
+          type: string
+          nullable: true
+          description: The supplier's invoice number as printed on the document. Null if not captured or the document is not an invoice.
+          example: FA17273
+        creditNoteNumber:
+          type: string
+          nullable: true
+          description: The supplier's credit-note number as printed on the document. Null if not captured or the document is not a credit note.
+        currency:
+          oneOf:
+          - $ref: '#/components/schemas/currency'
+          - type: 'null'
+          description: Currency the document is denominated in. Null until captured, and also null when the captured value is not a three-letter code.
+        grossAmount:
+          oneOf:
+          - $ref: '#/components/schemas/priceAmount'
+          - type: 'null'
+          description: Total amount including tax, in `currency`'s smallest unit. Null until captured, and also null, even once captured, whenever `currency` is null or a code Spendesk does not support.
+        netAmount:
+          oneOf:
+          - $ref: '#/components/schemas/priceAmount'
+          - type: 'null'
+          description: Total amount before tax, in `currency`'s smallest unit. Null until captured, and also null, even once captured, whenever `currency` is null or a code Spendesk does not support.
+        netPayableAmount:
+          oneOf:
+          - $ref: '#/components/schemas/priceAmount'
+          - type: 'null'
+          description: 'Amount actually left to pay the supplier after deductions recorded on the document (e.g. an advance already paid, or an applied credit note), in `currency`''s smallest unit. Equals `grossAmount` when there are none. Only ever populated for intakes ingested through e-invoicing: it is always null for intakes created through this API and for intakes forwarded by email, where the null is permanent rather than capture-pending.'
+        issueDate:
+          oneOf:
+          - $ref: '#/components/schemas/date'
+          - type: 'null'
+          description: Date the supplier issued the document, as printed on it (emission date). Null until captured.
+        dueDate:
+          oneOf:
+          - $ref: '#/components/schemas/date'
+          - type: 'null'
+          description: Date by which the document must be paid, per the supplier's payment terms. Null until captured or when no due date applies.
+        resultingDocument:
+          oneOf:
+          - $ref: '#/components/schemas/intakeResultingDocument'
+          - type: 'null'
+          description: 'The document the intake produced or was linked to. Null while the intake is in progress, and stays null for an intake that ends `refused` or `deleted` without producing one. Always null at `status: processed`, which records a controller clearing the to-process queue rather than a document being produced. A null can also mean the lookup failed rather than that none exists, on both List intakes and Get an intake.'
+        payableId:
+          type: string
+          format: uuid
+          description: 'Id of the accounting payable the intake ultimately produced, resolvable via the payables API. Null whenever none is known, which is common even at `stage: processed` — that stage also holds refused and deleted intakes, which never produce one. On [List intakes](/reference/v2-list-company-intakes) a null is "unknown" rather than "none"; [Get an intake](/reference/v2-get-company-intake) is authoritative.'
+          pattern: ^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$
+          nullable: true
+          example: bc9cef35-401d-4ea4-b384-ed725e6685cf
+        purchaseOrderId:
+          type: string
+          nullable: true
+          description: Id of the purchase order the intake is matched against. Null when none.
+        correctsIntakeId:
+          type: string
+          nullable: true
+          description: 'For a corrective document (e.g. a credit note cancelling or amending an earlier invoice): id of the intake it corrects. Null otherwise.'
+        appUrl:
+          type: string
+          description: Link to this intake in the Spendesk invoice inbox.
+          example: https://app.spendesk.com/app/RRbRgeIB7X/requests/inbox/shared/d967b168-0fad-5310-bf96-ca1858ff7da2
+        createdAt:
+          allOf:
+          - $ref: '#/components/schemas/dateTime'
+          description: When the intake was received by Spendesk (ingestion time, not `issueDate`).
+        updatedAt:
+          oneOf:
+          - $ref: '#/components/schemas/dateTime'
+          - type: 'null'
+          description: When any field on the intake last changed. Null when never updated.
+      required:
+      - id
+      - companyId
+      - type
+      - source
+      - status
+      - stage
+      - supplier
+      - assigneeId
+      - invoiceNumber
+      - creditNoteNumber
+      - currency
+      - grossAmount
+      - netAmount
+      - netPayableAmount
+      - issueDate
+      - dueDate
+      - resultingDocument
+      - payableId
+      - purchaseOrderId
+      - correctsIntakeId
+      - appUrl
+      - createdAt
+      - updatedAt
+      title: intakeSummary
+    invoiceAnalyticalSplit:
+      type: object
+      additionalProperties: false
+      description: One allocation of the whole invoice to a cost center and/or analytical-field values, as a share of its total. Splits apply to the invoice as a whole, not to individual line items.
+      properties:
+        costCenter:
+          oneOf:
+          - $ref: '#/components/schemas/costCenterRef'
+          - type: 'null'
+          description: Cost center this share is allocated to, or null when the split only sets analytical-field values.
+        percentage:
+          type: number
+          description: Percentage of the invoice allocated to this split, from 0 to 100 (e.g. `25` means 25%). The splits of an invoice add up to 100.
+          example: 25
+        analyticalProperties:
+          type: array
+          items:
+            $ref: '#/components/schemas/analyticalProperty'
+          description: Analytical-field values set on this split.
+      required:
+      - costCenter
+      - percentage
+      - analyticalProperties
+      title: invoiceAnalyticalSplit
+    paymentStatus:
+      type: string
+      enum:
+      - unpaid
+      - partiallyPaid
+      - paid
+      description: "Settlement state, independent of where the money moved (Spendesk or elsewhere) and of `stage`. On a single invoice with `payments`, it is aggregated over settled (`paid`) payments in the invoice `currency` only; on the invoice list, on credit notes (which have no stored payment status, so always report `unpaid`), and when `payments` is empty, it is the stored payment status instead, so the list and the single invoice can disagree and the `amountPaid` conditions below hold only for the aggregated case. Scheduling and per-transfer failures are visible on individual payments, not here. \n\n| Status | Description |\n| --- | --- |\n| `unpaid` | Nothing has settled (`amountPaid` equals 0). |\n| `partiallyPaid` | Some but not all has settled (`0 < amountPaid < grossAmount`). |\n| `paid` | Fully settled (`amountDue` equals 0), by any means. |\n\nA `returned` payment reduces `amountPaid`, so this can move back from `paid` to `partiallyPaid` or `unpaid`."
+      title: paymentStatus
+    intakesMeta:
+      type: object
+      additionalProperties: false
+      description: Meta object describing the intake list pagination.
+      properties:
+        pagination:
+          $ref: '#/components/schemas/intakesCursorPagination'
+      required:
+      - pagination
+      title: intakesMeta
+    taxRate:
+      type: number
+      nullable: true
+      description: Tax rate as a percentage — e.g. `20` means 20%, `5.5` means 5.5%. Null when no rate applies or it is unknown.
+      title: taxRate
+      example: 20
+    invoiceAttachment:
+      type: object
+      additionalProperties: false
+      description: A file supporting the invoice (documentary evidence). An invoice may have several.
+      properties:
+        id:
+          type: string
+        fileName:
+          type: string
+        mimeType:
+          type: string
+          description: MIME type of the file (e.g. `application/pdf`, `application/xml` for e-invoices).
+          example: application/pdf
+        downloadUrl:
+          type: string
+          format: uri
+          description: Pre-signed URL to download the file, valid for at most 3 hours from when it was generated. Invoice responses are cached, so a re-fetch shortly after may return the same URL — download promptly and do not persist it.
+      required:
+      - id
+      - fileName
+      - mimeType
+      - downloadUrl
+      title: invoiceAttachment
+    intakeDocument:
+      type: object
+      additionalProperties: false
+      description: A file received as part of the intake (the invoice, credit note or receipt itself, or a companion file). Unlike invoice attachments, documents carry no `id` — the underlying storage exposes no stable per-file identifier.
+      properties:
+        fileName:
+          type: string
+          description: Filename of the document, and the name it saves as when downloaded via `downloadUrl`. This is the original filename when one was captured at ingestion; otherwise a generated identifier with an extension derived from the mime type. Not guaranteed unique within this array.
+        mimeType:
+          type: string
+          description: MIME type of the file (e.g. `application/pdf`, `application/xml` for e-invoices).
+          example: application/pdf
+        downloadUrl:
+          type: string
+          format: uri
+          description: Time-limited pre-signed URL to download the file. Expires at most 3 hours after the response is issued — download promptly and do not persist the URL (re-fetch the intake for a fresh one).
+      required:
+      - fileName
+      - mimeType
+      - downloadUrl
+      title: intakeDocument
+    paymentMethod:
+      type: string
+      enum:
+      - wireTransfer
+      - sepa
+      - swift
+      - ach
+      - card
+      - directDebit
+      - check
+      - cash
+      - other
+      description: Means of payment. Extensible — new methods may be added over time, so treat unknown values defensively. `other` is a catch-all.
+      title: paymentMethod
+    invoiceSummary:
+      type: object
+      additionalProperties: false
+      description: Compact representation of an invoice, returned by the list endpoint.
+      properties:
+        id:
+          $ref: '#/components/schemas/invoiceId'
+        invoiceNumber:
+          type: string
+          nullable: true
+          description: Supplier's invoice/credit-note number. Null if not captured.
+          example: FA17273
+        type:
+          $ref: '#/components/schemas/invoiceType'
+        description:
+          type: string
+          nullable: true
+          description: Free-text description/purpose of the invoice.
+        stage:
+          $ref: '#/components/schemas/invoiceStage'
+        paymentStatus:
+          $ref: '#/components/schemas/paymentStatus'
+        dispute:
+          oneOf:
+          - $ref: '#/components/schemas/invoiceDispute'
+          - type: 'null'
+          description: 'Not populated yet: always null, even on a disputed invoice.'
+        supplier:
+          $ref: '#/components/schemas/supplierRef'
+        purchaseOrders:
+          type: array
+          items:
+            $ref: '#/components/schemas/purchaseOrderRef'
+          description: Purchase orders this invoice is matched against. Empty when the invoice references no PO.
+        costCenter:
+          oneOf:
+          - $ref: '#/components/schemas/costCenterRef'
+          - type: 'null'
+          description: 'Cost center the invoice is coded to, or null when none is set. Set independently of `analyticalSplits`: the two are not reconciled and can disagree.'
+        analyticalSplits:
+          type: array
+          items:
+            $ref: '#/components/schemas/invoiceAnalyticalSplit'
+          description: Allocation of the invoice total across cost centers and analytical-field values. Empty when the invoice is not split. Set independently of `costCenter`, so a split can name a different cost center.
+        expenseCategories:
+          type: array
+          items:
+            $ref: '#/components/schemas/expenseCategoryRef'
+          description: 'Expense categories the invoice is coded to, sorted by name. Empty when none is set. A split invoice can carry several, one per split. These ids are the ones the `expenseCategoryId` filter matches. Only the company''s current expense-category field counts: if it is changed or removed, past invoices follow the new setting. A deleted category still shows on the invoices coded to it.'
+        netAmount:
+          oneOf:
+          - $ref: '#/components/schemas/priceAmount'
+          - type: 'null'
+          description: 'Total before tax, in `currency`''s smallest unit. Can be null in any state, not only draft/incomplete: always for credit notes, and for older invoices whose net amount was never recorded.'
+        taxAmount:
+          oneOf:
+          - $ref: '#/components/schemas/priceAmount'
+          - type: 'null'
+          description: Total tax, in `currency`'s smallest unit. Null whenever `netAmount` or `grossAmount` is null, so in any state for credit notes and older invoices with no recorded net amount.
+        grossAmount:
+          oneOf:
+          - $ref: '#/components/schemas/priceAmount'
+          - type: 'null'
+          description: Total amount including tax (`netAmount` + `taxAmount`), in `currency`'s smallest unit. Positive for invoices (owed to the supplier); negative for credit notes (owed to the company). Null when the invoice has no gross amount yet (draft/incomplete).
+        amountDue:
+          oneOf:
+          - $ref: '#/components/schemas/priceAmount'
+          - type: 'null'
+          description: 'Placeholder on this list endpoint, not the actual outstanding balance: it is derived from `paymentStatus` only, 0 when `paid`, otherwise the full `grossAmount`, so a `partiallyPaid` invoice reports its whole gross. Never treat or sum it as the outstanding balance. Null when `grossAmount` is not known yet (draft/incomplete).'
+        currency:
+          $ref: '#/components/schemas/currency'
+        issueDate:
+          allOf:
+          - $ref: '#/components/schemas/date'
+          description: Date the supplier issued the invoice, as printed on the document (emission date).
+        dueDate:
+          oneOf:
+          - $ref: '#/components/schemas/date'
+          - type: 'null'
+          description: Date by which the invoice must be paid, per the supplier's payment terms. Null when no due date is known.
+        createdAt:
+          allOf:
+          - $ref: '#/components/schemas/dateTime'
+          description: When the invoice record was created in Spendesk (ingest/submission time, not the issue date).
+        updatedAt:
+          allOf:
+          - $ref: '#/components/schemas/dateTime'
+          description: When any field on the invoice record last changed.
+      required:
+      - id
+      - invoiceNumber
+      - type
+      - description
+      - stage
+      - paymentStatus
+      - dispute
+      - supplier
+      - purchaseOrders
+      - costCenter
+      - analyticalSplits
+      - expenseCategories
+      - netAmount
+      - taxAmount
+      - grossAmount
+      - amountDue
+      - currency
+      - issueDate
+      - dueDate
+      - createdAt
+      - updatedAt
+      title: invoiceSummary
+    analyticalProperty:
+      type: object
+      additionalProperties: false
+      description: A value set for one analytical field. Analytical fields are the customer's own bookkeeping dimensions (custom fields) — e.g. project, team — used to classify and report spend. `valueId`/`valueName` are null when the field applies but no value is selected.
+      properties:
+        fieldId:
+          type: string
+        fieldName:
+          type: string
+        valueId:
+          type: string
+          nullable: true
+        valueName:
+          type: string
+          nullable: true
+      required:
+      - fieldId
+      - fieldName
+      - valueId
+      - valueName
+      title: analyticalProperty
+    invoice:
+      type: object
+      additionalProperties: false
+      description: Full representation of an invoice, returned by the detail endpoint. A superset of `invoiceSummary`, adding line items, the tax breakdown, currency conversion (FX), the payment history, the approval chain, accounting links, attachments and custom fields.
+      properties:
+        id:
+          $ref: '#/components/schemas/invoiceId'
+        invoiceNumber:
+          type: string
+          nullable: true
+          description: Supplier's invoice/credit-note number. Null if not captured.
+          example: FA17273
+        type:
+          $ref: '#/components/schemas/invoiceType'
+        description:
+          type: string
+          nullable: true
+          description: Free-text description/purpose of the invoice.
+        stage:
+          $ref: '#/components/schemas/invoiceStage'
+        paymentStatus:
+          $ref: '#/components/schemas/paymentStatus'
+        exportStatus:
+          oneOf:
+          - $ref: '#/components/schemas/exportStatus'
+          - type: 'null'
+          description: Null until the invoice has an accounting payable (see `payableId`) — an invoice pending approval has nothing to export yet, which is distinct from `pending` (a payable exists but hasn't been exported).
+        dispute:
+          oneOf:
+          - $ref: '#/components/schemas/invoiceDispute'
+          - type: 'null'
+          description: Always null today, even if disputed (`stage` then shows `disputed`).
+        cancelledAt:
+          oneOf:
+          - $ref: '#/components/schemas/dateTime'
+          - type: 'null'
+          description: When the invoice was cancelled/voided, or null if it is still active.
+        supplier:
+          oneOf:
+          - $ref: '#/components/schemas/supplierRef'
+          - type: 'null'
+          description: Null only on a draft (`stage` `pendingApproval`) with no supplier set yet.
+        purchaseOrders:
+          type: array
+          items:
+            $ref: '#/components/schemas/purchaseOrderRef'
+          description: Purchase orders this invoice is matched against (two/three-way match). Empty when the invoice references no PO. May hold several when one invoice consolidates multiple POs.
+        buyer:
+          oneOf:
+          - $ref: '#/components/schemas/buyerRef'
+          - type: 'null'
+          description: The internal member the invoice is assigned to (the buyer), or null.
+        costCenter:
+          oneOf:
+          - $ref: '#/components/schemas/costCenterRef'
+          - type: 'null'
+          description: 'Cost center the invoice is coded to, or null when none is set. Set independently of `analyticalSplits`: the two are not reconciled and can disagree.'
+        analyticalSplits:
+          type: array
+          items:
+            $ref: '#/components/schemas/invoiceAnalyticalSplit'
+          description: Allocation of the invoice total across cost centers and analytical-field values. Empty when the invoice is not split. Set independently of `costCenter`, so a split can name a different cost center.
+        expenseCategories:
+          type: array
+          items:
+            $ref: '#/components/schemas/expenseCategoryRef'
+          description: 'Expense categories the invoice is coded to, sorted by name. Empty when none is set. A split invoice can carry several, one per split. These ids are the ones the `expenseCategoryId` filter matches. Only the company''s current expense-category field counts: if it is changed or removed, past invoices follow the new setting. A deleted category still shows on the invoices coded to it.'
+        lineItems:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/lineItem'
+          description: The invoice's line items — always at least one. A non-itemised invoice is represented as a single line covering the whole amount. Lines carry no accounting coding (see `costCenter` and `analyticalSplits`); line `netAmount`/`taxAmount` sum to the header totals, except when the header total itself is null (draft/incomplete) while real captured line items exist.
+        netAmount:
+          oneOf:
+          - $ref: '#/components/schemas/priceAmount'
+          - type: 'null'
+          description: 'Total before tax, in `currency`''s smallest unit. Can be null in any state, not only draft/incomplete: always for credit notes, and for older invoices whose net amount was never recorded.'
+        taxAmount:
+          oneOf:
+          - $ref: '#/components/schemas/priceAmount'
+          - type: 'null'
+          description: Total tax, in `currency`'s smallest unit, derived as `grossAmount - netAmount` (not summed from `lineItems`). For the tax-by-rate breakdown (VAT-return view), group the line items by `taxRate`. Null whenever `netAmount` or `grossAmount` is null, so in any state for credit notes and older invoices with no recorded net amount.
+        grossAmount:
+          oneOf:
+          - $ref: '#/components/schemas/priceAmount'
+          - type: 'null'
+          description: Total amount including tax (`netAmount` + `taxAmount`), in `currency`'s smallest unit. Positive for invoices (owed to the supplier); negative for credit notes (owed to the company). Null when the invoice has no gross amount yet (draft/incomplete).
+        amountPaid:
+          oneOf:
+          - $ref: '#/components/schemas/priceAmount'
+          - type: 'null'
+          description: 'Amount settled so far, in `currency`''s smallest unit: the sum of `payments` with status `paid` in the invoice `currency` (returned payments and payments in another currency are excluded). When `payments` is empty, it comes from the stored payment status instead: `grossAmount` if `paid`, otherwise 0 (even when `partiallyPaid`). Always 0 on credit notes, which have no stored payment status and never aggregate `payments`. When `grossAmount` is not known yet, it is null if it comes from the stored status (empty `payments`, or a credit note), but is still summed from `payments` when they are recorded.'
+        amountDue:
+          oneOf:
+          - $ref: '#/components/schemas/priceAmount'
+          - type: 'null'
+          description: Outstanding balance still to be settled (`grossAmount` minus `amountPaid`), in `currency`'s smallest unit. Zero when fully paid. Null when `grossAmount` is not known yet (draft/incomplete).
+        currency:
+          oneOf:
+          - $ref: '#/components/schemas/currency'
+          - type: 'null'
+          description: Null only on a draft (`stage` `pendingApproval`) with no currency set yet. Every amount on the invoice is then null too, because an amount can't be stated without its currency.
+        functionalAmount:
+          oneOf:
+          - $ref: '#/components/schemas/priceAmount'
+          - type: 'null'
+          description: '`grossAmount` converted into the company entity''s functional currency, in that currency''s smallest unit. For accounting/reporting only — the supplier is paid `grossAmount` in `currency`, not this. Equal to `grossAmount` when the invoice is already in the functional currency. Null until the invoice has an accounting payable (see `payableId`) — this is not known before then, regardless of currency.'
+        functionalCurrency:
+          oneOf:
+          - $ref: '#/components/schemas/currency'
+          - type: 'null'
+          description: The company entity's functional currency — its primary currency for accounting and reporting. Equals `currency` when no conversion is needed. Null until the invoice has an accounting payable (see `payableId`).
+        functionalExchangeRate:
+          type: number
+          nullable: true
+          description: Rate used to convert `currency` into `functionalCurrency`, applied as `functionalAmount` is approximately `grossAmount x functionalExchangeRate`. 1 when both currencies match. Null until the invoice has an accounting payable (see `payableId`).
+        issueDate:
+          oneOf:
+          - $ref: '#/components/schemas/date'
+          - type: 'null'
+          description: Date the supplier issued the invoice, as printed on the document (emission date). Null only on a draft (`stage` `pendingApproval`) with no issue date set yet.
+        dueDate:
+          oneOf:
+          - $ref: '#/components/schemas/date'
+          - type: 'null'
+          description: Date by which the invoice must be paid, per the supplier's payment terms. Null when no due date is known.
+        accountingDate:
+          oneOf:
+          - $ref: '#/components/schemas/date'
+          - type: 'null'
+          description: Posting date — the date the invoice is booked in the accounting ledger, which fixes the fiscal period it falls into. May differ from `issueDate`. Null until the invoice has an accounting payable (see `payableId`). Not the export date; see `exportedAt`.
+        payments:
+          type: array
+          items:
+            $ref: '#/components/schemas/payment'
+          description: The payment history/plan. Empty until payments exist, and for older invoices not yet backfilled. `paymentStatus`, `amountPaid` and `amountDue` aggregate these entries, except when this array is empty, where they come from the stored payment status, and on credit notes, which have no stored payment status and always report `unpaid`.
+        approval:
+          $ref: '#/components/schemas/approval'
+        review:
+          oneOf:
+          - $ref: '#/components/schemas/review'
+          - type: 'null'
+          description: Finance/controller review, or null if none has been recorded.
+        exportedAt:
+          oneOf:
+          - $ref: '#/components/schemas/dateTime'
+          - type: 'null'
+          description: When the invoice was exported to the accounting system, or null if not exported.
+        documentaryEvidenceStatus:
+          oneOf:
+          - $ref: '#/components/schemas/documentaryEvidenceStatus'
+          - type: 'null'
+          description: Null until the invoice has an accounting payable (see `payableId`) — there is nothing to attach evidence to yet for an invoice pending approval.
+        payableId:
+          type: string
+          format: uuid
+          description: Id of the accounting payable this invoice produced, resolvable via the payables API. Null until the invoice has passed approval/controller validation and a payable has been created — not merely "not yet booked" in the accounting sense. One invoice maps to exactly one payable — line items and cost/analytical splits are allocations within that payable, not separate payables; a credit note is a separate document with its own payable.
+          pattern: ^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$
+          nullable: true
+          example: bc9cef35-401d-4ea4-b384-ed725e6685cf
+        attachments:
+          type: array
+          items:
+            $ref: '#/components/schemas/invoiceAttachment'
+          description: Supporting files. Any without a download link is omitted, so may be partial.
+        createdAt:
+          allOf:
+          - $ref: '#/components/schemas/dateTime'
+          description: When the invoice record was created in Spendesk (ingest/submission time, not the issue date).
+        updatedAt:
+          allOf:
+          - $ref: '#/components/schemas/dateTime'
+          description: When any field on the invoice record last changed.
+      required:
+      - id
+      - invoiceNumber
+      - type
+      - description
+      - stage
+      - paymentStatus
+      - exportStatus
+      - dispute
+      - cancelledAt
+      - supplier
+      - purchaseOrders
+      - buyer
+      - costCenter
+      - analyticalSplits
+      - expenseCategories
+      - lineItems
+      - netAmount
+      - taxAmount
+      - grossAmount
+      - amountPaid
+      - amountDue
+      - currency
+      - functionalAmount
+      - functionalCurrency
+      - functionalExchangeRate
+      - issueDate
+      - dueDate
+      - accountingDate
+      - payments
+      - approval
+      - review
+      - exportedAt
+      - documentaryEvidenceStatus
+      - payableId
+      - attachments
+      - createdAt
+      - updatedAt
+      title: invoice
+    priceAmount:
+      type: number
+      description: 'If the payment was made in a foreign currency, this amount will be the one in the payment currency.
+
+        Can contain a negative value in case of refunds.
+
+        Expressed in smallest units of the currency (e.g. cents for EUR and USD, but yen for JPY).'
+      title: priceAmount
+    invoicesSummary:
+      type: object
+      additionalProperties: false
+      description: Aggregate figures over all invoices matching the filters, returned by `GET /v2/companies/:companyId/invoices/summary`.
+      properties:
+        count:
+          type: integer
+          description: Total number of matching invoices, across all currencies.
+        totalsByCurrency:
+          type: array
+          items:
+            $ref: '#/components/schemas/currencyTotal'
+          description: Amount totals broken down by currency — one entry per currency present in the matching set. Amounts are never summed across currencies. Empty when nothing matches.
+      required:
+      - count
+      - totalsByCurrency
+      title: invoicesSummary
+  securitySchemes:
+    Authentication:
+      type: oauth2
+      description: 'A company-level token acts on the company it was issued for. An organisation-level token (experimental) acts on the companies of an organisation: send the target company in the `X-Company-Id` header on every call, except on `GET /v2/companies` and on `/v2/companies/{companyId}/…` routes, which carry the company in the path. See [Organisation-level access](/reference/organisation-level-access).'
+      flows:
+        clientCredentials:
+          tokenUrl: /v1/auth/token
+          scopes:
+            analytical-field:read: Analytical Fields (Read)
+            bank-fee:read: Spending Bank Fees (Read)
+            cost-center:read: Cost Center (Read)
+            cost-center:manage: Cost Center (Manage)
+            expense-category:read: Expense Category (Read)
+            payable:read: Spending Payables (Read)
+            payable-attachment:read: Spending Payable Attachments (Read)
+            settlement:read: Spending Settlements (Read)
+            supplier:read: Suppliers (Read)
+            user:read: Users (Read)
+            experimental:user:manage: Users (Manage)
+            wallet-load:read: Spending Wallet Loads (Read)
+            wallet-summary:read: Spending Wallet Summary (Read)
+            experimental:accounting-export:read: Accounting exports (Read)
+            experimental:accounting-export:write: Accounting exports (Write)
+            experimental:accounting:update: Accounting (Update)
+            experimental:chart-of-accounts:read: Chart of Accounts (Read)
+            experimental:chart-of-accounts:write: Chart of Accounts (Write)
+            experimental:purchase-order:read: Purchase Orders (Read)
+            experimental:purchase-order:write: Purchase Orders (Write)
+            experimental:webhooks:read: Webhooks (Read)
+            experimental:webhooks:write: Webhooks (Write)
+            experimental:supplier:manage: Suppliers (Manage)
+            experimental:company:read: Companies (Read)
+            experimental:payable-search:read: Payable Search (Read)
+            experimental:payable-attachment:write: Payable Attachments (Write)
+            experimental:card:read: Cards (Read)
+            experimental:card:write: Cards (Write)
+            experimental:request:read: Requests (Read)
+            experimental:transaction:read: Transactions (Read)
+            experimental:analytical-field-v2:read: Analytical Fields v2 (Read)
+            experimental:analytical-field-v2:write: Analytical Fields v2 (Write)
+            experimental:expense-category-v2:read: Expense Category Fields v2 (Read)
+            experimental:expense-category-v2:write: Expense Category Fields v2 (Write)
+            experimental:invoice:read: Invoices (Read) - experimental
+            experimental:intake:read: Intakes (Read)
+            experimental:intake:write: Intakes (Write)
+            experimental:external-reference:read: External References (Read)
+            experimental:external-reference:write: External References (Write)
+        authorizationCode:
+          authorizationUrl: /v1/oauth2/authorize
+          tokenUrl: /v1/oauth2/token/create
+          scopes:
+            analytical-field:read: Analytical Fields (Read)
+            bank-fee:read: Spending Bank Fees (Read)
+            cost-center:read: Cost Center (Read)
+            cost-center:manage: Cost Center (Manage)
+            expense-category:read: Expense Category (Read)
+            payable:read: Spending Payables (Read)
+            payable-attachment:read: Spending Payable Attachments (Read)
+            settlement:read: Spending Settlements (Read)
+            supplier:read: Suppliers (Read)
+            user:read: Users (Read)
+            experimental:user:manage: Users (Manage)
+            wallet-load:read: Spending Wallet Loads (Read)
+            wallet-summary:read: Spending Wallet Summary (Read)
+            experimental:accounting-export:read: Accounting exports (Read)
+            experimental:accounting-export:write: Accounting exports (Write)
+            experimental:accounting:update: Accounting (Update)
+            experimental:chart-of-accounts:read: Chart of Accounts (Read)
+            experimental:chart-of-accounts:write: Chart of Accounts (Write)
+            experimental:purchase-order:read: Purchase Orders (Read)
+            experimental:purchase-order:write: Purchase Orders (Write)
+            experimental:webhooks:read: Webhooks (Read)
+            experimental:webhooks:write: Webhooks (Write)
+            experimental:supplier:manage: Suppliers (Manage)
+            experimental:company:read: Companies (Read)
+            experimental:payable-search:read: Payable Search (Read)
+            experimental:payable-attachment:write: Payable Attachments (Write)
+            experimental:card:read: Cards (Read)
+            experimental:card:write: Cards (Write)
+            experimental:request:read: Requests (Read)
+            experimental:transaction:read: Transactions (Read)
+            experimental:analytical-field-v2:read: Analytical Fields v2 (Read)
+            experimental:analytical-field-v2:write: Analytical Fields v2 (Write)
+            experimental:expense-category-v2:read: Expense Category Fields v2 (Read)
+            experimental:expense-category-v2:write: Expense Category Fields v2 (Write)
+            experimental:invoice:read: Invoices (Read) - experimental
+            experimental:intake:read: Intakes (Read)
+            experimental:intake:write: Intakes (Write)
+            experimental:external-reference:read: External References (Read)
+            experimental:external-reference:write: External References (Write)
+x-provenance:
+  method: searched
+  source: https://developer.spendesk.com/reference
+  harvested: '2026-10-14'
+  tool: harvest-readme-openapi.py
+  note: Assembled verbatim from the OpenAPI definition ReadMe embeds in each operation page of the provider's developer portal; paths and components merged by API title, nothing authored.
+  assembled_from:
+  - https://developer.spendesk.com/reference/mcp-authorization-server-metadata.md
+  - https://developer.spendesk.com/reference/mcp-protected-resource-metadata-mcp.md
+  - https://developer.spendesk.com/reference/v1-assign-creditors-to-accounts.md
+  - https://developer.spendesk.com/reference/v1-cancel-purchase-order.md
+  - https://developer.spendesk.com/reference/v1-close-purchase-order.md
+  - https://developer.spendesk.com/reference/v1-create-account.md
+  - https://developer.spendesk.com/reference/v1-create-auth-token.md
+  - https://developer.spendesk.com/reference/v1-create-cost-centers.md
+  - https://developer.spendesk.com/reference/v1-create-journal.md
+  - https://developer.spendesk.com/reference/v1-create-oauth2-token.md
+  - https://developer.spendesk.com/reference/v1-create-payable-attachment-upload.md
+  - https://developer.spendesk.com/reference/v1-create-purchase-order.md
+  - https://developer.spendesk.com/reference/v1-create-snapshot-payables.md
+  - https://developer.spendesk.com/reference/v1-create-suppliers.md
+  - https://developer.spendesk.com/reference/v1-create-webhook.md
+  - https://developer.spendesk.com/reference/v1-delete-account.md
+  - https://developer.spendesk.com/reference/v1-delete-cost-centers.md
+  - https://developer.spendesk.com/reference/v1-delete-mcp.md
+  - https://developer.spendesk.com/reference/v1-delete-webhook.md
+  - https://developer.spendesk.com/reference/v1-get-account-by-id.md
+  - https://developer.spendesk.com/reference/v1-get-accounts.md
+  - https://developer.spendesk.com/reference/v1-get-analytical-field-values.md
+  - https://developer.spendesk.com/reference/v1-get-analytical-fields.md
+  - https://developer.spendesk.com/reference/v1-get-bank-fees.md
+  - https://developer.spendesk.com/reference/v1-get-card-blocking-history.md
+  - https://developer.spendesk.com/reference/v1-get-card-order.md
+  - https://developer.spendesk.com/reference/v1-get-card.md
+  - https://developer.spendesk.com/reference/v1-get-cards.md
+  - https://developer.spendesk.com/reference/v1-get-cost-centers.md
+  - https://developer.spendesk.com/reference/v1-get-expense-categories.md
+  - https://developer.spendesk.com/reference/v1-get-external-references.md
+  - https://developer.spendesk.com/reference/v1-get-failed-transactions.md
+  - https://developer.spendesk.com/reference/v1-get-integrations-export-status.md
+  - https://developer.spendesk.com/reference/v1-get-journal-templates.md
+  - https://developer.spendesk.com/reference/v1-get-journal.md
+  - https://developer.spendesk.com/reference/v1-get-mcp.md
+  - https://developer.spendesk.com/reference/v1-get-payable-attachments.md
+  - https://developer.spendesk.com/reference/v1-get-payable-by-id.md
+  - https://developer.spendesk.com/reference/v1-get-purchase-order-document.md
+  - https://developer.spendesk.com/reference/v1-get-purchase-order.md
+  - https://developer.spendesk.com/reference/v1-get-purchase-orders.md
+  - https://developer.spendesk.com/reference/v1-get-request.md
+  - https://developer.spendesk.com/reference/v1-get-requests.md
+  - https://developer.spendesk.com/reference/v1-get-settlements.md
+  - https://developer.spendesk.com/reference/v1-get-snapshot-payables.md
+  - https://developer.spendesk.com/reference/v1-get-successful-transactions.md
+  - https://developer.spendesk.com/reference/v1-get-supplier-by-id.md
+  - https://developer.spendesk.com/reference/v1-get-suppliers.md
+  - https://developer.spendesk.com/reference/v1-get-transactions.md
+  - https://developer.spendesk.com/reference/v1-get-user-by-id.md
+  - https://developer.spendesk.com/reference/v1-get-users.md
+  - https://developer.spendesk.com/reference/v1-get-wallet-loads.md
+  - https://developer.spendesk.com/reference/v1-get-wallet-summary.md
+  - https://developer.spendesk.com/reference/v1-get-webhook-by-id.md
+  - https://developer.spendesk.com/reference/v1-get-webhook.md
+  - https://developer.spendesk.com/reference/v1-patch-accounts.md
+  - https://developer.spendesk.com/reference/v1-patch-payable-accounting-fields.md
+  - https://developer.spendesk.com/reference/v1-patch-supplier-status.md
+  - https://developer.spendesk.com/reference/v1-patch-suppliers-status.md
+  - https://developer.spendesk.com/reference/v1-post-experimental-integrations-refresh-settings.md
+  - https://developer.spendesk.com/reference/v1-post-mcp.md
+  - https://developer.spendesk.com/reference/v1-post-payable-mark-as-ready.md
+  - https://developer.spendesk.com/reference/v1-put-payables-bookkeeping-status.md
+  - https://developer.spendesk.com/reference/v1-put-settlements-state.md
+  - https://developer.spendesk.com/reference/v1-refresh-oauth2-token.md
+  - https://developer.spendesk.com/reference/v1-register-oauth2-client.md
+  - https://developer.spendesk.com/reference/v1-remove-creditors-from-accounts.md
+  - https://developer.spendesk.com/reference/v1-request-authorization.md
+  - https://developer.spendesk.com/reference/v1-search-creditor-account-assignments.md
+  - https://developer.spendesk.com/reference/v1-search-payables.md
+  - https://developer.spendesk.com/reference/v1-set-account-purpose.md
+  - https://developer.spendesk.com/reference/v1-sync-accounts.md
+  - https://developer.spendesk.com/reference/v1-update-cost-centers.md
+  - https://developer.spendesk.com/reference/v1-update-supplier.md
+  - https://developer.spendesk.com/reference/v1-update-suppliers.md
+  - https://developer.spendesk.com/reference/v1-update-webhook.md
+  - https://developer.spendesk.com/reference/v1-upsert-external-references.md
+  - https://developer.spendesk.com/reference/v2-create-analytical-field-value.md
+  - https://developer.spendesk.com/reference/v2-create-analytical-field.md
+  - https://developer.spendesk.com/reference/v2-create-expense-category-field.md
+  - https://developer.spendesk.com/reference/v2-create-expense-category.md
+  - https://developer.spendesk.com/reference/v2-create-intake-file-upload.md
+  - https://developer.spendesk.com/reference/v2-delete-analytical-field-value.md
+  - https://developer.spendesk.com/reference/v2-delete-analytical-field.md
+  - https://developer.spendesk.com/reference/v2-delete-expense-category-field.md
+  - https://developer.spendesk.com/reference/v2-delete-expense-category.md
+  - https://developer.spendesk.com/reference/v2-get-analytical-field-value.md
+  - https://developer.spendesk.com/reference/v2-get-analytical-field.md
+  - https://developer.spendesk.com/reference/v2-get-companies.md
+  - https://developer.spendesk.com/reference/v2-get-company-intake.md
+  - https://developer.spendesk.com/reference/v2-get-expense-category-field.md
+  - https://developer.spendesk.com/reference/v2-get-expense-category.md
+  - https://developer.spendesk.com/reference/v2-get-intake-file-upload-status.md
+  - https://developer.spendesk.com/reference/v2-get-invoice.md
+  - https://developer.spendesk.com/reference/v2-get-invoices-summary.md
+  - https://developer.spendesk.com/reference/v2-list-analytical-field-values.md
+  - https://developer.spendesk.com/reference/v2-list-analytical-fields.md
+  - https://developer.spendesk.com/reference/v2-list-company-intakes.md
+  - https://developer.spendesk.com/reference/v2-list-expense-categories.md
+  - https://developer.spendesk.com/reference/v2-list-expense-category-fields.md
+  - https://developer.spendesk.com/reference/v2-list-invoices.md
+  - https://developer.spendesk.com/reference/v2-post-company-intakes.md
+  - https://developer.spendesk.com/reference/v2-update-analytical-field-value.md
+  - https://developer.spendesk.com/reference/v2-update-analytical-field.md
+  - https://developer.spendesk.com/reference/v2-update-expense-category-field.md
+  - https://developer.spendesk.com/reference/v2-update-expense-category.md
+  merge:
+    pages: 106
+    deduped: 1705
+    conflicts_kept_first: 0

@@ -1,0 +1,3857 @@
+openapi: 3.2.0
+info:
+  title: Spendesk Public Payables API
+  description: Spendesk Public API
+  version: '1.0'
+  summary: Spendesk Public API
+  contact:
+    email: support-public-api@spendesk.com
+    url: https://developer.spendesk.com/
+    name: Spendesk for Developers
+  termsOfService: https://www.spendesk.com/en/legals/terms/api-agreement
+servers:
+- url: https://public-api.spendesk.com
+  description: Production
+- url: https://public-api.demo.spendesk.com
+  description: Sandbox
+tags:
+- name: Payables
+  description: 'Payables — invoices, credit notes, card purchases and expense claims — with their attachments. Retrieve them in bulk through snapshots, search them, read one by ID; experimental endpoints let accounting integrations update accounting fields, mark payables ready and write their bookkeeping status back. Part of: Retrieving Spend Data, Building an accounting integration.'
+paths:
+  /v1/payables/bookkeeping-status:
+    put:
+      operationId: v1-put-payables-bookkeeping-status
+      summary: Update Payables bookkeeping status
+      tags:
+      - Payables
+      description: '**Allowed Scopes**: _`experimental:accounting:update`_
+
+
+        Update the accounting status for multiple Payables.
+
+
+        The user associated with the token must have the Controller role in the company. Otherwise, the request fails with a `403` and the `CONTROLLER_ROLE_REQUIRED` error code.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                payables:
+                  description: Payables to update
+                  type: array
+                  items:
+                    type: object
+                    discriminator:
+                      propertyName: status
+                    oneOf:
+                    - additionalProperties: false
+                      properties:
+                        id:
+                          type: string
+                          format: uuid
+                          description: The ID of the Payable
+                          examples:
+                          - bc9cef35-401d-4ea4-b384-ed725e6685cf
+                          pattern: ^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$
+                        version:
+                          type: number
+                          description: The version of the Payable to update
+                          examples:
+                          - 1
+                        status:
+                          type: string
+                          description: The new bookkeeping status to set for the Payable
+                          examples:
+                          - exportedManually
+                          enum:
+                          - exportedManually
+                      required:
+                      - id
+                      - version
+                      - status
+                    - additionalProperties: false
+                      properties:
+                        id:
+                          type: string
+                          format: uuid
+                          description: The ID of the Payable
+                          examples:
+                          - bc9cef35-401d-4ea4-b384-ed725e6685cf
+                          pattern: ^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$
+                        version:
+                          type: number
+                          description: The version of the Payable to update
+                          examples:
+                          - 1
+                        status:
+                          type: string
+                          description: The new bookkeeping status to set for the Payable
+                          examples:
+                          - failedExport
+                          enum:
+                          - failedExport
+                        message:
+                          type: string
+                          description: The reason for the failure
+                          examples:
+                          - Failed to export due to missing information
+                      required:
+                      - id
+                      - version
+                      - status
+                  minItems: 1
+                  maxItems: 50
+                  example:
+                    payables:
+                    - id: bc9cef35-401d-4ea4-b384-ed725e6685cf
+                      version: 1
+                      status: exportedManually
+                status:
+                  type: string
+                  description: The new bookkeeping status to set for the Payables
+                  enum:
+                  - exportedManually
+                  deprecated: true
+                  example: exportedManually
+              required:
+              - payables
+      parameters:
+      - schema:
+          type: string
+        in: header
+        name: X-Company-Id
+        required: false
+        description: ID of the company the request acts on. Required with an organisation-level token; not needed with a company-level token.
+      security:
+      - Authentication:
+        - experimental:accounting:update
+      x-roles:
+      - controller
+      - admin
+      - accountOwner
+      responses:
+        '200':
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/bulkUpdatePayablesBookkeepingStatusFullSuccess'
+        '207':
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/bulkUpdatePayablesBookkeepingStatusPartialSuccess'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/badRequest'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/unauthorized'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/forbiddenControllerRoleRequired'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/notFound'
+        '413':
+          description: Payload Too Large
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/tooLarge'
+        '415':
+          description: Unsupported Media Type
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/unsupportedMediaType'
+        '429':
+          description: Too Many Requests
+          headers:
+            retry-after:
+              schema:
+                type: integer
+              description: Seconds to wait before retrying the request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/tooManyRequests'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/internalServerError'
+        '503':
+          description: Service Unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/serviceUnavailableError'
+  /v1/payables/search:
+    post:
+      operationId: v1-search-payables
+      summary: Search Payables
+      tags:
+      - Payables
+      description: '**Allowed Scopes**: _`experimental:payable-search:read`_
+
+
+        Searches payables using filters with cursor-based pagination. With an organisation-level token, each search covers the company in `X-Company-Id` only, and results carry no company ID: send one search per company. Payables search data is cached for up to 24 hours. Changes made through the API are returned by subsequent reads; changes made in Spendesk can take up to 24 hours to appear.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/searchPayableBody'
+      parameters:
+      - schema:
+          type: string
+        in: header
+        name: X-Company-Id
+        required: false
+        description: ID of the company the request acts on. Required with an organisation-level token; not needed with a company-level token.
+      security:
+      - Authentication:
+        - experimental:payable-search:read
+      x-roles:
+      - controller
+      - admin
+      - accountOwner
+      responses:
+        '200':
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  nextCursor:
+                    type:
+                    - 'null'
+                    - string
+                  referencesToRetry:
+                    type: array
+                    items:
+                      type: string
+                  payables:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/searchPayable'
+                required:
+                - nextCursor
+                - referencesToRetry
+                - payables
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/badRequest'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/unauthorized'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/forbidden'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/notFound'
+        '413':
+          description: Payload Too Large
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/tooLarge'
+        '415':
+          description: Unsupported Media Type
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/unsupportedMediaType'
+        '429':
+          description: Too Many Requests
+          headers:
+            retry-after:
+              schema:
+                type: integer
+              description: Seconds to wait before retrying the request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/tooManyRequests'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/internalServerError'
+        '503':
+          description: Service Unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/serviceUnavailableError'
+  /v1/payables/{id}:
+    get:
+      operationId: v1-get-payable-by-id
+      summary: Get Payable by ID
+      tags:
+      - Payables
+      description: '**Allowed Scopes**: _`payable:read`_
+
+
+        Retrieves a single payable by its ID. Payable data is cached for up to 20 minutes. Changes made through the API are returned by subsequent reads; changes made in Spendesk can take up to 20 minutes to appear.
+
+
+        For accounting export use cases, each line item''s net amount is available as `lineItems[].financial.netAmount`. Amounts are expressed in the smallest unit of the payable currency, for example cents for EUR and USD, pence for GBP, and yen for JPY.'
+      parameters:
+      - schema:
+          type: string
+          format: uuid
+          pattern: ^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$
+        example: bc9cef35-401d-4ea4-b384-ed725e6685cf
+        in: path
+        name: id
+        required: true
+        description: ID of the payable to retrieve.
+      - schema:
+          type: string
+        in: header
+        name: X-Company-Id
+        required: false
+        description: ID of the company the request acts on. Required with an organisation-level token; not needed with a company-level token.
+      security:
+      - Authentication:
+        - payable:read
+      x-roles:
+      - controller
+      - admin
+      - accountOwner
+      responses:
+        '200':
+          description: A payable is a short-term liability owed by a company to its creditors (suppliers or employees). Several types of payables are supported by Spendesk, e.g. Invoices, Credit Notes, Expense Claims, Physical card purchases, Single Use card purchases, Subscription card purchases, etc.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/payable'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/badRequest'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/unauthorized'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/forbidden'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/notFound'
+        '429':
+          description: Too Many Requests
+          headers:
+            retry-after:
+              schema:
+                type: integer
+              description: Seconds to wait before retrying the request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/tooManyRequests'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/internalServerError'
+        '503':
+          description: Service Unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/serviceUnavailableError'
+    patch:
+      operationId: v1-patch-payable-accounting-fields
+      summary: Update Payable accounting fields
+      tags:
+      - Payables
+      description: '**Allowed Scopes**: _`experimental:accounting:update`_
+
+
+        Updates accounting fields for one Payable with optimistic locking.
+
+
+        The user associated with the token must have the Controller role in the company. Otherwise, the request fails with a `403` and the `CONTROLLER_ROLE_REQUIRED` error code.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                version:
+                  type: number
+                  description: The current version of the Payable to update.
+                  example: 3
+                description:
+                  type: string
+                  description: Description to apply to the Payable.
+                  example: Team offsite lunch
+                accountPayableId:
+                  type: string
+                  format: uuid
+                  description: Account payable to apply to the Payable.
+                  example: 00886d31-f27d-5366-8b05-cd287dc0f43d
+                accountingDate:
+                  type: string
+                  format: date
+                  description: Date in the `YYYY-MM-DD` format.
+                lineItems:
+                  type: array
+                  minItems: 1
+                  description: Complete replacement for the payable line items. To preserve a line returned by GET /v1/payables/{id}, map financial.grossAmount.amount to grossAmount, expenseAccount.id to expenseAccountId, vatAccount.id or reverseChargeAccount.id to taxAccountId, costCenterId directly, and analyticalProperties fieldId/valueId pairs to analyticalFieldValues; use null only when an account or cost center should remain unassigned. A null taxAccountId is not a tax-exempt, zero-rated, or reverse-charge treatment; changing tax treatment requires the matching company tax account ID. Gross amounts must sum to the payable amount. Tax amounts are recalculated from taxAccountId, clearing manual VAT adjustments.
+                  items:
+                    type: object
+                    additionalProperties: false
+                    properties:
+                      grossAmount:
+                        type: integer
+                        minimum: -9007199254740991
+                        maximum: 9007199254740991
+                        description: Gross amount of this line in the payable currency smallest unit (for example cents for EUR and USD, or yen for JPY).
+                        example: 12000
+                      expenseAccountId:
+                        type: string
+                        nullable: true
+                        description: Expense account ID, or null to leave the line unassigned.
+                        example: exp_acc_123
+                      taxAccountId:
+                        type: string
+                        nullable: true
+                        description: Tax or reverse-charge account ID. Use null only to leave the line without an assigned tax account. Null does not mean tax-exempt, zero-rated, or reverse charge; those treatments require the matching company tax account ID.
+                        example: tax_acc_456
+                      costCenterId:
+                        type: string
+                        nullable: true
+                        description: Cost center ID, or null to clear it. All lines must use the same value when analytical splitting is disabled.
+                        example: cc_789
+                      analyticalFieldValues:
+                        type: array
+                        description: Complete analytical field value set; an empty array clears it. All lines must use the same set when analytical splitting is disabled.
+                        items:
+                          type: object
+                          additionalProperties: false
+                          properties:
+                            fieldId:
+                              type: string
+                              description: ID of the analytical field.
+                              example: field_001
+                            valueId:
+                              type: string
+                              description: ID of the analytical field value.
+                              example: val_abc
+                          required:
+                          - fieldId
+                          - valueId
+                    required:
+                    - grossAmount
+                    - expenseAccountId
+                    - taxAccountId
+                    - costCenterId
+                    - analyticalFieldValues
+                amortisation:
+                  type: object
+                  additionalProperties: false
+                  description: Prepaid-expense amortisation period to apply to the Payable.
+                  properties:
+                    startDate:
+                      type: string
+                      format: date
+                      description: Date in the `YYYY-MM-DD` format.
+                    endDate:
+                      type: string
+                      format: date
+                      description: Date in the `YYYY-MM-DD` format.
+                  required:
+                  - startDate
+                  - endDate
+              required:
+              - version
+              minProperties: 2
+              errorMessage:
+                minProperties: must include at least one of description, accountPayableId, accountingDate, lineItems or amortisation
+      parameters:
+      - schema:
+          type: string
+          format: uuid
+          pattern: ^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$
+        example: bc9cef35-401d-4ea4-b384-ed725e6685cf
+        in: path
+        name: id
+        required: true
+        description: The ID of the Payable
+      - schema:
+          type: string
+        in: header
+        name: X-Company-Id
+        required: false
+        description: ID of the company the request acts on. Required with an organisation-level token; not needed with a company-level token.
+      security:
+      - Authentication:
+        - experimental:accounting:update
+      x-roles:
+      - controller
+      - accountOwner
+      responses:
+        '200':
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  item:
+                    type: object
+                    additionalProperties: false
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                        description: The ID of the Payable
+                        pattern: ^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$
+                        example: bc9cef35-401d-4ea4-b384-ed725e6685cf
+                      version:
+                        type: number
+                        description: The updated Payable version.
+                      bookkeepingStatus:
+                        type: string
+                        description: The updated bookkeeping status of the Payable.
+                    required:
+                    - id
+                    - version
+                    - bookkeepingStatus
+                required:
+                - item
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/badRequest'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/unauthorized'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/forbiddenControllerRoleRequired'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/notFound'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/conflict'
+        '413':
+          description: Payload Too Large
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/tooLarge'
+        '415':
+          description: Unsupported Media Type
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/unsupportedMediaType'
+        '422':
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  reason:
+                    type: string
+                    description: The payable state is incompatible with this update.
+                    example: invalidState
+                required:
+                - reason
+        '429':
+          description: Too Many Requests
+          headers:
+            retry-after:
+              schema:
+                type: integer
+              description: Seconds to wait before retrying the request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/tooManyRequests'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/internalServerError'
+        '503':
+          description: Service Unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/serviceUnavailableError'
+  /v1/payables/{id}/mark-as-ready:
+    post:
+      operationId: v1-post-payable-mark-as-ready
+      summary: Mark Payable as ready
+      tags:
+      - Payables
+      description: '**Allowed Scopes**: _`experimental:accounting:update`_
+
+
+        Validates a Payable and marks it as ready for accounting export when all required bookkeeping information is present.
+
+
+        The user associated with the token must have the Controller role in the company. Otherwise, the request fails with a `403` and the `CONTROLLER_ROLE_REQUIRED` error code.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                version:
+                  type: number
+                  description: The current version of the Payable to mark as ready.
+                  example: 1
+              required:
+              - version
+      parameters:
+      - schema:
+          type: string
+          format: uuid
+          pattern: ^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$
+        example: bc9cef35-401d-4ea4-b384-ed725e6685cf
+        in: path
+        name: id
+        required: true
+        description: The ID of the Payable
+      - schema:
+          type: string
+        in: header
+        name: X-Company-Id
+        required: false
+        description: ID of the company the request acts on. Required with an organisation-level token; not needed with a company-level token.
+      security:
+      - Authentication:
+        - experimental:accounting:update
+      x-roles:
+      - controller
+      - accountOwner
+      responses:
+        '200':
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                    description: The ID of the Payable
+                    pattern: ^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$
+                    example: bc9cef35-401d-4ea4-b384-ed725e6685cf
+                  status:
+                    type: string
+                    description: The updated bookkeeping status of the Payable.
+                    enum:
+                    - prepared
+                required:
+                - id
+                - status
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/badRequest'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/unauthorized'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/forbiddenControllerRoleRequired'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/notFound'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/conflict'
+        '413':
+          description: Payload Too Large
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/tooLarge'
+        '415':
+          description: Unsupported Media Type
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/unsupportedMediaType'
+        '429':
+          description: Too Many Requests
+          headers:
+            retry-after:
+              schema:
+                type: integer
+              description: Seconds to wait before retrying the request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/tooManyRequests'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/internalServerError'
+        '503':
+          description: Service Unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/serviceUnavailableError'
+  /v1/payables/{payableId}/attachments:
+    get:
+      operationId: v1-get-payable-attachments
+      summary: Get Payable Attachments
+      tags:
+      - Payables
+      description: '**Allowed Scopes**: _`payable-attachment:read`_
+
+
+        Returns attachments for a given payable as short lived URLs. Download and save downloaded files in your long term storage. Payable attachment data is cached for up to 55 minutes. Changes made through the API are returned by subsequent reads; changes made in Spendesk can take up to 55 minutes to appear.'
+      parameters:
+      - schema:
+          type: string
+          format: uuid
+          pattern: ^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$
+        example: bc9cef35-401d-4ea4-b384-ed725e6685cf
+        in: path
+        name: payableId
+        required: true
+        description: The ID of the Payable
+      - schema:
+          type: string
+        in: header
+        name: X-Company-Id
+        required: false
+        description: ID of the company the request acts on. Required with an organisation-level token; not needed with a company-level token.
+      security:
+      - Authentication:
+        - payable-attachment:read
+      x-roles:
+      - controller
+      - admin
+      - accountOwner
+      responses:
+        '200':
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      additionalProperties: false
+                      properties:
+                        mimeType:
+                          type: string
+                          description: Media type of the attachment.
+                        checksum:
+                          type: string
+                          description: A file checksum is like a unique digital fingerprint that helps ensure a file hasn’t been tampered with during transfer or storage, providing data integrity and security assurance.
+                        attachedAt:
+                          type: string
+                          format: date
+                          description: The date the attachment was added.
+                        url:
+                          type: string
+                          description: A short-lived URL to download the attachment.
+                      required:
+                      - mimeType
+                      - url
+                required:
+                - data
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/badRequest'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/unauthorized'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/forbidden'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/notFound'
+        '429':
+          description: Too Many Requests
+          headers:
+            retry-after:
+              schema:
+                type: integer
+              description: Seconds to wait before retrying the request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/tooManyRequests'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/internalServerError'
+        '503':
+          description: Service Unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/serviceUnavailableError'
+    post:
+      operationId: v1-create-payable-attachment-upload
+      summary: Create Payable Attachment Upload
+      tags:
+      - Payables
+      description: '**Allowed Scopes**: _`experimental:payable-attachment:write`_
+
+
+        Creates a presigned upload target for a receipt attachment on a payable. This first version supports card transaction payables only. Upload the file using the returned method, URL, and form fields, then poll `GET /v1/payables/:payableId/attachments` until the attachment appears.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                mimeType:
+                  type: string
+                  minLength: 1
+                  description: Media type of the attachment.
+                contentLength:
+                  type: integer
+                  minimum: 1
+                  description: Attachment size in bytes.
+              required:
+              - mimeType
+              - contentLength
+      parameters:
+      - schema:
+          type: string
+          format: uuid
+          pattern: ^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$
+        example: bc9cef35-401d-4ea4-b384-ed725e6685cf
+        in: path
+        name: payableId
+        required: true
+        description: The ID of the Payable
+      - schema:
+          type: string
+        in: header
+        name: X-Company-Id
+        required: false
+        description: ID of the company the request acts on. Required with an organisation-level token; not needed with a company-level token.
+      security:
+      - Authentication:
+        - experimental:payable-attachment:write
+      x-roles:
+      - controller
+      - admin
+      - accountOwner
+      responses:
+        '201':
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  method:
+                    type: string
+                    enum:
+                    - POST
+                    description: HTTP method to use when uploading the attachment.
+                  url:
+                    type: string
+                    description: Presigned URL where the attachment must be uploaded.
+                  fields:
+                    type: object
+                    additionalProperties:
+                      type: string
+                    description: Form fields to send with the attachment upload.
+                required:
+                - method
+                - url
+                - fields
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/badRequest'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/unauthorized'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/forbidden'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/notFound'
+        '413':
+          description: Payload Too Large
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/tooLarge'
+        '415':
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      additionalProperties: false
+                      properties:
+                        code:
+                          type: string
+                          enum:
+                          - UNSUPPORTED_MEDIA_TYPE
+                        detail:
+                          type: string
+                      required:
+                      - code
+                      - detail
+                required:
+                - errors
+        '429':
+          description: Too Many Requests
+          headers:
+            retry-after:
+              schema:
+                type: integer
+              description: Seconds to wait before retrying the request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/tooManyRequests'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/internalServerError'
+        '503':
+          description: Service Unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/serviceUnavailableError'
+  /v1/snapshots/payables:
+    post:
+      operationId: v1-create-snapshot-payables
+      summary: Create a snapshot of payables
+      tags:
+      - Payables
+      description: '**Allowed Scopes**: _`payable:read`_
+
+
+        Request an extract (snapshot) of expenses to be created.
+
+
+        A request to create a snapshot of expenses according to the filters provided will be queued, where a key (of format UUID) will be returned immediately, it being a reference to your request.
+
+
+        This key can be used to check for the status of this request using the GET Snapshot Payable API call. Once its status is "COMPLETE", the list of payables is returned under the "result.data" element of the response.
+
+
+        Requesting snapshots should be done sequentially and cannot be done simultaneously (in parallel). Requesting a new snapshot with exactly the same parameters will return the same key as long as the snapshot exists. Snapshots are typically cached for 10 hours.
+
+
+        These two APIs (POST and GET) are implemented based on the asynchronous request-response pattern, decoupling long-running backend jobs from the synchronous nature of REST APIs.
+
+
+        For more information about payables, see this guide.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/payableQuery'
+      parameters:
+      - schema:
+          type: string
+        in: header
+        name: X-Company-Id
+        required: false
+        description: ID of the company the request acts on. Required with an organisation-level token; not needed with a company-level token.
+      security:
+      - Authentication:
+        - payable:read
+      x-roles:
+      - controller
+      - admin
+      - accountOwner
+      responses:
+        '200':
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  query:
+                    $ref: '#/components/schemas/payableQuery'
+                  key:
+                    type: string
+                    format: uuid
+                    description: The key that can be used to query the [Get Snapshot Payable](/reference/v1-get-snapshot-payables) endpoint.
+                  expireInSeconds:
+                    type: number
+                    description: The total number of seconds the snapshot of payables is available for.
+                  remainingSeconds:
+                    type: number
+                    nullable: true
+                    description: Remaining time to live of the snapshot. Typically 10 hours.
+                required:
+                - query
+                - key
+                - expireInSeconds
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/badRequest'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/unauthorized'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/forbidden'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/conflict'
+        '429':
+          description: Too Many Requests
+          headers:
+            retry-after:
+              schema:
+                type: integer
+              description: Seconds to wait before retrying.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/tooManyRequests'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/internalServerError'
+        '503':
+          description: Service Unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/serviceUnavailableError'
+  /v1/snapshots/payables/{key}:
+    get:
+      operationId: v1-get-snapshot-payables
+      summary: Get a snapshot of payables
+      tags:
+      - Payables
+      description: '**Allowed Scopes**: _`payable:read`_
+
+
+        Returns an extract (snapshot) of payables requested via the POST API. Requires the returned key as a parameter.
+
+
+        Due to its asynchronous nature, we recommend to poll this endpoint ideally after 1 hour, or alternatively every 5 minutes until status is "COMPLETE" or "ERROR".
+
+
+        The list of expenses is returned under "result.data" when its status is "COMPLETE". The response is paginated (30 payables per page), where the current page number is returned under "result.meta.pagination". Snapshots are typically cached for 10 hours.
+
+
+        These two APIs (POST and GET) are implemented based on the asynchronous request-response pattern, decoupling long-running backend jobs from the synchronous nature of REST APIs.
+
+
+        For more information about payables, see this guide.'
+      parameters:
+      - schema:
+          $ref: '#/components/schemas/paginationQuery/properties/page'
+        in: query
+        name: page
+        required: false
+      - schema:
+          type: string
+          format: uuid
+        in: path
+        name: key
+        required: true
+        description: Key received from the response of [Create a Snapshot of Payables](/reference/v1-create-snapshot-payables).
+      - schema:
+          type: string
+        in: header
+        name: X-Company-Id
+        required: false
+        description: ID of the company the request acts on. Required with an organisation-level token; not needed with a company-level token.
+      security:
+      - Authentication:
+        - payable:read
+      x-roles:
+      - controller
+      - admin
+      - accountOwner
+      responses:
+        '200':
+          description: The snapshot status. Once the status is `COMPLETE`, `result.data` holds the requested page of payables.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                description: The snapshot status. Once the status is `COMPLETE`, `result.data` holds the requested page of payables.
+                properties:
+                  query:
+                    $ref: '#/components/schemas/payableQuery'
+                  result:
+                    type: object
+                    properties:
+                      meta:
+                        $ref: '#/components/schemas/meta'
+                      data:
+                        description: The array of payables
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/payable'
+                  associated:
+                    type: object
+                    additionalProperties: false
+                    properties:
+                      companyId:
+                        type: string
+                        description: The ID of the company for which payables were requested for.
+                      userId:
+                        type: string
+                        description: The user ID that requested the snapshot.
+                      correlationId:
+                        type: string
+                        description: ID of the original request.
+                    required:
+                    - companyId
+                    - userId
+                    - correlationId
+                  status:
+                    type: string
+                    enum:
+                    - IN_PROGRESS
+                    - ERROR
+                    - COMPLETE
+                    description: The current status of the snapshot preparation. In case `ERROR` is returned, the request should be retried.
+                  remainingSeconds:
+                    type: number
+                    description: Remaining time to live of the snapshot.
+                required:
+                - query
+                - result
+                - associated
+                - status
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/badRequest'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/unauthorized'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/forbidden'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/notFound'
+        '429':
+          description: Too Many Requests
+          headers:
+            retry-after:
+              schema:
+                type: integer
+              description: Seconds to wait before retrying the request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/tooManyRequests'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/internalServerError'
+        '503':
+          description: Service Unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/serviceUnavailableError'
+components:
+  schemas:
+    currency:
+      type: string
+      pattern: ^[A-Z]{3}$
+      description: If the payment was made in a foreign currency, this amount will be the one in the payment currency. Three-letter [ISO currency codes](https://www.iso.org/iso-4217-currency-codes.html).
+      title: currency
+    searchPayableCompliances:
+      type: object
+      description: Country-specific compliance information (e.g. Spain e-receipt).
+      properties:
+        spainEreceipt:
+          type: object
+          properties:
+            receipt:
+              type: object
+              properties:
+                path:
+                  type: string
+                uniqueId:
+                  type: string
+              required:
+              - path
+              - uniqueId
+              additionalProperties: false
+            closure:
+              type: object
+              properties:
+                closedAt:
+                  type: string
+                closingPeriod:
+                  type: string
+                error:
+                  type: object
+                  properties:
+                    kind:
+                      type: string
+                    details: {}
+                  required:
+                  - kind
+                  additionalProperties: false
+              required:
+              - closedAt
+              - closingPeriod
+              additionalProperties: false
+          additionalProperties: false
+      additionalProperties: false
+      title: searchPayableCompliances
+    unauthorized:
+      type: object
+      description: Unauthorized
+      additionalProperties: false
+      properties:
+        correlationId:
+          type: string
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              code:
+                type: string
+                enum:
+                - AUTHENTICATION_ERROR
+              detail:
+                type: string
+            required:
+            - code
+            - detail
+      required:
+      - errors
+      title: unauthorized
+    serviceUnavailableError:
+      type: object
+      description: Service Unavailable
+      additionalProperties: false
+      properties:
+        correlationId:
+          type: string
+        errors:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            properties:
+              code:
+                type: string
+                enum:
+                - SERVICE_UNAVAILABLE_ERROR
+              detail:
+                type: string
+            required:
+            - code
+            - detail
+      required:
+      - errors
+      title: serviceUnavailableError
+    searchPayableAmountRangeOperand:
+      type: object
+      description: Amount filter with a range operator (between or notBetween).
+      properties:
+        operator:
+          type: string
+          enum:
+          - between
+          - notBetween
+        value:
+          type: object
+          properties:
+            from:
+              type: number
+            to:
+              type: number
+          required:
+          - from
+          - to
+          additionalProperties: false
+      required:
+      - operator
+      - value
+      title: searchPayableAmountRangeOperand
+    priceAmount:
+      type: number
+      description: 'If the payment was made in a foreign currency, this amount will be the one in the payment currency.
+
+        Can contain a negative value in case of refunds.
+
+        Expressed in smallest units of the currency (e.g. cents for EUR and USD, but yen for JPY).'
+      title: priceAmount
+    tooManyRequests:
+      type: object
+      description: Too Many Requests
+      additionalProperties: false
+      properties:
+        correlationId:
+          type: string
+        errors:
+          type: array
+          items:
+            additionalProperties: false
+            type: object
+            properties:
+              code:
+                type: string
+                enum:
+                - TOO_MANY_REQUESTS
+              detail:
+                type: string
+            required:
+            - code
+            - detail
+      required:
+      - errors
+      title: tooManyRequests
+    internalServerError:
+      type: object
+      description: Internal Server Error
+      additionalProperties: false
+      properties:
+        correlationId:
+          type: string
+        errors:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            properties:
+              code:
+                type: string
+                enum:
+                - INTERNAL_SERVER_ERROR
+              detail:
+                type: string
+                enum:
+                - Sorry, something has gone wrong at our end. If this persists please contact support.
+            required:
+            - code
+            - detail
+      required:
+      - errors
+      title: internalServerError
+    searchPayableAmountOperand:
+      anyOf:
+      - $ref: '#/components/schemas/searchPayableAmountComparisonOperand'
+      - $ref: '#/components/schemas/searchPayableAmountRangeOperand'
+      title: searchPayableAmountOperand
+    meta:
+      description: Meta object describing pagination
+      type: object
+      properties:
+        pagination:
+          type: object
+          unevaluatedProperties: false
+          allOf:
+          - $ref: '#/components/schemas/pagination'
+      required:
+      - pagination
+      title: meta
+    searchPayableDateOperand:
+      anyOf:
+      - type: string
+        format: date-time
+      - type: string
+        enum:
+        - today
+      - type: string
+        enum:
+        - yesterday
+      - type: string
+        enum:
+        - thisMonth
+      - type: string
+        enum:
+        - lastMonth
+      title: searchPayableDateOperand
+    searchPayableDocEvidenceStatusFilter:
+      description: Filter payables by documentary evidence status. `provided`/`providedAndDpr` mean a file is attached (user-set) — they do NOT certify that the document is a valid or compliant invoice; for actual validation read the payable's `documentaryEvidence.validity` field. `missing` and `declaredAsInvalid` indicate the receipt still needs follow-up.
+      allOf:
+      - type: object
+        properties:
+          field:
+            type: string
+            enum:
+            - documentaryEvidenceStatus
+        required:
+        - field
+      - type: object
+        properties:
+          operator:
+            type: string
+            enum:
+            - '='
+            - '!='
+          value:
+            anyOf:
+            - type: 'null'
+            - type: array
+              items:
+                type: string
+                enum:
+                - provided
+                - providedAndDpr
+                - missing
+                - cannotBeProvided
+                - declaredAsInvalid
+                - hasDprError
+                - hasDpr
+              minItems: 1
+            - type: string
+              enum:
+              - any
+        required:
+        - operator
+        - value
+      title: searchPayableDocEvidenceStatusFilter
+    searchPayableDateInLastOperand:
+      type: object
+      description: Date filter with inLast operator specifying a relative time window.
+      properties:
+        operator:
+          type: string
+          enum:
+          - inLast
+        value:
+          type: object
+          properties:
+            timeUnit:
+              type: string
+              enum:
+              - days
+              - months
+              - years
+            amount:
+              type: number
+          required:
+          - timeUnit
+          - amount
+          additionalProperties: false
+      required:
+      - operator
+      - value
+      title: searchPayableDateInLastOperand
+    searchPayable:
+      description: 'A payable returned by the search endpoint. Discriminated union: either an expense or a reversal, identified by the kind field.'
+      anyOf:
+      - type: object
+        description: An expense payable (kind = "expense").
+        properties:
+          id:
+            type: string
+            format: uuid
+            description: Unique payable identifier.
+            examples:
+            - bc9cef35-401d-4ea4-b384-ed725e6685cf
+            pattern: ^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$
+          state:
+            type: string
+            description: Bookkeeping lifecycle state of the payable.
+            enum:
+            - toPrepare
+            - toExport
+            - exported
+          amount:
+            allOf:
+            - $ref: '#/components/schemas/searchPayableMoney'
+            description: Original transaction amount in currency minor units.
+          currency:
+            type: string
+            description: ISO 4217 currency code of the transaction amount.
+          functionalAmount:
+            allOf:
+            - $ref: '#/components/schemas/searchPayableMoney'
+            description: Amount in the company's functional currency, in minor units.
+          functionalCurrency:
+            type: string
+            description: ISO 4217 currency code of the functional amount.
+          outstandingAmount:
+            allOf:
+            - $ref: '#/components/schemas/searchPayableMoney'
+            description: Portion of the payable amount not yet covered by allocations, in the payable native currency minor units. Zero means fully allocated. Absent if allocation tracking is unavailable for that payable.
+          outstandingFunctionalAmount:
+            allOf:
+            - $ref: '#/components/schemas/searchPayableMoney'
+            description: Same as outstandingAmount but in the company's functional currency minor units.
+          creationDate:
+            type: string
+            format: date-time
+            description: 'Issue date of the payable — the date on the underlying document: a supplier invoice''s issue date, or for card purchases the transaction''s settlement date. This is the payable''s accounting-relevant business date and the default basis for placing it in an accounting period. It is set during the request/review flow, is editable by controllers, and can be backdated, so it does NOT reflect when the record entered Spendesk (see firstCreatedAt for that). When the optional accounting-date override is enabled, accountingDate takes precedence for the booking period; otherwise accountingDate defaults to this date. To filter payables by this date, use the payableDate date-filter field (this same value is returned here as creationDate) — not firstCreatedAt, which is the system-entry timestamp.'
+          memberId:
+            type: string
+            description: ID of the team member who owns this payable.
+          version:
+            type: number
+            description: The current version of this payable. This is incremented every time the payable is modified.
+          kind:
+            type: string
+            description: Discriminator. Always "expense" for this variant.
+            enum:
+            - expense
+          subType:
+            type: string
+            description: Payment method or expense origin.
+            enum:
+            - expense
+            - invoice
+            - creditNote
+            - singlePurchase
+            - subscription
+            - multiUseCard
+            - physical
+            - mileageAllowance
+            - perDiemAllowance
+          description:
+            type: string
+            description: Free-text description of the payable.
+          dueDate:
+            type: string
+            format: date-time
+            description: Payment due date, when applicable (e.g. invoices).
+          accountPayableId:
+            type: string
+            format: uuid
+            description: Linked accounts-payable entry ID.
+          firstExportedAt:
+            type: string
+            format: date-time
+            description: Timestamp of the first export to an accounting system.
+          firstCreatedAt:
+            type: string
+            format: date-time
+            description: Original creation timestamp (preserved across bookkeeping resets).
+          accountingDate:
+            type: string
+            format: date-time
+            description: Date used for the accounting period.
+          amortisation:
+            type: object
+            description: Prepaid-expense amortisation schedule.
+            properties:
+              date:
+                type: object
+                properties:
+                  from:
+                    type: string
+                  to:
+                    type: string
+                required:
+                - from
+                - to
+                additionalProperties: false
+            required:
+            - date
+            additionalProperties: false
+          type:
+            type: string
+            description: 'Expense type: bill, claimedBill (employee-submitted), mileageExpense or perDiemExpense.'
+            enum:
+            - bill
+            - claimedBill
+            - mileageExpense
+            - perDiemExpense
+          spendingAmount:
+            allOf:
+            - $ref: '#/components/schemas/searchPayableMoney'
+            description: Amount in the spending (card) currency, in minor units.
+          spendingCurrency:
+            type: string
+            description: ISO 4217 currency code of the spending (card) amount.
+          allocations:
+            type: array
+            description: Allocations linked to this expense. `settlement` entries are cash paid; `reversal` entries are a credit note or card refund applied document-to-document, not money moved.
+            items:
+              type: object
+              properties:
+                allocationId:
+                  type: string
+                amount:
+                  $ref: '#/components/schemas/searchPayableMoney'
+                entityId:
+                  type: string
+                entityType:
+                  type: string
+                  enum:
+                  - reversal
+                  - settlement
+              required:
+              - allocationId
+              - amount
+              - entityId
+              - entityType
+              additionalProperties: false
+          documentaryEvidenceCannotBeProvided:
+            allOf:
+            - $ref: '#/components/schemas/searchPayableDocEvidenceCannotBeProvided'
+            description: Present when the member declared that documentary evidence cannot be provided.
+          itemLines:
+            type: array
+            description: Accounting line items with VAT breakdown.
+            items:
+              $ref: '#/components/schemas/searchPayableItemLine'
+          documentaryEvidence:
+            description: Attached documentary evidence (invoice, declaration of missing invoice, mileage or per-diem entry).
+            anyOf:
+            - type: object
+              properties:
+                validity:
+                  $ref: '#/components/schemas/searchPayableValidity'
+                compliances:
+                  $ref: '#/components/schemas/searchPayableCompliances'
+                type:
+                  type: string
+                  enum:
+                  - invoice
+                invoiceNumber:
+                  type: string
+              required:
+              - validity
+              - type
+              additionalProperties: false
+            - type: object
+              properties:
+                validity:
+                  $ref: '#/components/schemas/searchPayableValidity'
+                compliances:
+                  $ref: '#/components/schemas/searchPayableCompliances'
+                type:
+                  type: string
+                  enum:
+                  - declarationOfMissingInvoice
+                invoiceNumber:
+                  type: string
+              required:
+              - validity
+              - type
+              additionalProperties: false
+            - type: object
+              properties:
+                validity:
+                  $ref: '#/components/schemas/searchPayableValidity'
+                compliances:
+                  $ref: '#/components/schemas/searchPayableCompliances'
+                type:
+                  type: string
+                  enum:
+                  - mileageEntry
+                invoiceNumber:
+                  type: string
+              required:
+              - validity
+              - type
+              additionalProperties: false
+            - type: object
+              properties:
+                validity:
+                  $ref: '#/components/schemas/searchPayableValidity'
+                compliances:
+                  $ref: '#/components/schemas/searchPayableCompliances'
+                type:
+                  type: string
+                  enum:
+                  - perDiemEntry
+                invoiceNumber:
+                  type: string
+              required:
+              - validity
+              - type
+              additionalProperties: false
+          functionalExchangeRate:
+            allOf:
+            - $ref: '#/components/schemas/searchPayableRate'
+            description: Exchange rate from transaction currency to functional currency.
+          spendingExchangeRate:
+            allOf:
+            - $ref: '#/components/schemas/searchPayableRate'
+            description: Exchange rate from spending (card) currency to transaction currency.
+          counterparty:
+            description: The supplier or employee counterparty for this expense.
+            anyOf:
+            - type: object
+              properties:
+                type:
+                  type: string
+                  enum:
+                  - supplier
+                supplierId:
+                  type: string
+              required:
+              - type
+              - supplierId
+              additionalProperties: false
+            - type: object
+              properties:
+                type:
+                  type: string
+                  enum:
+                  - employee
+                memberId:
+                  type: string
+              required:
+              - type
+              - memberId
+              additionalProperties: false
+          commitmentCounterparty:
+            description: The spending commitment counterparty, when available. For expense claims, a supplier reference identifies the merchant while counterparty identifies the employee being reimbursed. The merchant name is available from the payable detail response; never use the employee accountPayable as a merchant creditor account.
+            anyOf:
+            - type: object
+              properties:
+                type:
+                  type: string
+                  enum:
+                  - supplier
+                supplierId:
+                  type: string
+              required:
+              - type
+              - supplierId
+              additionalProperties: false
+            - type: object
+              properties:
+                type:
+                  type: string
+                  enum:
+                  - employee
+                memberId:
+                  type: string
+              required:
+              - type
+              - memberId
+              additionalProperties: false
+        required:
+        - id
+        - state
+        - amount
+        - currency
+        - functionalAmount
+        - functionalCurrency
+        - creationDate
+        - memberId
+        - version
+        - kind
+        - subType
+        - description
+        - firstCreatedAt
+        - type
+        - allocations
+        - itemLines
+        - functionalExchangeRate
+        - spendingExchangeRate
+        - counterparty
+        additionalProperties: false
+      - type: object
+        description: A reversal payable (kind = "reversal"), e.g. a credit note.
+        properties:
+          id:
+            type: string
+            format: uuid
+            description: Unique payable identifier.
+            examples:
+            - bc9cef35-401d-4ea4-b384-ed725e6685cf
+            pattern: ^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$
+          state:
+            type: string
+            description: Bookkeeping lifecycle state of the payable.
+            enum:
+            - toPrepare
+            - toExport
+            - exported
+          amount:
+            allOf:
+            - $ref: '#/components/schemas/searchPayableMoney'
+            description: Original transaction amount in currency minor units.
+          currency:
+            type: string
+            description: ISO 4217 currency code of the transaction amount.
+          functionalAmount:
+            allOf:
+            - $ref: '#/components/schemas/searchPayableMoney'
+            description: Amount in the company's functional currency, in minor units.
+          functionalCurrency:
+            type: string
+            description: ISO 4217 currency code of the functional amount.
+          outstandingAmount:
+            allOf:
+            - $ref: '#/components/schemas/searchPayableMoney'
+            description: Portion of the payable amount not yet covered by allocations, in the payable native currency minor units. Zero means fully allocated. Absent if allocation tracking is unavailable for that payable.
+          outstandingFunctionalAmount:
+            allOf:
+            - $ref: '#/components/schemas/searchPayableMoney'
+            description: Same as outstandingAmount but in the company's functional currency minor units.
+          creationDate:
+            type: string
+            format: date-time
+            description: 'Issue date of the payable — the date on the underlying document: a supplier invoice''s issue date, or for card purchases the transaction''s settlement date. This is the payable''s accounting-relevant business date and the default basis for placing it in an accounting period. It is set during the request/review flow, is editable by controllers, and can be backdated, so it does NOT reflect when the record entered Spendesk (see firstCreatedAt for that). When the optional accounting-date override is enabled, accountingDate takes precedence for the booking period; otherwise accountingDate defaults to this date. To filter payables by this date, use the payableDate date-filter field (this same value is returned here as creationDate) — not firstCreatedAt, which is the system-entry timestamp.'
+          memberId:
+            type: string
+            description: ID of the team member who owns this payable.
+          version:
+            type: number
+            description: The current version of this payable. This is incremented every time the payable is modified.
+          kind:
+            type: string
+            description: Discriminator. Always "reversal" for this variant.
+            enum:
+            - reversal
+          subType:
+            type: string
+            description: Payment method or expense origin of the reversed payable.
+            enum:
+            - expense
+            - invoice
+            - creditNote
+            - singlePurchase
+            - subscription
+            - multiUseCard
+            - physical
+            - mileageAllowance
+            - perDiemAllowance
+          description:
+            type: string
+            description: Free-text description of the payable.
+          dueDate:
+            type: string
+            format: date-time
+            description: Payment due date, when applicable.
+          accountPayableId:
+            type: string
+            format: uuid
+            description: Linked accounts-payable entry ID.
+          firstExportedAt:
+            type: string
+            format: date-time
+            description: Timestamp of the first export to an accounting system.
+          firstCreatedAt:
+            type: string
+            format: date-time
+            description: Original creation timestamp (preserved across bookkeeping resets).
+          accountingDate:
+            type: string
+            format: date-time
+            description: Date used for the accounting period.
+          amortisation:
+            type: object
+            description: Prepaid-expense amortisation schedule.
+            properties:
+              date:
+                type: object
+                properties:
+                  from:
+                    type: string
+                  to:
+                    type: string
+                required:
+                - from
+                - to
+                additionalProperties: false
+            required:
+            - date
+            additionalProperties: false
+          type:
+            type: string
+            description: Always "reverseBill" for reversal payables.
+            enum:
+            - reverseBill
+          allocations:
+            type: array
+            description: Allocations linked to this reversal. `settlement` entries are cash refunded; `expense` entries are this credit note or card refund applied document-to-document to an invoice, not money moved. Amounts are negative, matching the payable.
+            items:
+              type: object
+              properties:
+                allocationId:
+                  type: string
+                amount:
+                  $ref: '#/components/schemas/searchPayableMoney'
+                entityId:
+                  type: string
+                entityType:
+                  type: string
+                  enum:
+                  - expense
+                  - settlement
+              required:
+              - allocationId
+              - amount
+              - entityId
+              - entityType
+              additionalProperties: false
+          documentaryEvidenceCannotBeProvided:
+            allOf:
+            - $ref: '#/components/schemas/searchPayableDocEvidenceCannotBeProvided'
+            description: Present when the member declared that documentary evidence cannot be provided.
+          itemLines:
+            type: array
+            description: Accounting line items with VAT breakdown.
+            items:
+              $ref: '#/components/schemas/searchPayableItemLine'
+          documentaryEvidence:
+            description: Attached documentary evidence (credit note or declaration of missing credit note).
+            anyOf:
+            - type: object
+              properties:
+                validity:
+                  $ref: '#/components/schemas/searchPayableValidity'
+                compliances:
+                  $ref: '#/components/schemas/searchPayableCompliances'
+                type:
+                  type: string
+                  enum:
+                  - creditNote
+                creditNoteNumber:
+                  type: string
+                referenceInvoiceNumber:
+                  type: string
+              required:
+              - validity
+              - type
+              additionalProperties: false
+            - type: object
+              properties:
+                validity:
+                  $ref: '#/components/schemas/searchPayableValidity'
+                compliances:
+                  $ref: '#/components/schemas/searchPayableCompliances'
+                type:
+                  type: string
+                  enum:
+                  - declarationOfMissingCreditNote
+              required:
+              - validity
+              - type
+              additionalProperties: false
+          functionalExchangeRate:
+            allOf:
+            - $ref: '#/components/schemas/searchPayableRate'
+            description: Exchange rate from transaction currency to functional currency.
+          counterparty:
+            description: The supplier or employee counterparty for this reversal.
+            anyOf:
+            - type: object
+              properties:
+                type:
+                  type: string
+                  enum:
+                  - supplier
+                supplierId:
+                  type: string
+              required:
+              - type
+              - supplierId
+              additionalProperties: false
+            - type: object
+              properties:
+                type:
+                  type: string
+                  enum:
+                  - employee
+                memberId:
+                  type: string
+              required:
+              - type
+              - memberId
+              additionalProperties: false
+        required:
+        - id
+        - state
+        - amount
+        - currency
+        - functionalAmount
+        - functionalCurrency
+        - creationDate
+        - memberId
+        - version
+        - kind
+        - subType
+        - description
+        - firstCreatedAt
+        - type
+        - allocations
+        - itemLines
+        - functionalExchangeRate
+        - counterparty
+        additionalProperties: false
+      title: searchPayable
+      example:
+        id: bc9cef35-401d-4ea4-b384-ed725e6685cf
+        state: toExport
+        amount: 1500
+        currency: EUR
+        functionalAmount: 1500
+        functionalCurrency: EUR
+        creationDate: '2024-06-15T10:30:00.000Z'
+        memberId: usr_001
+        version: 1
+        kind: expense
+        subType: invoice
+        description: Office supplies Q2
+        firstCreatedAt: '2024-06-15T10:30:00.000Z'
+        type: bill
+        allocations: []
+        itemLines:
+        - netAmount: 1250
+          grossAmount: 1500
+          vatAmount: 250
+          vatAdjustment: 0
+          analyticalFieldAssociations: []
+          vatRate: 20
+        functionalExchangeRate: 1
+        spendingExchangeRate: 1
+        counterparty:
+          type: supplier
+          supplierId: sup_xyz
+    searchPayableAnalyticalFieldAssociation:
+      type: object
+      description: Association between an item line and an analytical field (cost center or custom field).
+      properties:
+        fieldKind:
+          type: string
+          enum:
+          - costCenter
+          - customField
+        fieldEntityId:
+          type: string
+        fieldEntityValueId:
+          type: string
+      required:
+      - fieldKind
+      - fieldEntityId
+      - fieldEntityValueId
+      additionalProperties: false
+      title: searchPayableAnalyticalFieldAssociation
+    forbidden:
+      type: object
+      description: Forbidden
+      additionalProperties: false
+      properties:
+        correlationId:
+          type: string
+        errors:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            properties:
+              code:
+                type: string
+                enum:
+                - FORBIDDEN_ERROR
+              detail:
+                type: string
+            required:
+            - code
+            - detail
+      required:
+      - errors
+      title: forbidden
+    searchPayableDocEvidenceCannotBeProvided:
+      description: Explanation for why documentary evidence (receipt/invoice) cannot be provided.
+      anyOf:
+      - type: object
+        properties:
+          reason:
+            type: string
+          reportMethod:
+            type: string
+            enum:
+            - manual
+          reporterId:
+            type: string
+        required:
+        - reason
+        - reportMethod
+        - reporterId
+        additionalProperties: false
+      - type: object
+        properties:
+          reason:
+            type: string
+          reportMethod:
+            type: string
+            enum:
+            - automatic
+        required:
+        - reason
+        - reportMethod
+        additionalProperties: false
+      title: searchPayableDocEvidenceCannotBeProvided
+    notFound:
+      type: object
+      description: Not Found
+      additionalProperties: false
+      properties:
+        correlationId:
+          type: string
+        errors:
+          type: array
+          items:
+            additionalProperties: false
+            type: object
+            properties:
+              code:
+                type: string
+                enum:
+                - NOT_FOUND
+              detail:
+                type: string
+            required:
+            - code
+            - detail
+      required:
+      - errors
+      title: notFound
+    searchPayableMoney:
+      type: number
+      description: Amount expressed in the smallest unit of the currency (e.g. cents for EUR, yen for JPY).
+      title: searchPayableMoney
+    searchPayableBookkeepingStatusFilter:
+      description: Filter payables by bookkeeping status.
+      allOf:
+      - type: object
+        properties:
+          field:
+            type: string
+            enum:
+            - bookkeepingStatus
+        required:
+        - field
+      - type: object
+        properties:
+          operator:
+            type: string
+            enum:
+            - '='
+            - '!='
+          value:
+            anyOf:
+            - type: 'null'
+            - type: array
+              items:
+                type: string
+                enum:
+                - toPrepare
+                - toExport
+                - exported
+              minItems: 1
+            - type: string
+              enum:
+              - any
+        required:
+        - operator
+        - value
+      title: searchPayableBookkeepingStatusFilter
+    searchPayableBooleanFieldFilter:
+      type: object
+      description: Filter payables by the withBookkeepingStartDate boolean. When true, excludes payables dated before the company's bookkeeping start date (the onboarding/migration cutover), keeping only those whose creationDate is on or after it — or all payables when the company has no start date configured. When false, the filter is a no-op and returns everything.
+      properties:
+        field:
+          type: string
+          enum:
+          - withBookkeepingStartDate
+        operator:
+          type: string
+          enum:
+          - '='
+        value:
+          type: boolean
+      required:
+      - field
+      - operator
+      - value
+      additionalProperties: false
+      title: searchPayableBooleanFieldFilter
+    searchPayablePayableIdFilter:
+      description: Filter payables by payable ID.
+      type: object
+      properties:
+        field:
+          type: string
+          enum:
+          - id
+        operator:
+          type: string
+          enum:
+          - '='
+          - '!='
+        value:
+          $ref: '#/components/schemas/searchPayablePayableIdOperandValue'
+      required:
+      - field
+      - operator
+      - value
+      title: searchPayablePayableIdFilter
+    bookkeepingStatus:
+      type: string
+      enum:
+      - created
+      - prepared
+      - exported
+      - exportedManually
+      - unprepared
+      - failedExport
+      description: "Status of the payable in the Spendesk flow. \n\n| Status | Description |\n| ---|--- |\n| `created` | Payable (approved expense) has been created. There is no accounting or supplier information on the payable in this state. |\n| `prepared` | Payable has been prepared (enriched with accounting and supplier information) by an accountant. |\n| `exported` | Payable has been exported to accounting |\n| `failedExport` | Payable has failed to export to accounting via a native Spendesk integrations |\n| `exportedManually` | Payable has been marked as exported manually by the accountant |\n| `unprepared` | Payable has been sent back to Bookkeep>Prepare |\n\""
+      title: bookkeepingStatus
+    searchPayableStringPatternOperand:
+      type: object
+      description: String filter with pattern-matching operator.
+      properties:
+        operator:
+          type: string
+          enum:
+          - contains
+          - notContains
+          - startsWith
+          - endsWith
+        value:
+          type: string
+      required:
+      - operator
+      - value
+      title: searchPayableStringPatternOperand
+    bulkUpdatePayablesBookkeepingStatusPartialSuccess:
+      type: object
+      unevaluatedProperties: false
+      properties:
+        updatedPayables:
+          type: array
+          description: List of payables with the update outcome
+          items:
+            anyOf:
+            - $ref: '#/components/schemas/updatePayableBookkeepingStatusSuccess'
+            - $ref: '#/components/schemas/updatePayableBookkeepingStatusFailure'
+      required:
+      - updatedPayables
+      title: bulkUpdatePayablesBookkeepingStatusPartialSuccess
+    searchPayableRate:
+      type: number
+      description: Exchange rate as a decimal number.
+      title: searchPayableRate
+    searchPayableValueFilter:
+      type: object
+      anyOf:
+      - $ref: '#/components/schemas/searchPayablePayableIdFilter'
+      - $ref: '#/components/schemas/searchPayableIdFilter'
+      - $ref: '#/components/schemas/searchPayableCustomFieldFilter'
+      - $ref: '#/components/schemas/searchPayableDocEvidenceStatusFilter'
+      - $ref: '#/components/schemas/searchPayablePaymentStatusFilter'
+      - $ref: '#/components/schemas/searchPayableBookkeepingStatusFilter'
+      - $ref: '#/components/schemas/searchPayablePayableTypeFilter'
+      - $ref: '#/components/schemas/searchPayableStringFieldFilter'
+      - $ref: '#/components/schemas/searchPayableAmountFieldFilter'
+      - $ref: '#/components/schemas/searchPayableDateFieldFilter'
+      - $ref: '#/components/schemas/searchPayableBooleanFieldFilter'
+      unevaluatedProperties: false
+      title: searchPayableValueFilter
+    searchPayableDateFieldOperand:
+      anyOf:
+      - $ref: '#/components/schemas/searchPayableDateEqualsOperand'
+      - $ref: '#/components/schemas/searchPayableDateRelativeOperand'
+      - $ref: '#/components/schemas/searchPayableDateBetweenOperand'
+      - $ref: '#/components/schemas/searchPayableDateInLastOperand'
+      title: searchPayableDateFieldOperand
+    searchPayableIdFilter:
+      description: Filter payables by an ID field (supplier, requestor, accountPayable, costCenter, paymentId, requestId).
+      allOf:
+      - type: object
+        properties:
+          field:
+            type: string
+            enum:
+            - supplier
+            - requestor
+            - accountPayable
+            - costCenter
+            - paymentId
+            - requestId
+        required:
+        - field
+      - type: object
+        properties:
+          operator:
+            type: string
+            enum:
+            - '='
+            - '!='
+          value:
+            $ref: '#/components/schemas/searchPayableIdOperandValue'
+        required:
+        - operator
+        - value
+      title: searchPayableIdFilter
+    searchPayablePayableIdOperandValue:
+      anyOf:
+      - type: 'null'
+      - type: array
+        items:
+          type: string
+          format: uuid
+          description: The ID of the Payable
+          examples:
+          - bc9cef35-401d-4ea4-b384-ed725e6685cf
+          pattern: ^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$
+        minItems: 1
+      - type: string
+        enum:
+        - any
+      title: searchPayablePayableIdOperandValue
+    tooLarge:
+      type: object
+      description: Payload Too Large
+      additionalProperties: false
+      properties:
+        correlationId:
+          type: string
+        errors:
+          type: array
+          items:
+            additionalProperties: false
+            type: object
+            properties:
+              code:
+                type: string
+                enum:
+                - LARGE_BODY_ERROR
+              detail:
+                type: string
+                enum:
+                - 'The request is too large for this endpoint: send a smaller body or a smaller file.'
+            required:
+            - code
+            - detail
+      required:
+      - errors
+      title: tooLarge
+    pagination:
+      type: object
+      properties:
+        page:
+          type: integer
+          default: 1
+          minimum: 1
+          description: Page number
+        pageSize:
+          type: integer
+          default: 30
+          minimum: 1
+          maximum: 30
+          description: Page size
+        total:
+          type: integer
+          minimum: 0
+          description: Total amount of records for this collection
+      required:
+      - page
+      - pageSize
+      - total
+      title: pagination
+    searchPayableDateRelativeOperand:
+      type: object
+      description: Date filter with before or after operator.
+      properties:
+        operator:
+          type: string
+          enum:
+          - before
+          - after
+        value:
+          $ref: '#/components/schemas/searchPayableDateOperand'
+      required:
+      - operator
+      - value
+      title: searchPayableDateRelativeOperand
+    unsupportedMediaType:
+      type: object
+      description: Unsupported Media Type
+      additionalProperties: false
+      properties:
+        correlationId:
+          type: string
+        errors:
+          type: array
+          items:
+            additionalProperties: false
+            type: object
+            properties:
+              code:
+                type: string
+                enum:
+                - UNSUPPORTED_MEDIA_TYPE_ERROR
+              detail:
+                type: string
+                enum:
+                - 'The Content-Type of the request is not supported: send application/json, or application/x-www-form-urlencoded where the endpoint documents it.'
+            required:
+            - code
+            - detail
+      required:
+      - errors
+      title: unsupportedMediaType
+    searchPayableAmountComparisonOperand:
+      type: object
+      description: Amount filter with a single comparison operator.
+      properties:
+        operator:
+          type: string
+          enum:
+          - '='
+          - '!='
+          - <
+          - '>'
+          - <=
+          - '>='
+        value:
+          type: number
+      required:
+      - operator
+      - value
+      title: searchPayableAmountComparisonOperand
+    dateTime:
+      type: string
+      format: date-time
+      description: String containing a UTC datetime expressed in [ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) format like `2023-05-12T14:06:40Z`.
+      title: dateTime
+    payable:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: The ID of the Payable
+          pattern: ^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$
+          example: bc9cef35-401d-4ea4-b384-ed725e6685cf
+        type:
+          type: string
+          enum:
+          - expenseClaim
+          - invoicePurchase
+          - creditNote
+          - singlePurchaseCard
+          - multiUseCard
+          - subscriptionCard
+          - physicalCard
+          - mileageAllowance
+          - perDiemAllowance
+          - reverseBill
+          description: "Indicates the type of the payable. \n\nType | Description |\n---------|----------|\n `expenseClaim` | An expense claim submitted and approved | \n `invoicePurchase` | An invoice to pay submitted and approved | \n `creditNote` | A credit note submitted and approved |\n  `singlePurchaseCard` | A purchase made with a single-use virtual card |\n  `multiUseCard` | A purchase made with a multi-use virtual card | \n  `subscriptionCard` | A purchase made with a subscription virtual card |\n  `physicalCard` | A purchase made with a physical card |\n  `mileageAllowance` | A mileage expense submitted and approved |\n  `perDiemAllowance` | A per diem expense submitted and approved |\n  `reverseBill` | A refund or a late return (aka cash return) |\""
+        version:
+          type: number
+          description: The current version of this payable. This is incremented every time the payable is modified.
+        userId:
+          type: string
+          description: The ID of the Spendesk user who created this payable.
+        bookkeepingStatus:
+          $ref: '#/components/schemas/bookkeepingStatus'
+        companyId:
+          type: string
+          description: The ID of the company (this could be a wallet or an entity).
+        appUrl:
+          type: string
+          description: Link to this payable in the Spendesk web app.
+          example: https://app.spendesk.com/app/RRbRgeIB7X/payables/bc9cef35-401d-4ea4-b384-ed725e6685cf
+        costCenterId:
+          type: string
+          nullable: true
+          description: The ID of the cost center, if available.
+        costCenterName:
+          type: string
+          nullable: true
+          description: The name of the cost center, if available.
+        teamId:
+          type: string
+          nullable: true
+          description: The ID of the team.
+        teamName:
+          type: string
+          nullable: true
+          description: The name of the team.
+        analyticalProperties:
+          type: array
+          items:
+            $ref: '#/components/schemas/analyticalProperties'
+        payableDate:
+          type: string
+          format: date
+          description: 'For expenses - this is the date of the expense.
+
+            For reversals - this is the date of the reversal.
+
+            In the `YYYY-MM-DD` format.'
+        accountingDate:
+          type: string
+          nullable: true
+          format: date
+          description: 'This feature is not activated by default.
+
+            If activated, `accounting date` field allows accountants to override the original expense date.
+
+            In the `YYYY-MM-DD` format.'
+        invoiceDueDate:
+          type: string
+          nullable: true
+          format: date
+          description: The date the invoice is due. In the `YYYY-MM-DD` format.
+        amount:
+          $ref: '#/components/schemas/priceAmount'
+        currency:
+          $ref: '#/components/schemas/currency'
+        functionalAmount:
+          $ref: '#/components/schemas/priceAmount'
+        functionalCurrency:
+          $ref: '#/components/schemas/currency'
+        functionalExchangeRate:
+          type: number
+          description: If the payment was made in a foreign currency, this will be the exchange rate that was applied when the payment was made.
+        outstandingAmount:
+          allOf:
+          - $ref: '#/components/schemas/priceAmount'
+          description: Portion of the payable amount not yet covered by allocations, in the payable currency minor units (e.g. cents for EUR and USD, but yen for JPY). Zero means fully allocated. Absent if allocation tracking is unavailable for this payable.
+        outstandingFunctionalAmount:
+          allOf:
+          - $ref: '#/components/schemas/priceAmount'
+          description: Same as `outstandingAmount` but expressed in the company's functional currency minor units.
+        invoiceNumber:
+          type: string
+          nullable: true
+          description: Invoice number, if available.
+        purchaseOrderNumber:
+          type: string
+          nullable: true
+          description: Purchase order number linked to this invoice payable, if available.
+        creditNoteNumber:
+          type: string
+          nullable: true
+          description: Credit Note number, if available.
+        referenceInvoiceNumber:
+          type: string
+          nullable: true
+          description: Invoice number of an invoice that resulted in a credit note, if available.
+        description:
+          type: string
+          nullable: true
+          description: Description of the payable.
+        exportedAt:
+          type: string
+          nullable: true
+          format: date-time
+          description: The date this payable was first exported via an accounting export. In the [ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) date format.
+        createdAt:
+          type: string
+          format: date-time
+          description: The timestamp of the creation of this payable. String containing a UTC datetime expressed in ISO 8601 format like `2023-05-12T14:06:40Z` (source `https://en.wikipedia.org/wiki/ISO_8601`).
+        commitmentCounterparty:
+          type: object
+          nullable: true
+          additionalProperties: false
+          properties:
+            type:
+              type: string
+              enum:
+              - supplier
+              - employee
+            name:
+              type: string
+          required:
+          - type
+          - name
+          description: The counterparty associated with the spending commitment, or null when unavailable. For expense claims, use its name as the merchant name only when type is supplier. counterparty is the employee being reimbursed; their accountPayable must not be used as a merchant creditor account.
+        counterparty:
+          type: object
+          additionalProperties: false
+          properties:
+            id:
+              type: string
+              description: The ID of this counterparty.
+            type:
+              type: string
+              enum:
+              - supplier
+              - employee
+              description: The type of this counterparty.
+            name:
+              type: string
+              nullable: true
+              description: The name of this counterparty.
+            accountPayable:
+              type: object
+              nullable: true
+              additionalProperties: false
+              properties:
+                id:
+                  type: string
+                  description: Internal Spendesk ID of the account payable.
+                generalAccountCode:
+                  type: string
+                  description: Accounting code of the account payable.
+                auxiliaryAccountCode:
+                  type: string
+                  nullable: true
+                  description: Auxiliary code of the account payable, if available.
+              required:
+              - id
+              - generalAccountCode
+              - auxiliaryAccountCode
+          required:
+          - id
+          - type
+          - name
+          - accountPayable
+          description: A payable is due to either a supplier or an employee.
+        lineItems:
+          type: array
+          items:
+            $ref: '#/components/schemas/payableLineItem'
+          description: Line items of the payable.
+        allocations:
+          type: array
+          items:
+            oneOf:
+            - type: object
+              additionalProperties: false
+              properties:
+                type:
+                  enum:
+                  - settlement
+                allocatedAmount:
+                  allOf:
+                  - $ref: '#/components/schemas/priceAmount'
+                  description: Payable amount allocated to this settlement. Expressed in smallest units of the currency (e.g. cents for EUR and USD, but yen for JPY).
+                settlementId:
+                  type: string
+                  description: The ID of the allocated settlement.
+              required:
+              - type
+              - allocatedAmount
+              - settlementId
+            - type: object
+              additionalProperties: false
+              properties:
+                type:
+                  enum:
+                  - expense
+                allocatedAmount:
+                  allOf:
+                  - $ref: '#/components/schemas/priceAmount'
+                  description: Payable amount allocated to expenses. Expressed in smallest units of the currency (e.g. cents for EUR and USD, but yen for JPY).
+                payableId:
+                  type: string
+                  format: uuid
+                  description: The ID of the Payable
+                  examples:
+                  - bc9cef35-401d-4ea4-b384-ed725e6685cf
+                  pattern: ^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$
+              required:
+              - type
+              - allocatedAmount
+              - payableId
+            - type: object
+              additionalProperties: false
+              properties:
+                type:
+                  enum:
+                  - reversal
+                allocatedAmount:
+                  allOf:
+                  - $ref: '#/components/schemas/priceAmount'
+                  description: Payable amount allocated to reversals. Expressed in smallest units of the currency (e.g. cents for EUR and USD, but yen for JPY).
+                payableId:
+                  type: string
+                  format: uuid
+                  description: The ID of the Payable
+                  examples:
+                  - bc9cef35-401d-4ea4-b384-ed725e6685cf
+                  pattern: ^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$
+              required:
+              - type
+              - allocatedAmount
+              - payableId
+          description: An array of allocations for the payable. An expense payable can have a settlement or a reversal payable allocated to it. A reversal payable can have a settlement or an expense payable allocated to it.
+        amortisation:
+          type: object
+          nullable: true
+          additionalProperties: false
+          properties:
+            date:
+              type: object
+              additionalProperties: false
+              properties:
+                from:
+                  type: string
+                  format: date-time
+                  description: Start date of the amortisation period. In the ISO 8601 date-time format.
+                to:
+                  type: string
+                  format: date-time
+                  description: End date of the amortisation period. In the ISO 8601 date-time format.
+              required:
+              - from
+              - to
+          required:
+          - date
+          description: Amortisation details for the payable, if applicable.
+      required:
+      - id
+      - version
+      - type
+      - userId
+      - bookkeepingStatus
+      - companyId
+      - teamId
+      - teamName
+      - payableDate
+      - accountingDate
+      - invoiceDueDate
+      - amount
+      - currency
+      - functionalAmount
+      - functionalCurrency
+      - functionalExchangeRate
+      - invoiceNumber
+      - purchaseOrderNumber
+      - creditNoteNumber
+      - referenceInvoiceNumber
+      - description
+      - exportedAt
+      - createdAt
+      - counterparty
+      - lineItems
+      - analyticalProperties
+      - allocations
+      description: A payable is a short-term liability owed by a company to its creditors (suppliers or employees). Several types of payables are supported by Spendesk, e.g. Invoices, Credit Notes, Expense Claims, Physical card purchases, Single Use card purchases, Subscription card purchases, etc.
+      title: payable
+    payableLineItem:
+      type: object
+      additionalProperties: false
+      properties:
+        expenseAccount:
+          type: object
+          nullable: true
+          additionalProperties: false
+          properties:
+            id:
+              type: string
+              description: Expense account Spendesk internal ID.
+            code:
+              type: string
+              description: Expense account accounting code.
+            description:
+              type: string
+              description: Expense account description.
+          required:
+          - id
+          - code
+          - description
+          description: Expense account this line item is allocated to.
+        vatAccount:
+          type: object
+          nullable: true
+          description: VAT account this line item is allocated to.
+          properties:
+            id:
+              type: string
+              description: VAT account Spendesk internal ID.
+            code:
+              type: string
+              description: VAT account accounting code.
+            rate:
+              type: number
+              description: VAT account rate in percent (e.g. 19.2%).
+            description:
+              type: string
+              nullable: true
+              description: VAT account description.
+          required:
+          - id
+          - code
+          - rate
+          - description
+        reverseChargeAccount:
+          additionalProperties: false
+          type: object
+          nullable: true
+          properties:
+            id:
+              type: string
+              description: Reverse charge account Spendesk internal ID.
+            creditCode:
+              type: string
+              description: Account code used to credit the reverse charge to.
+            debitCode:
+              type: string
+              description: Account code used to debit the reverse charge to.
+            description:
+              type: string
+              nullable: true
+              description: Reverse charge account description.
+          required:
+          - id
+          - creditCode
+          - debitCode
+          - description
+          description: Reverse charge accounts can be used in place of VAT accounts. They always have a rate of 0%.
+        financial:
+          type: object
+          nullable: true
+          additionalProperties: false
+          properties:
+            vatAmount:
+              allOf:
+              - $ref: '#/components/schemas/priceAmount'
+              description: Amount of VAT calculated automatically or entered manually by the accountant. Expressed in smallest units of the currency (e.g. cents for EUR and USD, but yen for JPY).
+            vatAdjustmentAmount:
+              allOf:
+              - $ref: '#/components/schemas/priceAmount'
+              description: Only exists when vatAmount was manually adjusted by the accountant. Is calculated as vatAmount - (netAmount * vatAccount.rate) and can be negative or positive. Expressed in smallest units of the currency (e.g. cents for EUR and USD, but yen for JPY).
+            netAmount:
+              allOf:
+              - $ref: '#/components/schemas/priceAmount'
+              description: Net amount or the line iteam (grossAmount - vatAmount) Expressed in smallest units of the currency (e.g. cents for EUR and USD, but yen for JPY).
+            grossAmount:
+              allOf:
+              - $ref: '#/components/schemas/priceAmount'
+              description: Gross amount of the line item (netAmount + vatAmount) Expressed in smallest units of the currency (e.g. cents for EUR and USD, but yen for JPY).
+          required:
+          - vatAmount
+          - vatAdjustmentAmount
+          - netAmount
+          - grossAmount
+          description: Financial amounts of the line item
+        costCenterId:
+          type: string
+          nullable: true
+          description: The ID of the cost center, if available.
+        costCenterName:
+          type: string
+          nullable: true
+          description: The name of the cost center, if available.
+        analyticalProperties:
+          type: array
+          items:
+            $ref: '#/components/schemas/analyticalProperties'
+          description: Array of analytical properties for this line item.
+      required:
+      - vatAccount
+      - reverseChargeAccount
+      - financial
+      - expenseAccount
+      - analyticalProperties
+      title: payableLineItem
+    analyticalProperties:
+      type: object
+      additionalProperties: false
+      properties:
+        fieldId:
+          type: string
+          description: ID of the analytical field.
+        fieldName:
+          type: string
+          description: Name of the analytical field.
+        valueId:
+          type: string
+          nullable: true
+          description: ID of the analytical value.
+        valueName:
+          type: string
+          nullable: true
+          description: Name of the analytical value.
+      required:
+      - fieldId
+      - fieldName
+      - valueId
+      - valueName
+      description: Analytical fields and values of the payable.
+      title: analyticalProperties
+    updatePayableBookkeepingStatusFailure:
+      type: object
+      unevaluatedProperties: false
+      properties:
+        id:
+          type: string
+          example: bc9cef35-401d-4ea4-b384-ed725e6685cf
+        outcome:
+          type: string
+          enum:
+          - notUpdated
+          example: notUpdated
+        reason:
+          type: string
+          description: 'The reason for the failure
+
+            - ''notFound'': The Payable was not found
+
+            - ''invalidState'': The Payable is in an invalid state for this operation
+
+            - ''wrongVersion'': The Payable version is not the latest
+
+            - ''updateInProgress'': The Payable is already being updated
+
+            - ''nothingToUpdate'': The Payable has no changes to apply'
+          enum:
+          - notFound
+          - invalidState
+          - wrongVersion
+          - updateInProgress
+          - nothingToUpdate
+          example: wrongVersion
+      required:
+      - id
+      - outcome
+      - reason
+      title: updatePayableBookkeepingStatusFailure
+    forbiddenControllerRoleRequired:
+      type: object
+      description: Forbidden
+      additionalProperties: false
+      properties:
+        correlationId:
+          type: string
+        errors:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            properties:
+              code:
+                type: string
+                enum:
+                - FORBIDDEN_ERROR
+                - CONTROLLER_ROLE_REQUIRED
+              detail:
+                type: string
+            required:
+            - code
+            - detail
+      required:
+      - errors
+      title: forbiddenControllerRoleRequired
+    searchPayableStringOperand:
+      anyOf:
+      - $ref: '#/components/schemas/searchPayableStringEqualityOperand'
+      - $ref: '#/components/schemas/searchPayableStringPatternOperand'
+      title: searchPayableStringOperand
+    searchPayableStringEqualityOperand:
+      type: object
+      description: String filter with equality operator (= or !=).
+      properties:
+        operator:
+          type: string
+          enum:
+          - '='
+          - '!='
+        value:
+          type:
+          - string
+          - 'null'
+      required:
+      - operator
+      - value
+      title: searchPayableStringEqualityOperand
+    searchPayableCompoundFilter:
+      type: object
+      properties:
+        operator:
+          type: string
+          enum:
+          - and
+          - or
+        subfilters:
+          anyOf:
+          - type: array
+            items:
+              $ref: '#/components/schemas/searchPayableFilter'
+          - type: array
+            items:
+              $ref: '#/components/schemas/searchPayableValueFilter'
+      required:
+      - operator
+      - subfilters
+      additionalProperties: false
+      title: searchPayableCompoundFilter
+    searchPayableStringFieldFilter:
+      description: Filter payables by a string field (description or documentaryEvidenceNumber).
+      allOf:
+      - type: object
+        properties:
+          field:
+            type: string
+            enum:
+            - description
+            - documentaryEvidenceNumber
+        required:
+        - field
+      - $ref: '#/components/schemas/searchPayableStringOperand'
+      title: searchPayableStringFieldFilter
+    searchPayableDateFieldFilter:
+      description: Filter payables by a date field (payableDate, firstCreatedAt, firstExportedAt, lastUpdatedAt, dueDate, accountingDate).
+      allOf:
+      - type: object
+        properties:
+          field:
+            type: string
+            enum:
+            - payableDate
+            - firstCreatedAt
+            - firstExportedAt
+            - lastUpdatedAt
+            - dueDate
+            - accountingDate
+        required:
+        - field
+      - $ref: '#/components/schemas/searchPayableDateFieldOperand'
+      title: searchPayableDateFieldFilter
+    conflict:
+      type: object
+      description: Conflict
+      additionalProperties: false
+      properties:
+        correlationId:
+          type: string
+        errors:
+          type: array
+          items:
+            additionalProperties: false
+            type: object
+            properties:
+              code:
+                type: string
+                enum:
+                - CONFLICT_ERROR
+              detail:
+                type: string
+            required:
+            - code
+            - detail
+      required:
+      - errors
+      title: conflict
+    payableQuery:
+      type: object
+      nullable: true
+      properties:
+        bookkeepingStatus:
+          type: array
+          items:
+            $ref: '#/components/schemas/bookkeepingStatus'
+          description: A list of statuses to filter payables by.
+        exportedAfter:
+          allOf:
+          - $ref: '#/components/schemas/dateTime'
+          description: String containing a UTC datetime expressed in ISO 8601 format like `2023-05-12T14:06:40Z` (source `https://en.wikipedia.org/wiki/ISO_8601`). Returns payables exported after the given date.
+        ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+            description: A payable ID.
+            pattern: ^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$
+            example: bc9cef35-401d-4ea4-b384-ed725e6685cf
+          description: A list of payable IDs to filter by.
+        sortBy:
+          type: string
+          enum:
+          - payableDate
+          default: payableDate
+          description: Determines by which field payables are sorted.
+        sortOrder:
+          type: string
+          enum:
+          - asc
+          - desc
+          default: desc
+          description: Determines in which order payables are sorted by.
+        fromPayableDate:
+          type: string
+          format: date
+          pattern: ^\d{4}-\d{2}-\d{2}$
+          description: Period start date.
+        toPayableDate:
+          type: string
+          format: date
+          pattern: ^\d{4}-\d{2}-\d{2}$
+          description: Period end date, no more than 31 days from `fromPayableDate`
+        createdFrom:
+          type: string
+          format: date
+          pattern: ^\d{4}-\d{2}-\d{2}$
+          description: Period start date for the creation date.
+        createdTo:
+          type: string
+          format: date
+          pattern: ^\d{4}-\d{2}-\d{2}$
+          description: Period end date for the creation date, that will be defaulted to the end of day (so T23:59:59).
+        updatedFrom:
+          type: string
+          format: date
+          pattern: ^\d{4}-\d{2}-\d{2}$
+          description: Returns payables modified after a given date.
+        fromDueDate:
+          type: string
+          format: date
+          pattern: ^\d{4}-\d{2}-\d{2}$
+          description: Returns payables with a due date on or after the given date.
+        toDueDate:
+          type: string
+          format: date
+          pattern: ^\d{4}-\d{2}-\d{2}$
+          description: Returns payables with a due date on or before the given date.
+        type:
+          type: array
+          items:
+            type: string
+            enum:
+            - expenseClaim
+            - invoicePurchase
+            - creditNote
+            - singlePurchaseCard
+            - multiUseCard
+            - subscriptionCard
+            - physicalCard
+            - mileageAllowance
+            - perDiemAllowance
+            - reverseBill
+          description: A list of payable types to filter by.
+        supplierIds:
+          type: array
+          items:
+            type: string
+          description: A list of supplier IDs to filter by.
+        isOverdue:
+          type: boolean
+          description: When true, returns only overdue payables. When false, returns only non-overdue payables.
+        hasSettlement:
+          type: boolean
+          description: When true, returns only payables with a settlement. When false, returns only payables without a settlement.
+      additionalProperties: false
+      dependentSchemas:
+        fromPayableDate:
+          required:
+          - toPayableDate
+          errorMessage: toPayableDate must be provided when fromPayableDate is provided
+        toPayableDate:
+          required:
+          - fromPayableDate
+          errorMessage: fromPayableDate must be provided when toPayableDate is provided
+      title: payableQuery
+    badRequest:
+      type: object
+      description: Bad request
+      additionalProperties: false
+      properties:
+        correlationId:
+          type: string
+        errors:
+          type: array
+          items:
+            additionalProperties: false
+            type: object
+            properties:
+              code:
+                type: string
+                enum:
+                - BAD_REQUEST_INCORRECT_OR_MISSING_FIELD
+                - RESPONSE_TOO_LARGE
+              detail:
+                type: string
+              source:
+                type: string
+            required:
+            - code
+            - detail
+            - source
+      required:
+      - errors
+      title: badRequest
+    searchPayableValidity:
+      description: Validation status of documentary evidence. When invalid, might include a reason.
+      anyOf:
+      - type: object
+        properties:
+          valid:
+            type: boolean
+            enum:
+            - true
+        required:
+        - valid
+        additionalProperties: false
+      - type: object
+        properties:
+          valid:
+            type: boolean
+            enum:
+            - false
+          reason:
+            type: string
+        required:
+        - valid
+        additionalProperties: false
+      title: searchPayableValidity
+    searchPayableDateEqualsOperand:
+      type: object
+      description: Date filter with equality operator. Value can be a date literal or null.
+      properties:
+        operator:
+          type: string
+          enum:
+          - '='
+        value:
+          anyOf:
+          - $ref: '#/components/schemas/searchPayableDateOperand'
+          - type: 'null'
+      required:
+      - operator
+      - value
+      title: searchPayableDateEqualsOperand
+    searchPayableDateBetweenOperand:
+      type: object
+      description: Date filter with between operator specifying a from/to range.
+      properties:
+        operator:
+          type: string
+          enum:
+          - between
+        value:
+          type: object
+          properties:
+            from:
+              $ref: '#/components/schemas/searchPayableDateOperand'
+            to:
+              $ref: '#/components/schemas/searchPayableDateOperand'
+          required:
+          - from
+          - to
+          additionalProperties: false
+      required:
+      - operator
+      - value
+      title: searchPayableDateBetweenOperand
+    searchPayableFilter:
+      anyOf:
+      - $ref: '#/components/schemas/searchPayableValueFilter'
+      - $ref: '#/components/schemas/searchPayableCompoundFilter'
+      title: searchPayableFilter
+    bulkUpdatePayablesBookkeepingStatusFullSuccess:
+      type: object
+      unevaluatedProperties: false
+      properties:
+        updatedPayables:
+          type: array
+          description: List of payables with the update outcome
+          items:
+            $ref: '#/components/schemas/updatePayableBookkeepingStatusSuccess'
+      required:
+      - updatedPayables
+      title: bulkUpdatePayablesBookkeepingStatusFullSuccess
+    searchPayablePaymentStatusFilter:
+      description: 'Filter payables by payment status. `toPay` means any outstanding balance remains — it INCLUDES partially-paid invoices and does NOT mean ''fully unpaid''. `paid` means the allocations on the payable sum to its full amount, leaving zero outstanding (settlements and/or credit notes, so a credit note alone can make an invoice `paid`); it EXCLUDES partially-paid invoices, which are classified as `toPay`. Payment status is not returned on the payable, and the amount fields are always the full invoice value, never reduced by partial payments. So: to size true outstanding AP, sum `outstandingFunctionalAmount` (the authoritative server-computed remainder, in the company''s functional currency; `outstandingAmount` is the same figure in each payable''s own currency and is therefore NOT summable across currencies) rather than summing `amount` over `toPay` payables, and fall back to `amount` minus `allocations[]` only on payables where those fields are absent. To size total cash paid out, use get_settlements rather than summing `amount` over `paid` payables (which omits the partial payments already made on still-open `toPay` invoices) — do NOT aggregate `allocations[]` for cash: only `entityType: ''settlement''` entries are money moved, while `reversal` (on an expense) and `expense` (on a credit note) entries are credit notes or card refunds applied document-to-document, so an invoice fully covered by a credit note reports `paid` with `outstandingAmount` 0 and zero cash paid; allocation amounts also carry the sign of the payable they sit on, so allocations on credit-note payables are negative.'
+      allOf:
+      - type: object
+        properties:
+          field:
+            type: string
+            enum:
+            - paymentStatus
+        required:
+        - field
+      - type: object
+        properties:
+          operator:
+            type: string
+            enum:
+            - '='
+            - '!='
+          value:
+            anyOf:
+            - type: 'null'
+            - type: array
+              items:
+                type: string
+                enum:
+                - toPay
+                - paid
+              minItems: 1
+            - type: string
+              enum:
+              - any
+        required:
+        - operator
+        - value
+      title: searchPayablePaymentStatusFilter
+    searchPayableBody:
+      type: object
+      description: Search body for querying payables. Combine leaf filters or compound (and/or) filter groups with cursor-based pagination.
+      properties:
+        filters:
+          allOf:
+          - $ref: '#/components/schemas/searchPayableFilter'
+          description: A single value filter or a compound filter group. Omit to return all payables.
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 1000
+          description: Maximum number of payables to return per page, from 1 to 1000. Defaults to 1000.
+        cursor:
+          type: string
+          description: Opaque pagination cursor returned in the previous response’s nextCursor field. Omit for the first page.
+        sort:
+          type: string
+          enum:
+          - asc
+          - desc
+          description: Sort order by creation date. Defaults to ascending.
+      additionalProperties: false
+      title: searchPayableBody
+      example:
+        filters:
+          field: bookkeepingStatus
+          operator: '='
+          value:
+          - toExport
+    paginationQuery:
+      type: object
+      properties:
+        page:
+          type: integer
+          default: 1
+          minimum: 1
+          description: Page number
+        pageSize:
+          type: integer
+          default: 30
+          minimum: 1
+          maximum: 30
+          description: Page size
+      title: paginationQuery
+    searchPayableItemLine:
+      type: object
+      description: An accounting line item with net/gross/VAT breakdown and analytical field associations.
+      properties:
+        taxAccountId:
+          type: string
+        expenseAccountId:
+          type: string
+        netAmount:
+          $ref: '#/components/schemas/searchPayableMoney'
+        grossAmount:
+          $ref: '#/components/schemas/searchPayableMoney'
+        functionalGrossAmount:
+          allOf:
+          - $ref: '#/components/schemas/searchPayableMoney'
+          description: Gross amount for this line in the company functional currency. Optional during rollout; when absent, consumers fall back to grossAmount.
+        vatAmount:
+          $ref: '#/components/schemas/searchPayableMoney'
+        vatAdjustment:
+          $ref: '#/components/schemas/searchPayableMoney'
+        analyticalFieldAssociations:
+          type: array
+          items:
+            $ref: '#/components/schemas/searchPayableAnalyticalFieldAssociation'
+        vatRate:
+          $ref: '#/components/schemas/searchPayableRate'
+      required:
+      - netAmount
+      - grossAmount
+      - vatAmount
+      - vatAdjustment
+      - analyticalFieldAssociations
+      - vatRate
+      additionalProperties: false
+      title: searchPayableItemLine
+    searchPayablePayableTypeFilter:
+      description: Filter payables by payable type.
+      allOf:
+      - type: object
+        properties:
+          field:
+            type: string
+            enum:
+            - payableType
+        required:
+        - field
+      - type: object
+        properties:
+          operator:
+            type: string
+            enum:
+            - '='
+            - '!='
+          value:
+            anyOf:
+            - type: 'null'
+            - type: array
+              items:
+                type: string
+                enum:
+                - invoicePurchase
+                - creditNote
+                - mileageAllowance
+                - perDiemAllowance
+                - singleCardPurchase
+                - physicalCardPurchase
+                - multiUseCardPurchase
+                - subscription
+                - cardRefund
+                - expenseClaim
+              minItems: 1
+            - type: string
+              enum:
+              - any
+        required:
+        - operator
+        - value
+      title: searchPayablePayableTypeFilter
+    updatePayableBookkeepingStatusSuccess:
+      type: object
+      unevaluatedProperties: false
+      properties:
+        id:
+          type: string
+          example: bc9cef35-401d-4ea4-b384-ed725e6685cf
+        outcome:
+          type: string
+          enum:
+          - updated
+          example: updated
+      required:
+      - id
+      - outcome
+      title: updatePayableBookkeepingStatusSuccess
+    searchPayableIdOperandValue:
+      anyOf:
+      - type: 'null'
+      - type: array
+        items:
+          type: string
+          minLength: 1
+        minItems: 1
+      - type: string
+        enum:
+        - any
+      title: searchPayableIdOperandValue
+    searchPayableAmountFieldFilter:
+      description: 'Filter payables by an amount field. `grossAmount` is the payable''s total. `netAmount` and `vatAmount` are not totals: each item line is tested on its own and a payable matches when ANY one line meets the condition (so `netAmount > 5000` misses a payable with two 3,000 lines, and payables with no item lines never match); for a threshold on a payable''s net or VAT total, sum itemLines[].netAmount / vatAmount client-side (they are in the payable''s own currency, not the functional currency). `value` is a DECIMAL amount in MAJOR units of the company''s functional currency (the currency of functionalAmount), NOT the minor-unit coefficient returned in money objects and NOT the payable''s own currency: for payables over EUR 5,000.00 use `{ "field": "grossAmount", "operator": ">", "value": 5000 }`, not 500000.'
+      allOf:
+      - type: object
+        properties:
+          field:
+            type: string
+            enum:
+            - grossAmount
+            - netAmount
+            - vatAmount
+        required:
+        - field
+      - $ref: '#/components/schemas/searchPayableAmountOperand'
+      title: searchPayableAmountFieldFilter
+    searchPayableCustomFieldFilter:
+      description: Filter payables by a custom field key and value.
+      allOf:
+      - type: object
+        properties:
+          field:
+            type: string
+            enum:
+            - customField
+        required:
+        - field
+      - type: object
+        properties:
+          operator:
+            type: string
+            enum:
+            - '='
+            - '!='
+          value:
+            type: object
+            properties:
+              key:
+                type: string
+              value:
+                $ref: '#/components/schemas/searchPayableIdOperandValue'
+            required:
+            - key
+            - value
+            additionalProperties: false
+        required:
+        - operator
+        - value
+      title: searchPayableCustomFieldFilter
+  securitySchemes:
+    Authentication:
+      type: oauth2
+      description: 'A company-level token acts on the company it was issued for. An organisation-level token (experimental) acts on the companies of an organisation: send the target company in the `X-Company-Id` header on every call, except on `GET /v2/companies` and on `/v2/companies/{companyId}/…` routes, which carry the company in the path. See [Organisation-level access](/reference/organisation-level-access).'
+      flows:
+        clientCredentials:
+          tokenUrl: /v1/auth/token
+          scopes:
+            analytical-field:read: Analytical Fields (Read)
+            bank-fee:read: Spending Bank Fees (Read)
+            cost-center:read: Cost Center (Read)
+            cost-center:manage: Cost Center (Manage)
+            expense-category:read: Expense Category (Read)
+            payable:read: Spending Payables (Read)
+            payable-attachment:read: Spending Payable Attachments (Read)
+            settlement:read: Spending Settlements (Read)
+            supplier:read: Suppliers (Read)
+            user:read: Users (Read)
+            experimental:user:manage: Users (Manage)
+            wallet-load:read: Spending Wallet Loads (Read)
+            wallet-summary:read: Spending Wallet Summary (Read)
+            experimental:accounting-export:read: Accounting exports (Read)
+            experimental:accounting-export:write: Accounting exports (Write)
+            experimental:accounting:update: Accounting (Update)
+            experimental:chart-of-accounts:read: Chart of Accounts (Read)
+            experimental:chart-of-accounts:write: Chart of Accounts (Write)
+            experimental:purchase-order:read: Purchase Orders (Read)
+            experimental:purchase-order:write: Purchase Orders (Write)
+            experimental:webhooks:read: Webhooks (Read)
+            experimental:webhooks:write: Webhooks (Write)
+            experimental:supplier:manage: Suppliers (Manage)
+            experimental:company:read: Companies (Read)
+            experimental:payable-search:read: Payable Search (Read)
+            experimental:payable-attachment:write: Payable Attachments (Write)
+            experimental:card:read: Cards (Read)
+            experimental:card:write: Cards (Write)
+            experimental:request:read: Requests (Read)
+            experimental:transaction:read: Transactions (Read)
+            experimental:analytical-field-v2:read: Analytical Fields v2 (Read)
+            experimental:analytical-field-v2:write: Analytical Fields v2 (Write)
+            experimental:expense-category-v2:read: Expense Category Fields v2 (Read)
+            experimental:expense-category-v2:write: Expense Category Fields v2 (Write)
+            experimental:invoice:read: Invoices (Read) - experimental
+            experimental:intake:read: Intakes (Read)
+            experimental:intake:write: Intakes (Write)
+            experimental:external-reference:read: External References (Read)
+            experimental:external-reference:write: External References (Write)
+        authorizationCode:
+          authorizationUrl: /v1/oauth2/authorize
+          tokenUrl: /v1/oauth2/token/create
+          scopes:
+            analytical-field:read: Analytical Fields (Read)
+            bank-fee:read: Spending Bank Fees (Read)
+            cost-center:read: Cost Center (Read)
+            cost-center:manage: Cost Center (Manage)
+            expense-category:read: Expense Category (Read)
+            payable:read: Spending Payables (Read)
+            payable-attachment:read: Spending Payable Attachments (Read)
+            settlement:read: Spending Settlements (Read)
+            supplier:read: Suppliers (Read)
+            user:read: Users (Read)
+            experimental:user:manage: Users (Manage)
+            wallet-load:read: Spending Wallet Loads (Read)
+            wallet-summary:read: Spending Wallet Summary (Read)
+            experimental:accounting-export:read: Accounting exports (Read)
+            experimental:accounting-export:write: Accounting exports (Write)
+            experimental:accounting:update: Accounting (Update)
+            experimental:chart-of-accounts:read: Chart of Accounts (Read)
+            experimental:chart-of-accounts:write: Chart of Accounts (Write)
+            experimental:purchase-order:read: Purchase Orders (Read)
+            experimental:purchase-order:write: Purchase Orders (Write)
+            experimental:webhooks:read: Webhooks (Read)
+            experimental:webhooks:write: Webhooks (Write)
+            experimental:supplier:manage: Suppliers (Manage)
+            experimental:company:read: Companies (Read)
+            experimental:payable-search:read: Payable Search (Read)
+            experimental:payable-attachment:write: Payable Attachments (Write)
+            experimental:card:read: Cards (Read)
+            experimental:card:write: Cards (Write)
+            experimental:request:read: Requests (Read)
+            experimental:transaction:read: Transactions (Read)
+            experimental:analytical-field-v2:read: Analytical Fields v2 (Read)
+            experimental:analytical-field-v2:write: Analytical Fields v2 (Write)
+            experimental:expense-category-v2:read: Expense Category Fields v2 (Read)
+            experimental:expense-category-v2:write: Expense Category Fields v2 (Write)
+            experimental:invoice:read: Invoices (Read) - experimental
+            experimental:intake:read: Intakes (Read)
+            experimental:intake:write: Intakes (Write)
+            experimental:external-reference:read: External References (Read)
+            experimental:external-reference:write: External References (Write)
+x-provenance:
+  method: searched
+  source: https://developer.spendesk.com/reference
+  harvested: '2026-10-14'
+  tool: harvest-readme-openapi.py
+  note: Assembled verbatim from the OpenAPI definition ReadMe embeds in each operation page of the provider's developer portal; paths and components merged by API title, nothing authored.
+  assembled_from:
+  - https://developer.spendesk.com/reference/mcp-authorization-server-metadata.md
+  - https://developer.spendesk.com/reference/mcp-protected-resource-metadata-mcp.md
+  - https://developer.spendesk.com/reference/v1-assign-creditors-to-accounts.md
+  - https://developer.spendesk.com/reference/v1-cancel-purchase-order.md
+  - https://developer.spendesk.com/reference/v1-close-purchase-order.md
+  - https://developer.spendesk.com/reference/v1-create-account.md
+  - https://developer.spendesk.com/reference/v1-create-auth-token.md
+  - https://developer.spendesk.com/reference/v1-create-cost-centers.md
+  - https://developer.spendesk.com/reference/v1-create-journal.md
+  - https://developer.spendesk.com/reference/v1-create-oauth2-token.md
+  - https://developer.spendesk.com/reference/v1-create-payable-attachment-upload.md
+  - https://developer.spendesk.com/reference/v1-create-purchase-order.md
+  - https://developer.spendesk.com/reference/v1-create-snapshot-payables.md
+  - https://developer.spendesk.com/reference/v1-create-suppliers.md
+  - https://developer.spendesk.com/reference/v1-create-webhook.md
+  - https://developer.spendesk.com/reference/v1-delete-account.md
+  - https://developer.spendesk.com/reference/v1-delete-cost-centers.md
+  - https://developer.spendesk.com/reference/v1-delete-mcp.md
+  - https://developer.spendesk.com/reference/v1-delete-webhook.md
+  - https://developer.spendesk.com/reference/v1-get-account-by-id.md
+  - https://developer.spendesk.com/reference/v1-get-accounts.md
+  - https://developer.spendesk.com/reference/v1-get-analytical-field-values.md
+  - https://developer.spendesk.com/reference/v1-get-analytical-fields.md
+  - https://developer.spendesk.com/reference/v1-get-bank-fees.md
+  - https://developer.spendesk.com/reference/v1-get-card-blocking-history.md
+  - https://developer.spendesk.com/reference/v1-get-card-order.md
+  - https://developer.spendesk.com/reference/v1-get-card.md
+  - https://developer.spendesk.com/reference/v1-get-cards.md
+  - https://developer.spendesk.com/reference/v1-get-cost-centers.md
+  - https://developer.spendesk.com/reference/v1-get-expense-categories.md
+  - https://developer.spendesk.com/reference/v1-get-external-references.md
+  - https://developer.spendesk.com/reference/v1-get-failed-transactions.md
+  - https://developer.spendesk.com/reference/v1-get-integrations-export-status.md
+  - https://developer.spendesk.com/reference/v1-get-journal-templates.md
+  - https://developer.spendesk.com/reference/v1-get-journal.md
+  - https://developer.spendesk.com/reference/v1-get-mcp.md
+  - https://developer.spendesk.com/reference/v1-get-payable-attachments.md
+  - https://developer.spendesk.com/reference/v1-get-payable-by-id.md
+  - https://developer.spendesk.com/reference/v1-get-purchase-order-document.md
+  - https://developer.spendesk.com/reference/v1-get-purchase-order.md
+  - https://developer.spendesk.com/reference/v1-get-purchase-orders.md
+  - https://developer.spendesk.com/reference/v1-get-request.md
+  - https://developer.spendesk.com/reference/v1-get-requests.md
+  - https://developer.spendesk.com/reference/v1-get-settlements.md
+  - https://developer.spendesk.com/reference/v1-get-snapshot-payables.md
+  - https://developer.spendesk.com/reference/v1-get-successful-transactions.md
+  - https://developer.spendesk.com/reference/v1-get-supplier-by-id.md
+  - https://developer.spendesk.com/reference/v1-get-suppliers.md
+  - https://developer.spendesk.com/reference/v1-get-transactions.md
+  - https://developer.spendesk.com/reference/v1-get-user-by-id.md
+  - https://developer.spendesk.com/reference/v1-get-users.md
+  - https://developer.spendesk.com/reference/v1-get-wallet-loads.md
+  - https://developer.spendesk.com/reference/v1-get-wallet-summary.md
+  - https://developer.spendesk.com/reference/v1-get-webhook-by-id.md
+  - https://developer.spendesk.com/reference/v1-get-webhook.md
+  - https://developer.spendesk.com/reference/v1-patch-accounts.md
+  - https://developer.spendesk.com/reference/v1-patch-payable-accounting-fields.md
+  - https://developer.spendesk.com/reference/v1-patch-supplier-status.md
+  - https://developer.spendesk.com/reference/v1-patch-suppliers-status.md
+  - https://developer.spendesk.com/reference/v1-post-experimental-integrations-refresh-settings.md
+  - https://developer.spendesk.com/reference/v1-post-mcp.md
+  - https://developer.spendesk.com/reference/v1-post-payable-mark-as-ready.md
+  - https://developer.spendesk.com/reference/v1-put-payables-bookkeeping-status.md
+  - https://developer.spendesk.com/reference/v1-put-settlements-state.md
+  - https://developer.spendesk.com/reference/v1-refresh-oauth2-token.md
+  - https://developer.spendesk.com/reference/v1-register-oauth2-client.md
+  - https://developer.spendesk.com/reference/v1-remove-creditors-from-accounts.md
+  - https://developer.spendesk.com/reference/v1-request-authorization.md
+  - https://developer.spendesk.com/reference/v1-search-creditor-account-assignments.md
+  - https://developer.spendesk.com/reference/v1-search-payables.md
+  - https://developer.spendesk.com/reference/v1-set-account-purpose.md
+  - https://developer.spendesk.com/reference/v1-sync-accounts.md
+  - https://developer.spendesk.com/reference/v1-update-cost-centers.md
+  - https://developer.spendesk.com/reference/v1-update-supplier.md
+  - https://developer.spendesk.com/reference/v1-update-suppliers.md
+  - https://developer.spendesk.com/reference/v1-update-webhook.md
+  - https://developer.spendesk.com/reference/v1-upsert-external-references.md
+  - https://developer.spendesk.com/reference/v2-create-analytical-field-value.md
+  - https://developer.spendesk.com/reference/v2-create-analytical-field.md
+  - https://developer.spendesk.com/reference/v2-create-expense-category-field.md
+  - https://developer.spendesk.com/reference/v2-create-expense-category.md
+  - https://developer.spendesk.com/reference/v2-create-intake-file-upload.md
+  - https://developer.spendesk.com/reference/v2-delete-analytical-field-value.md
+  - https://developer.spendesk.com/reference/v2-delete-analytical-field.md
+  - https://developer.spendesk.com/reference/v2-delete-expense-category-field.md
+  - https://developer.spendesk.com/reference/v2-delete-expense-category.md
+  - https://developer.spendesk.com/reference/v2-get-analytical-field-value.md
+  - https://developer.spendesk.com/reference/v2-get-analytical-field.md
+  - https://developer.spendesk.com/reference/v2-get-companies.md
+  - https://developer.spendesk.com/reference/v2-get-company-intake.md
+  - https://developer.spendesk.com/reference/v2-get-expense-category-field.md
+  - https://developer.spendesk.com/reference/v2-get-expense-category.md
+  - https://developer.spendesk.com/reference/v2-get-intake-file-upload-status.md
+  - https://developer.spendesk.com/reference/v2-get-invoice.md
+  - https://developer.spendesk.com/reference/v2-get-invoices-summary.md
+  - https://developer.spendesk.com/reference/v2-list-analytical-field-values.md
+  - https://developer.spendesk.com/reference/v2-list-analytical-fields.md
+  - https://developer.spendesk.com/reference/v2-list-company-intakes.md
+  - https://developer.spendesk.com/reference/v2-list-expense-categories.md
+  - https://developer.spendesk.com/reference/v2-list-expense-category-fields.md
+  - https://developer.spendesk.com/reference/v2-list-invoices.md
+  - https://developer.spendesk.com/reference/v2-post-company-intakes.md
+  - https://developer.spendesk.com/reference/v2-update-analytical-field-value.md
+  - https://developer.spendesk.com/reference/v2-update-analytical-field.md
+  - https://developer.spendesk.com/reference/v2-update-expense-category-field.md
+  - https://developer.spendesk.com/reference/v2-update-expense-category.md
+  merge:
+    pages: 106
+    deduped: 1705
+    conflicts_kept_first: 0

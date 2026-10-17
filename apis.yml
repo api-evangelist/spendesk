@@ -152,29 +152,18 @@ common:
   url: json-ld/spendesk-context.jsonld
 
 apis:
-- name: Spendesk Public API
-  description: 'REST API for managing corporate cards, expense claims, vendor invoices, wallet summaries, settlements, bank fees, members, suppliers,
-    cost centers, analytical fields, and webhook subscriptions within the Spendesk spend management platform.
-
-    '
-  image: https://kinlane-images.s3.amazonaws.com/shared/apis-json/apis-json-logo.jpg
+- aid: spendesk:spendesk-accounting-exports-api
+  name: Spendesk Accounting exports API
+  description: >-
+    Experimental: generate purchase and bank journals from the company's templates, download them, and
+    check which entities are exported. Part of: [Exporting accounting data](/reference/exporting-accounting-data).
   humanURL: https://developer.spendesk.com/
   baseURL: https://api.spendesk.com
   tags:
-  - Spend Management
-  - Corporate Cards
-  - Expense Management
-  - Invoices
-  - Webhook
-  tags_raw:
-  - Spend Management
-  - Corporate Cards
-  - Expense Management
-  - Invoices
-  - Webhooks
+  - Accounting exports
   properties:
-  - url: openapi/spendesk-public-api-openapi.yml
-    type: OpenAPI
+  - type: OpenAPI
+    url: openapi/spendesk-accounting-exports-api-openapi.yml
   - type: Documentation
     url: https://developer.spendesk.com/reference/general
   - type: Authentication
@@ -184,7 +173,8 @@ apis:
   - type: ChangeLog
     url: https://developer.spendesk.com/changelog
   - type: PostmanCollection
-    url: https://www.postman.com/spendesk-pde-sas/spendesk-public-api/collection/q48314q/spendesk-public-api
+    url: >-
+      https://www.postman.com/spendesk-pde-sas/spendesk-public-api/collection/q48314q/spendesk-public-api
   - type: JSONSchema
     url: json-schema/spendesk-search-payable-schema.json
   - type: JSONSchema
@@ -197,8 +187,600 @@ apis:
     url: json-schema/spendesk-intake-summary-schema.json
   - type: JSONSchema
     url: json-schema/spendesk-supplier-schema.json
-  aid: spendesk:spendesk-public-api
-
+- aid: spendesk:spendesk-analytical-fields-and-cost-centers-api
+  name: Spendesk Analytical fields and cost centers API
+  description: >-
+    Cost centers and analytical fields used to categorise spend. The `v1` endpoints read analytical fields
+    and manage cost centers; the experimental `v2` endpoints also create, update and delete analytical
+    fields and their values. Part of: [Building an accounting integration](/reference/building-an-accounting-integration).
+  humanURL: https://developer.spendesk.com/
+  baseURL: https://api.spendesk.com
+  tags:
+  - Analytical fields and cost centers
+  properties:
+  - type: OpenAPI
+    url: openapi/spendesk-analytical-fields-and-cost-centers-api-openapi.yml
+  - type: Documentation
+    url: https://developer.spendesk.com/reference/general
+  - type: Authentication
+    url: https://developer.spendesk.com/reference/how-to-authenticate
+  - type: RateLimits
+    url: https://developer.spendesk.com/public/reference/rate-limiting
+  - type: ChangeLog
+    url: https://developer.spendesk.com/changelog
+  - type: PostmanCollection
+    url: >-
+      https://www.postman.com/spendesk-pde-sas/spendesk-public-api/collection/q48314q/spendesk-public-api
+  - type: JSONSchema
+    url: json-schema/spendesk-search-payable-schema.json
+  - type: JSONSchema
+    url: json-schema/spendesk-invoice-schema.json
+  - type: JSONSchema
+    url: json-schema/spendesk-payable-schema.json
+  - type: JSONSchema
+    url: json-schema/spendesk-intake-schema.json
+  - type: JSONSchema
+    url: json-schema/spendesk-intake-summary-schema.json
+  - type: JSONSchema
+    url: json-schema/spendesk-supplier-schema.json
+- aid: spendesk:spendesk-authentication-api
+  name: Spendesk Authentication API
+  description: >-
+    How to get an access token: Public API credentials (API keys) exchanged with HTTP Basic authentication,
+    or OAuth 2.0 for partner apps — authorization code with PKCE, the token endpoint (code exchange and
+    refresh), dynamic client registration and discovery metadata. Part of: [How to Authenticate](/reference/how-to-authenticate).
+  humanURL: https://developer.spendesk.com/
+  baseURL: https://api.spendesk.com
+  tags:
+  - Authentication
+  properties:
+  - type: OpenAPI
+    url: openapi/spendesk-authentication-api-openapi.yml
+  - type: Documentation
+    url: https://developer.spendesk.com/reference/general
+  - type: Authentication
+    url: https://developer.spendesk.com/reference/how-to-authenticate
+  - type: RateLimits
+    url: https://developer.spendesk.com/public/reference/rate-limiting
+  - type: ChangeLog
+    url: https://developer.spendesk.com/changelog
+  - type: PostmanCollection
+    url: >-
+      https://www.postman.com/spendesk-pde-sas/spendesk-public-api/collection/q48314q/spendesk-public-api
+  - type: JSONSchema
+    url: json-schema/spendesk-search-payable-schema.json
+  - type: JSONSchema
+    url: json-schema/spendesk-invoice-schema.json
+  - type: JSONSchema
+    url: json-schema/spendesk-payable-schema.json
+  - type: JSONSchema
+    url: json-schema/spendesk-intake-schema.json
+  - type: JSONSchema
+    url: json-schema/spendesk-intake-summary-schema.json
+  - type: JSONSchema
+    url: json-schema/spendesk-supplier-schema.json
+- aid: spendesk:spendesk-cards-api
+  name: Spendesk Cards API
+  description: 'Experimental: cards, their blocking history, and the order of a physical card.'
+  humanURL: https://developer.spendesk.com/
+  baseURL: https://api.spendesk.com
+  tags:
+  - Cards
+  properties:
+  - type: OpenAPI
+    url: openapi/spendesk-cards-api-openapi.yml
+  - type: Documentation
+    url: https://developer.spendesk.com/reference/general
+  - type: Authentication
+    url: https://developer.spendesk.com/reference/how-to-authenticate
+  - type: RateLimits
+    url: https://developer.spendesk.com/public/reference/rate-limiting
+  - type: ChangeLog
+    url: https://developer.spendesk.com/changelog
+  - type: PostmanCollection
+    url: >-
+      https://www.postman.com/spendesk-pde-sas/spendesk-public-api/collection/q48314q/spendesk-public-api
+  - type: JSONSchema
+    url: json-schema/spendesk-search-payable-schema.json
+  - type: JSONSchema
+    url: json-schema/spendesk-invoice-schema.json
+  - type: JSONSchema
+    url: json-schema/spendesk-payable-schema.json
+  - type: JSONSchema
+    url: json-schema/spendesk-intake-schema.json
+  - type: JSONSchema
+    url: json-schema/spendesk-intake-summary-schema.json
+  - type: JSONSchema
+    url: json-schema/spendesk-supplier-schema.json
+- aid: spendesk:spendesk-chart-of-accounts-api
+  name: Spendesk Chart of accounts API
+  description: >-
+    Experimental chart of accounts: read, create, update, bulk-sync and archive accounts, set their purpose,
+    and assign suppliers and employees to their accounts. Part of: [Building an accounting integration](/reference/building-an-accounting-integration).
+  humanURL: https://developer.spendesk.com/
+  baseURL: https://api.spendesk.com
+  tags:
+  - Chart of accounts
+  properties:
+  - type: OpenAPI
+    url: openapi/spendesk-chart-of-accounts-api-openapi.yml
+  - type: Documentation
+    url: https://developer.spendesk.com/reference/general
+  - type: Authentication
+    url: https://developer.spendesk.com/reference/how-to-authenticate
+  - type: RateLimits
+    url: https://developer.spendesk.com/public/reference/rate-limiting
+  - type: ChangeLog
+    url: https://developer.spendesk.com/changelog
+  - type: PostmanCollection
+    url: >-
+      https://www.postman.com/spendesk-pde-sas/spendesk-public-api/collection/q48314q/spendesk-public-api
+  - type: JSONSchema
+    url: json-schema/spendesk-search-payable-schema.json
+  - type: JSONSchema
+    url: json-schema/spendesk-invoice-schema.json
+  - type: JSONSchema
+    url: json-schema/spendesk-payable-schema.json
+  - type: JSONSchema
+    url: json-schema/spendesk-intake-schema.json
+  - type: JSONSchema
+    url: json-schema/spendesk-intake-summary-schema.json
+  - type: JSONSchema
+    url: json-schema/spendesk-supplier-schema.json
+- aid: spendesk:spendesk-companies-api
+  name: Spendesk Companies API
+  description: >-
+    The companies (legal entities) of an organisation. Requires an organisation-level token (experimental).
+    Part of: [Organisation-level access](/reference/organisation-level-access).
+  humanURL: https://developer.spendesk.com/
+  baseURL: https://api.spendesk.com
+  tags:
+  - Companies
+  properties:
+  - type: OpenAPI
+    url: openapi/spendesk-companies-api-openapi.yml
+  - type: Documentation
+    url: https://developer.spendesk.com/reference/general
+  - type: Authentication
+    url: https://developer.spendesk.com/reference/how-to-authenticate
+  - type: RateLimits
+    url: https://developer.spendesk.com/public/reference/rate-limiting
+  - type: ChangeLog
+    url: https://developer.spendesk.com/changelog
+  - type: PostmanCollection
+    url: >-
+      https://www.postman.com/spendesk-pde-sas/spendesk-public-api/collection/q48314q/spendesk-public-api
+  - type: JSONSchema
+    url: json-schema/spendesk-search-payable-schema.json
+  - type: JSONSchema
+    url: json-schema/spendesk-invoice-schema.json
+  - type: JSONSchema
+    url: json-schema/spendesk-payable-schema.json
+  - type: JSONSchema
+    url: json-schema/spendesk-intake-schema.json
+  - type: JSONSchema
+    url: json-schema/spendesk-intake-summary-schema.json
+  - type: JSONSchema
+    url: json-schema/spendesk-supplier-schema.json
+- aid: spendesk:spendesk-expense-categories-api
+  name: Spendesk Expense categories API
+  description: >-
+    Expense categories. `v1` reads them; the experimental `v2` endpoints manage expense category fields
+    and their categories. Part of: [Building an accounting integration](/reference/building-an-accounting-integration).
+  humanURL: https://developer.spendesk.com/
+  baseURL: https://api.spendesk.com
+  tags:
+  - Expense categories
+  properties:
+  - type: OpenAPI
+    url: openapi/spendesk-expense-categories-api-openapi.yml
+  - type: Documentation
+    url: https://developer.spendesk.com/reference/general
+  - type: Authentication
+    url: https://developer.spendesk.com/reference/how-to-authenticate
+  - type: RateLimits
+    url: https://developer.spendesk.com/public/reference/rate-limiting
+  - type: ChangeLog
+    url: https://developer.spendesk.com/changelog
+  - type: PostmanCollection
+    url: >-
+      https://www.postman.com/spendesk-pde-sas/spendesk-public-api/collection/q48314q/spendesk-public-api
+  - type: JSONSchema
+    url: json-schema/spendesk-search-payable-schema.json
+  - type: JSONSchema
+    url: json-schema/spendesk-invoice-schema.json
+  - type: JSONSchema
+    url: json-schema/spendesk-payable-schema.json
+  - type: JSONSchema
+    url: json-schema/spendesk-intake-schema.json
+  - type: JSONSchema
+    url: json-schema/spendesk-intake-summary-schema.json
+  - type: JSONSchema
+    url: json-schema/spendesk-supplier-schema.json
+- aid: spendesk:spendesk-external-references-api
+  name: Spendesk External references API
+  description: >-
+    Experimental: store and look up the IDs your ERP gives to Spendesk objects — suppliers, cost centers,
+    expense categories, analytical fields and values, accounts — per provider. Part of: [Building an accounting
+    integration](/reference/building-an-accounting-integration).
+  humanURL: https://developer.spendesk.com/
+  baseURL: https://api.spendesk.com
+  tags:
+  - External references
+  properties:
+  - type: OpenAPI
+    url: openapi/spendesk-external-references-api-openapi.yml
+  - type: Documentation
+    url: https://developer.spendesk.com/reference/general
+  - type: Authentication
+    url: https://developer.spendesk.com/reference/how-to-authenticate
+  - type: RateLimits
+    url: https://developer.spendesk.com/public/reference/rate-limiting
+  - type: ChangeLog
+    url: https://developer.spendesk.com/changelog
+  - type: PostmanCollection
+    url: >-
+      https://www.postman.com/spendesk-pde-sas/spendesk-public-api/collection/q48314q/spendesk-public-api
+  - type: JSONSchema
+    url: json-schema/spendesk-search-payable-schema.json
+  - type: JSONSchema
+    url: json-schema/spendesk-invoice-schema.json
+  - type: JSONSchema
+    url: json-schema/spendesk-payable-schema.json
+  - type: JSONSchema
+    url: json-schema/spendesk-intake-schema.json
+  - type: JSONSchema
+    url: json-schema/spendesk-intake-summary-schema.json
+  - type: JSONSchema
+    url: json-schema/spendesk-supplier-schema.json
+- aid: spendesk:spendesk-invoices-and-intakes-api
+  name: Spendesk Invoices and intakes API
+  description: >-
+    Experimental supplier invoices and invoice intake: send invoices and credit notes to a company's inbox
+    by uploading their file, track the intakes, then list, summarise and retrieve the invoices.
+  humanURL: https://developer.spendesk.com/
+  baseURL: https://api.spendesk.com
+  tags:
+  - Invoices and intakes
+  properties:
+  - type: OpenAPI
+    url: openapi/spendesk-invoices-and-intakes-api-openapi.yml
+  - type: Documentation
+    url: https://developer.spendesk.com/reference/general
+  - type: Authentication
+    url: https://developer.spendesk.com/reference/how-to-authenticate
+  - type: RateLimits
+    url: https://developer.spendesk.com/public/reference/rate-limiting
+  - type: ChangeLog
+    url: https://developer.spendesk.com/changelog
+  - type: PostmanCollection
+    url: >-
+      https://www.postman.com/spendesk-pde-sas/spendesk-public-api/collection/q48314q/spendesk-public-api
+  - type: JSONSchema
+    url: json-schema/spendesk-search-payable-schema.json
+  - type: JSONSchema
+    url: json-schema/spendesk-invoice-schema.json
+  - type: JSONSchema
+    url: json-schema/spendesk-payable-schema.json
+  - type: JSONSchema
+    url: json-schema/spendesk-intake-schema.json
+  - type: JSONSchema
+    url: json-schema/spendesk-intake-summary-schema.json
+  - type: JSONSchema
+    url: json-schema/spendesk-supplier-schema.json
+- aid: spendesk:spendesk-mcp-api
+  name: Spendesk MCP API
+  description: >-
+    The Spendesk MCP server (Streamable HTTP transport), for AI assistants connected through OAuth 2.0.
+  humanURL: https://developer.spendesk.com/
+  baseURL: https://api.spendesk.com
+  tags:
+  - MCP
+  properties:
+  - type: OpenAPI
+    url: openapi/spendesk-mcp-api-openapi.yml
+  - type: Documentation
+    url: https://developer.spendesk.com/reference/general
+  - type: Authentication
+    url: https://developer.spendesk.com/reference/how-to-authenticate
+  - type: RateLimits
+    url: https://developer.spendesk.com/public/reference/rate-limiting
+  - type: ChangeLog
+    url: https://developer.spendesk.com/changelog
+  - type: PostmanCollection
+    url: >-
+      https://www.postman.com/spendesk-pde-sas/spendesk-public-api/collection/q48314q/spendesk-public-api
+  - type: JSONSchema
+    url: json-schema/spendesk-search-payable-schema.json
+  - type: JSONSchema
+    url: json-schema/spendesk-invoice-schema.json
+  - type: JSONSchema
+    url: json-schema/spendesk-payable-schema.json
+  - type: JSONSchema
+    url: json-schema/spendesk-intake-schema.json
+  - type: JSONSchema
+    url: json-schema/spendesk-intake-summary-schema.json
+  - type: JSONSchema
+    url: json-schema/spendesk-supplier-schema.json
+- aid: spendesk:spendesk-payables-api
+  name: Spendesk Payables API
+  description: >-
+    Payables — invoices, credit notes, card purchases and expense claims — with their attachments. Retrieve
+    them in bulk through snapshots, search them, read one by ID; experimental endpoints let accounting
+    integrations update accounting fields, mark payables ready and write their bookkeeping status back.
+    Part of: [Retrieving Spend Data](/reference/retrieving-snapshots-of-payables), [Building an accounting
+    integration](/reference/building-an-accounting-integration).
+  humanURL: https://developer.spendesk.com/
+  baseURL: https://api.spendesk.com
+  tags:
+  - Payables
+  properties:
+  - type: OpenAPI
+    url: openapi/spendesk-payables-api-openapi.yml
+  - type: Documentation
+    url: https://developer.spendesk.com/reference/general
+  - type: Authentication
+    url: https://developer.spendesk.com/reference/how-to-authenticate
+  - type: RateLimits
+    url: https://developer.spendesk.com/public/reference/rate-limiting
+  - type: ChangeLog
+    url: https://developer.spendesk.com/changelog
+  - type: PostmanCollection
+    url: >-
+      https://www.postman.com/spendesk-pde-sas/spendesk-public-api/collection/q48314q/spendesk-public-api
+  - type: JSONSchema
+    url: json-schema/spendesk-search-payable-schema.json
+  - type: JSONSchema
+    url: json-schema/spendesk-invoice-schema.json
+  - type: JSONSchema
+    url: json-schema/spendesk-payable-schema.json
+  - type: JSONSchema
+    url: json-schema/spendesk-intake-schema.json
+  - type: JSONSchema
+    url: json-schema/spendesk-intake-summary-schema.json
+  - type: JSONSchema
+    url: json-schema/spendesk-supplier-schema.json
+- aid: spendesk:spendesk-purchase-orders-api
+  name: Spendesk Purchase orders API
+  description: >-
+    Experimental purchase orders: list, retrieve, create, cancel and close them, and download a purchase
+    order's document.
+  humanURL: https://developer.spendesk.com/
+  baseURL: https://api.spendesk.com
+  tags:
+  - Purchase orders
+  properties:
+  - type: OpenAPI
+    url: openapi/spendesk-purchase-orders-api-openapi.yml
+  - type: Documentation
+    url: https://developer.spendesk.com/reference/general
+  - type: Authentication
+    url: https://developer.spendesk.com/reference/how-to-authenticate
+  - type: RateLimits
+    url: https://developer.spendesk.com/public/reference/rate-limiting
+  - type: ChangeLog
+    url: https://developer.spendesk.com/changelog
+  - type: PostmanCollection
+    url: >-
+      https://www.postman.com/spendesk-pde-sas/spendesk-public-api/collection/q48314q/spendesk-public-api
+  - type: JSONSchema
+    url: json-schema/spendesk-search-payable-schema.json
+  - type: JSONSchema
+    url: json-schema/spendesk-invoice-schema.json
+  - type: JSONSchema
+    url: json-schema/spendesk-payable-schema.json
+  - type: JSONSchema
+    url: json-schema/spendesk-intake-schema.json
+  - type: JSONSchema
+    url: json-schema/spendesk-intake-summary-schema.json
+  - type: JSONSchema
+    url: json-schema/spendesk-supplier-schema.json
+- aid: spendesk:spendesk-requests-and-transactions-api
+  name: Spendesk Requests and transactions API
+  description: 'Experimental: spend requests, and successful and failed card transactions.'
+  humanURL: https://developer.spendesk.com/
+  baseURL: https://api.spendesk.com
+  tags:
+  - Requests and transactions
+  properties:
+  - type: OpenAPI
+    url: openapi/spendesk-requests-and-transactions-api-openapi.yml
+  - type: Documentation
+    url: https://developer.spendesk.com/reference/general
+  - type: Authentication
+    url: https://developer.spendesk.com/reference/how-to-authenticate
+  - type: RateLimits
+    url: https://developer.spendesk.com/public/reference/rate-limiting
+  - type: ChangeLog
+    url: https://developer.spendesk.com/changelog
+  - type: PostmanCollection
+    url: >-
+      https://www.postman.com/spendesk-pde-sas/spendesk-public-api/collection/q48314q/spendesk-public-api
+  - type: JSONSchema
+    url: json-schema/spendesk-search-payable-schema.json
+  - type: JSONSchema
+    url: json-schema/spendesk-invoice-schema.json
+  - type: JSONSchema
+    url: json-schema/spendesk-payable-schema.json
+  - type: JSONSchema
+    url: json-schema/spendesk-intake-schema.json
+  - type: JSONSchema
+    url: json-schema/spendesk-intake-summary-schema.json
+  - type: JSONSchema
+    url: json-schema/spendesk-supplier-schema.json
+- aid: spendesk:spendesk-settlements-and-wallet-api
+  name: Spendesk Settlements and wallet API
+  description: >-
+    Money movements on the Spendesk wallet: settlements (payments) and their export state, bank fees,
+    wallet loads and the wallet summary. Part of: [What is Spend Data?](/reference/how-to-use-spend-data),
+    [Building an accounting integration](/reference/building-an-accounting-integration).
+  humanURL: https://developer.spendesk.com/
+  baseURL: https://api.spendesk.com
+  tags:
+  - Settlements and wallet
+  properties:
+  - type: OpenAPI
+    url: openapi/spendesk-settlements-and-wallet-api-openapi.yml
+  - type: Documentation
+    url: https://developer.spendesk.com/reference/general
+  - type: Authentication
+    url: https://developer.spendesk.com/reference/how-to-authenticate
+  - type: RateLimits
+    url: https://developer.spendesk.com/public/reference/rate-limiting
+  - type: ChangeLog
+    url: https://developer.spendesk.com/changelog
+  - type: PostmanCollection
+    url: >-
+      https://www.postman.com/spendesk-pde-sas/spendesk-public-api/collection/q48314q/spendesk-public-api
+  - type: JSONSchema
+    url: json-schema/spendesk-search-payable-schema.json
+  - type: JSONSchema
+    url: json-schema/spendesk-invoice-schema.json
+  - type: JSONSchema
+    url: json-schema/spendesk-payable-schema.json
+  - type: JSONSchema
+    url: json-schema/spendesk-intake-schema.json
+  - type: JSONSchema
+    url: json-schema/spendesk-intake-summary-schema.json
+  - type: JSONSchema
+    url: json-schema/spendesk-supplier-schema.json
+- aid: spendesk:spendesk-spendesk-public-api-api
+  name: Spendesk Spendesk Public API
+  description: The Spendesk Public API API from Spendesk — 0 operation(s) for spendesk public api.
+  humanURL: https://developer.spendesk.com/
+  baseURL: https://api.spendesk.com
+  tags:
+  - Spendesk Public API
+  properties:
+  - type: OpenAPI
+    url: openapi/spendesk-spendesk-public-api-api-openapi.yml
+  - type: Documentation
+    url: https://developer.spendesk.com/reference/general
+  - type: Authentication
+    url: https://developer.spendesk.com/reference/how-to-authenticate
+  - type: RateLimits
+    url: https://developer.spendesk.com/public/reference/rate-limiting
+  - type: ChangeLog
+    url: https://developer.spendesk.com/changelog
+  - type: PostmanCollection
+    url: >-
+      https://www.postman.com/spendesk-pde-sas/spendesk-public-api/collection/q48314q/spendesk-public-api
+  - type: JSONSchema
+    url: json-schema/spendesk-search-payable-schema.json
+  - type: JSONSchema
+    url: json-schema/spendesk-invoice-schema.json
+  - type: JSONSchema
+    url: json-schema/spendesk-payable-schema.json
+  - type: JSONSchema
+    url: json-schema/spendesk-intake-schema.json
+  - type: JSONSchema
+    url: json-schema/spendesk-intake-summary-schema.json
+  - type: JSONSchema
+    url: json-schema/spendesk-supplier-schema.json
+- aid: spendesk:spendesk-suppliers-api
+  name: Spendesk Suppliers API
+  description: >-
+    Suppliers of a company: read them with `supplier:read`; create, update, archive and unarchive them
+    with `experimental:supplier:manage`. Part of: [Building an accounting integration](/reference/building-an-accounting-integration).
+  humanURL: https://developer.spendesk.com/
+  baseURL: https://api.spendesk.com
+  tags:
+  - Suppliers
+  properties:
+  - type: OpenAPI
+    url: openapi/spendesk-suppliers-api-openapi.yml
+  - type: Documentation
+    url: https://developer.spendesk.com/reference/general
+  - type: Authentication
+    url: https://developer.spendesk.com/reference/how-to-authenticate
+  - type: RateLimits
+    url: https://developer.spendesk.com/public/reference/rate-limiting
+  - type: ChangeLog
+    url: https://developer.spendesk.com/changelog
+  - type: PostmanCollection
+    url: >-
+      https://www.postman.com/spendesk-pde-sas/spendesk-public-api/collection/q48314q/spendesk-public-api
+  - type: JSONSchema
+    url: json-schema/spendesk-search-payable-schema.json
+  - type: JSONSchema
+    url: json-schema/spendesk-invoice-schema.json
+  - type: JSONSchema
+    url: json-schema/spendesk-payable-schema.json
+  - type: JSONSchema
+    url: json-schema/spendesk-intake-schema.json
+  - type: JSONSchema
+    url: json-schema/spendesk-intake-summary-schema.json
+  - type: JSONSchema
+    url: json-schema/spendesk-supplier-schema.json
+- aid: spendesk:spendesk-users-api
+  name: Spendesk Users API
+  description: Members of a company (`user:read`).
+  humanURL: https://developer.spendesk.com/
+  baseURL: https://api.spendesk.com
+  tags:
+  - Users
+  properties:
+  - type: OpenAPI
+    url: openapi/spendesk-users-api-openapi.yml
+  - type: Documentation
+    url: https://developer.spendesk.com/reference/general
+  - type: Authentication
+    url: https://developer.spendesk.com/reference/how-to-authenticate
+  - type: RateLimits
+    url: https://developer.spendesk.com/public/reference/rate-limiting
+  - type: ChangeLog
+    url: https://developer.spendesk.com/changelog
+  - type: PostmanCollection
+    url: >-
+      https://www.postman.com/spendesk-pde-sas/spendesk-public-api/collection/q48314q/spendesk-public-api
+  - type: JSONSchema
+    url: json-schema/spendesk-search-payable-schema.json
+  - type: JSONSchema
+    url: json-schema/spendesk-invoice-schema.json
+  - type: JSONSchema
+    url: json-schema/spendesk-payable-schema.json
+  - type: JSONSchema
+    url: json-schema/spendesk-intake-schema.json
+  - type: JSONSchema
+    url: json-schema/spendesk-intake-summary-schema.json
+  - type: JSONSchema
+    url: json-schema/spendesk-supplier-schema.json
+- aid: spendesk:spendesk-webhooks-api
+  name: Spendesk Webhooks API
+  description: >-
+    Experimental webhook instances: subscribe an endpoint to payable and settlement events, and list,
+    update or delete instances. Part of: [Using webhooks](/reference/using-webhooks), [Building an accounting
+    integration](/reference/building-an-accounting-integration).
+  humanURL: https://developer.spendesk.com/
+  baseURL: https://api.spendesk.com
+  tags:
+  - Webhooks
+  properties:
+  - type: OpenAPI
+    url: openapi/spendesk-webhooks-api-openapi.yml
+  - type: Documentation
+    url: https://developer.spendesk.com/reference/general
+  - type: Authentication
+    url: https://developer.spendesk.com/reference/how-to-authenticate
+  - type: RateLimits
+    url: https://developer.spendesk.com/public/reference/rate-limiting
+  - type: ChangeLog
+    url: https://developer.spendesk.com/changelog
+  - type: PostmanCollection
+    url: >-
+      https://www.postman.com/spendesk-pde-sas/spendesk-public-api/collection/q48314q/spendesk-public-api
+  - type: JSONSchema
+    url: json-schema/spendesk-search-payable-schema.json
+  - type: JSONSchema
+    url: json-schema/spendesk-invoice-schema.json
+  - type: JSONSchema
+    url: json-schema/spendesk-payable-schema.json
+  - type: JSONSchema
+    url: json-schema/spendesk-intake-schema.json
+  - type: JSONSchema
+    url: json-schema/spendesk-intake-summary-schema.json
+  - type: JSONSchema
+    url: json-schema/spendesk-supplier-schema.json
 x-readme-harvest:
   date: '2026-10-14'
   ops: 106

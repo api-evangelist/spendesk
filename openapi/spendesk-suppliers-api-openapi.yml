@@ -1,0 +1,1970 @@
+openapi: 3.2.0
+info:
+  title: Spendesk Public Suppliers API
+  description: Spendesk Public API
+  version: '1.0'
+  summary: Spendesk Public API
+  contact:
+    email: support-public-api@spendesk.com
+    url: https://developer.spendesk.com/
+    name: Spendesk for Developers
+  termsOfService: https://www.spendesk.com/en/legals/terms/api-agreement
+servers:
+- url: https://public-api.spendesk.com
+  description: Production
+- url: https://public-api.demo.spendesk.com
+  description: Sandbox
+tags:
+- name: Suppliers
+  description: 'Suppliers of a company: read them with `supplier:read`; create, update, archive and unarchive them with `experimental:supplier:manage`. Part of: Building an accounting integration.'
+paths:
+  /v1/experimental/suppliers/status:
+    patch:
+      operationId: v1-patch-suppliers-status
+      summary: Archive/Unarchive Suppliers
+      tags:
+      - Suppliers
+      description: '**Allowed Scopes**: _`experimental:supplier:manage`_
+
+
+        Archives or unarchives suppliers.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              additionalProperties: false
+              type: object
+              properties:
+                supplierIds:
+                  type: array
+                  items:
+                    type: string
+                  minItems: 1
+                  maxItems: 100
+                  description: Supplier IDs to update. When omitted, the action applies to all company suppliers.
+                isArchived:
+                  type: boolean
+                  description: Indicates new status of the supplier. `true` to archive, `false` to unarchive.
+              required:
+              - isArchived
+      parameters:
+      - schema:
+          type: string
+        in: header
+        name: X-Company-Id
+        required: false
+        description: ID of the company the request acts on. Required with an organisation-level token; not needed with a company-level token.
+      security:
+      - Authentication:
+        - experimental:supplier:manage
+      x-roles:
+      - controller
+      - accountOwner
+      responses:
+        '200':
+          description: Response for the PATCH suppliers/status endpoint
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/supplierStatusUpdateSuccessResponse'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/badRequest'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/unauthorized'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/forbidden'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/notFound'
+        '413':
+          description: Payload Too Large
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/tooLarge'
+        '415':
+          description: Unsupported Media Type
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/unsupportedMediaType'
+        '429':
+          description: Too Many Requests
+          headers:
+            retry-after:
+              schema:
+                type: integer
+              description: Seconds to wait before retrying the request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/tooManyRequests'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/internalServerError'
+        '503':
+          description: Service Unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/serviceUnavailableError'
+  /v1/experimental/suppliers/{id}/status:
+    patch:
+      operationId: v1-patch-supplier-status
+      summary: Archive/Unarchive Supplier
+      tags:
+      - Suppliers
+      description: '**Allowed Scopes**: _`experimental:supplier:manage`_
+
+
+        Archives or unarchives supplier by id.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              additionalProperties: false
+              type: object
+              properties:
+                isArchived:
+                  type: boolean
+                  description: Indicates new status of the supplier. `true` to archive, `false` to unarchive.
+              required:
+              - isArchived
+      parameters:
+      - schema:
+          type: string
+        in: path
+        name: id
+        required: true
+        description: ID of the supplier to update.
+      - schema:
+          type: string
+        in: header
+        name: X-Company-Id
+        required: false
+        description: ID of the company the request acts on. Required with an organisation-level token; not needed with a company-level token.
+      security:
+      - Authentication:
+        - experimental:supplier:manage
+      x-roles:
+      - controller
+      - accountOwner
+      responses:
+        '200':
+          description: Response for the PATCH suppliers/status endpoint
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/supplierStatusUpdateSuccessResponse'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/badRequest'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/unauthorized'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/forbidden'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/notFound'
+        '413':
+          description: Payload Too Large
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/tooLarge'
+        '415':
+          description: Unsupported Media Type
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/unsupportedMediaType'
+        '429':
+          description: Too Many Requests
+          headers:
+            retry-after:
+              schema:
+                type: integer
+              description: Seconds to wait before retrying the request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/tooManyRequests'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/internalServerError'
+        '503':
+          description: Service Unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/serviceUnavailableError'
+  /v1/suppliers:
+    get:
+      operationId: v1-get-suppliers
+      summary: Get Suppliers
+      tags:
+      - Suppliers
+      description: '**Allowed Scopes**: _`supplier:read`_
+
+
+        Returns suppliers existing in the Spendesk entity (company). Supplier data is cached for up to 24 hours; supplier account data (used for `accountPayable`) is cached for up to 20 minutes. Changes made through the API are returned by subsequent reads; changes made in Spendesk can take up to 24 hours to appear.
+
+
+        Pass `include=externalIds` to embed the IDs each supplier has in external systems (ERPs). It is opt-in because it costs one additional lookup per request.
+
+
+        Filter with `externalIds` to return only the suppliers carrying given external IDs, optionally narrowed to one `provider`. Suppliers with no matching mapping are excluded, so an external ID that matches nothing yields an empty page rather than every supplier.'
+      parameters:
+      - schema:
+          type: integer
+          default: 1
+          minimum: 1
+        in: query
+        name: page
+        required: false
+        description: Page number
+      - schema:
+          type: integer
+          default: 30
+          minimum: 1
+          maximum: 30
+        in: query
+        name: pageSize
+        required: false
+        description: Page size
+      - schema:
+          type: array
+          items:
+            type: string
+        in: query
+        name: ids
+        required: false
+        description: Supplier IDs to filter by.
+      - schema:
+          type: string
+        in: query
+        name: search
+        required: false
+        description: Free-text supplier search, for example by supplier name.
+      - schema:
+          $ref: '#/components/schemas/dateTime'
+        in: query
+        name: updatedBefore
+        required: false
+      - schema:
+          $ref: '#/components/schemas/dateTime'
+        in: query
+        name: updatedAfter
+        required: false
+      - schema:
+          $ref: '#/components/schemas/dateTime'
+        in: query
+        name: createdBefore
+        required: false
+      - schema:
+          $ref: '#/components/schemas/dateTime'
+        in: query
+        name: createdAfter
+        required: false
+      - schema:
+          type: string
+          pattern: ^[A-Z]{2}$
+        in: query
+        name: bankCountry
+        required: false
+        description: ISO alpha-2 code of the bank country
+      - schema:
+          type: string
+        in: query
+        name: iban
+        required: false
+        description: Supplier IBAN
+      - schema:
+          type: string
+        in: query
+        name: vatNumber
+        required: false
+        description: Supplier VAT number
+      - schema:
+          type: string
+          enum:
+          - 'true'
+          - 'false'
+        in: query
+        name: isArchived
+        required: false
+        description: 'Selects one archive state and is not additive: true returns ONLY archived suppliers, false ONLY active ones. Omit it to get both — every row carries isArchived.'
+      - schema:
+          type: array
+          maxItems: 50
+          items:
+            type: string
+        in: query
+        name: externalIds
+        required: false
+        description: Return only suppliers carrying one of these IDs in an external system (ERP). Resolved against the external-reference registry, so unmapped suppliers are excluded. Up to 50 per request.
+      - schema:
+          type: string
+          minLength: 1
+        in: query
+        name: provider
+        required: false
+        description: Restrict the `externalIds` filter to one external system (e.g. Netsuite, Xero). Worth setting when a company has been connected to more than one ERP, since the same external ID string can exist in each. Ignored without that filter, and it does not narrow the `externalIds` include, which returns the IDs from every system (read `provider` on each entry).
+      - schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - externalIds
+        in: query
+        name: include
+        required: false
+        description: Extra data to embed in the response. `externalIds` costs one additional lookup per request, so it is opt-in.
+      - schema:
+          type: string
+          enum:
+          - name
+          - created_at
+          - updated_at
+        in: query
+        name: sortBy
+        required: false
+        description: Field to sort suppliers by.
+      - schema:
+          type: string
+          enum:
+          - asc
+          - desc
+        in: query
+        name: sort
+        required: false
+        description: Sort direction.
+      - schema:
+          type: string
+        in: header
+        name: X-Company-Id
+        required: false
+        description: ID of the company the request acts on. Required with an organisation-level token; not needed with a company-level token.
+      security:
+      - Authentication:
+        - supplier:read
+      x-roles:
+      - controller
+      - admin
+      - accountOwner
+      responses:
+        '200':
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/supplierResponse'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/badRequest'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/unauthorized'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/forbidden'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/notFound'
+        '429':
+          description: Too Many Requests
+          headers:
+            retry-after:
+              schema:
+                type: integer
+              description: Seconds to wait before retrying the request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/tooManyRequests'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/internalServerError'
+        '503':
+          description: Service Unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/serviceUnavailableError'
+    post:
+      operationId: v1-create-suppliers
+      summary: Create Supplier(s)
+      tags:
+      - Suppliers
+      description: '**Allowed Scopes**: _`experimental:supplier:manage`_
+
+
+        Create one or multiple suppliers. Send an array of 1 to 100 supplier objects; a single object outside an array is rejected with a 400. A one-item array returns `item`; two or more return `items`.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/supplierToCreate'
+              description: Array of suppliers to create (minimum 1 item).
+              minItems: 1
+              maxItems: 100
+        description: Array of suppliers to create (minimum 1 item).
+      parameters:
+      - schema:
+          type: string
+        in: header
+        name: X-Company-Id
+        required: false
+        description: ID of the company the request acts on. Required with an organisation-level token; not needed with a company-level token.
+      security:
+      - Authentication:
+        - experimental:supplier:manage
+      x-roles:
+      - controller
+      - admin
+      - accountOwner
+      responses:
+        '201':
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                oneOf:
+                - type: object
+                  additionalProperties: false
+                  properties:
+                    item:
+                      $ref: '#/components/schemas/supplierInfoBase'
+                  required:
+                  - item
+                - $ref: '#/components/schemas/bulkCreateSuppliersResponse'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/badRequest'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/unauthorized'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/forbidden'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/notFound'
+        '413':
+          description: Payload Too Large
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/tooLarge'
+        '415':
+          description: Unsupported Media Type
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/unsupportedMediaType'
+        '429':
+          description: Too Many Requests
+          headers:
+            retry-after:
+              schema:
+                type: integer
+              description: Seconds to wait before retrying.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/tooManyRequests'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/internalServerError'
+        '503':
+          description: Service Unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/serviceUnavailableError'
+    patch:
+      operationId: v1-update-suppliers
+      summary: Update Suppliers
+      tags:
+      - Suppliers
+      description: '**Allowed Scopes**: _`experimental:supplier:manage`_
+
+
+        Update multiple suppliers. Accepts an array of supplier update objects (minimum 2 items), each containing an id field. For a single supplier use PATCH /v1/suppliers/:id.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/supplierToUpdateBulk'
+              minItems: 2
+              maxItems: 100
+              description: Array of suppliers to update (minimum 2 items).
+        description: Array of suppliers to update (minimum 2 items).
+      parameters:
+      - schema:
+          type: string
+        in: header
+        name: X-Company-Id
+        required: false
+        description: ID of the company the request acts on. Required with an organisation-level token; not needed with a company-level token.
+      security:
+      - Authentication:
+        - experimental:supplier:manage
+      x-roles:
+      - controller
+      - admin
+      - accountOwner
+      responses:
+        '200':
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/bulkUpdateSuppliersResponse'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/badRequest'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/unauthorized'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/forbidden'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/notFound'
+        '413':
+          description: Payload Too Large
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/tooLarge'
+        '415':
+          description: Unsupported Media Type
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/unsupportedMediaType'
+        '429':
+          description: Too Many Requests
+          headers:
+            retry-after:
+              schema:
+                type: integer
+              description: Seconds to wait before retrying the request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/tooManyRequests'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/internalServerError'
+        '503':
+          description: Service Unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/serviceUnavailableError'
+  /v1/suppliers/{id}:
+    get:
+      operationId: v1-get-supplier-by-id
+      summary: Get Supplier By Id
+      tags:
+      - Suppliers
+      description: '**Allowed Scopes**: _`supplier:read`_
+
+
+        Retrieves a single supplier by its ID. Supplier data is cached for up to 24 hours; supplier account data (used for `accountPayable`) is cached for up to 20 minutes. Changes made through the API are returned by subsequent reads; changes made in Spendesk can take up to 24 hours to appear.
+
+
+        Pass `include=externalIds` to embed the IDs this supplier has in external systems (ERPs). It is opt-in because it costs an additional lookup.'
+      parameters:
+      - schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - externalIds
+        in: query
+        name: include
+        required: false
+        description: Extra data to embed in the response.
+      - schema:
+          type: string
+        in: path
+        name: id
+        required: true
+        description: ID of the supplier to retrieve.
+      - schema:
+          type: string
+        in: header
+        name: X-Company-Id
+        required: false
+        description: ID of the company the request acts on. Required with an organisation-level token; not needed with a company-level token.
+      security:
+      - Authentication:
+        - supplier:read
+      x-roles:
+      - controller
+      - admin
+      - accountOwner
+      responses:
+        '200':
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/supplier'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/badRequest'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/unauthorized'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/forbidden'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/notFound'
+        '429':
+          description: Too Many Requests
+          headers:
+            retry-after:
+              schema:
+                type: integer
+              description: Seconds to wait before retrying the request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/tooManyRequests'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/internalServerError'
+        '503':
+          description: Service Unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/serviceUnavailableError'
+    patch:
+      operationId: v1-update-supplier
+      summary: Update Supplier
+      tags:
+      - Suppliers
+      description: '**Allowed Scopes**: _`experimental:supplier:manage`_
+
+
+        Update a single supplier by ID.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/supplierToUpdateSingle'
+      parameters:
+      - schema:
+          type: string
+        in: path
+        name: id
+        required: true
+        description: ID of the supplier to update.
+      - schema:
+          type: string
+        in: header
+        name: X-Company-Id
+        required: false
+        description: ID of the company the request acts on. Required with an organisation-level token; not needed with a company-level token.
+      security:
+      - Authentication:
+        - experimental:supplier:manage
+      x-roles:
+      - controller
+      - admin
+      - accountOwner
+      responses:
+        '200':
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  item:
+                    $ref: '#/components/schemas/supplierInfoBase'
+                required:
+                - item
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/badRequest'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/unauthorized'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/forbiddenControllerRoleRequired'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/notFound'
+        '413':
+          description: Payload Too Large
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/tooLarge'
+        '415':
+          description: Unsupported Media Type
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/unsupportedMediaType'
+        '429':
+          description: Too Many Requests
+          headers:
+            retry-after:
+              schema:
+                type: integer
+              description: Seconds to wait before retrying the request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/tooManyRequests'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/internalServerError'
+        '503':
+          description: Service Unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/serviceUnavailableError'
+components:
+  schemas:
+    unauthorized:
+      type: object
+      description: Unauthorized
+      additionalProperties: false
+      properties:
+        correlationId:
+          type: string
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              code:
+                type: string
+                enum:
+                - AUTHENTICATION_ERROR
+              detail:
+                type: string
+            required:
+            - code
+            - detail
+      required:
+      - errors
+      title: unauthorized
+    serviceUnavailableError:
+      type: object
+      description: Service Unavailable
+      additionalProperties: false
+      properties:
+        correlationId:
+          type: string
+        errors:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            properties:
+              code:
+                type: string
+                enum:
+                - SERVICE_UNAVAILABLE_ERROR
+              detail:
+                type: string
+            required:
+            - code
+            - detail
+      required:
+      - errors
+      title: serviceUnavailableError
+    tooManyRequests:
+      type: object
+      description: Too Many Requests
+      additionalProperties: false
+      properties:
+        correlationId:
+          type: string
+        errors:
+          type: array
+          items:
+            additionalProperties: false
+            type: object
+            properties:
+              code:
+                type: string
+                enum:
+                - TOO_MANY_REQUESTS
+              detail:
+                type: string
+            required:
+            - code
+            - detail
+      required:
+      - errors
+      title: tooManyRequests
+    supplierToCreate:
+      type: object
+      additionalProperties: false
+      properties:
+        name:
+          type: string
+          description: The name of the supplier.
+        primaryEmail:
+          type: string
+          description: The primary email of the supplier.
+        supplierDetails:
+          type: object
+          additionalProperties: false
+          properties:
+            legalName:
+              type: string
+              description: The legal name of the supplier.
+            registrationNumber:
+              type: string
+              description: The registration number of the supplier.
+            vatNumber:
+              type: string
+              description: The VAT number of the supplier.
+            address:
+              type: string
+              description: The address of the supplier.
+            city:
+              type: string
+              description: The city of the supplier.
+            zipcode:
+              type: string
+              description: The zipcode of the supplier.
+            country:
+              type: string
+              description: The country of the supplier.
+          required:
+          - legalName
+        bankInfo:
+          type: object
+          additionalProperties: false
+          properties:
+            iban:
+              type: string
+              description: The IBAN of the supplier.
+            bic:
+              type: string
+              description: The BIC of the supplier.
+            bankCountry:
+              type: string
+              description: The bank country of the supplier.
+            accountNumber:
+              type: string
+              description: The account number of the supplier.
+            routingNumber:
+              type: string
+              description: The routing number of the supplier.
+            sortCode:
+              type: string
+              description: The sort code of the supplier.
+            accountHolderName:
+              type: string
+              description: The account holder name of the supplier.
+      required:
+      - name
+      - supplierDetails
+      title: supplierToCreate
+    internalServerError:
+      type: object
+      description: Internal Server Error
+      additionalProperties: false
+      properties:
+        correlationId:
+          type: string
+        errors:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            properties:
+              code:
+                type: string
+                enum:
+                - INTERNAL_SERVER_ERROR
+              detail:
+                type: string
+                enum:
+                - Sorry, something has gone wrong at our end. If this persists please contact support.
+            required:
+            - code
+            - detail
+      required:
+      - errors
+      title: internalServerError
+    meta:
+      description: Meta object describing pagination
+      type: object
+      properties:
+        pagination:
+          type: object
+          unevaluatedProperties: false
+          allOf:
+          - $ref: '#/components/schemas/pagination'
+      required:
+      - pagination
+      title: meta
+    bulkUpdateSuppliersResponse:
+      type: object
+      additionalProperties: false
+      properties:
+        items:
+          type: array
+          items:
+            oneOf:
+            - $ref: '#/components/schemas/bulkUpdateSupplierSuccessItem'
+            - $ref: '#/components/schemas/bulkUpdateSupplierErrorItem'
+          description: Per-supplier outcome for each update.
+      required:
+      - items
+      title: bulkUpdateSuppliersResponse
+    supplier:
+      additionalProperties: false
+      type: object
+      properties:
+        id:
+          type: string
+          description: Supplier ID in Spendesk
+        name:
+          type: string
+          description: Supplier name
+        isArchived:
+          type: boolean
+          description: Indicates if supplier is archived. Archiving suppliers is a feature that needs to be activated in Spendesk.
+        externalIds:
+          type: array
+          description: IDs this supplier has in external systems (ERPs), one entry per system. Only present when `externalIds` is requested through `include`. Not to be confused with `accountPayable.externalId`, which is the external ID of the account payable rather than of the supplier itself.
+          items:
+            type: object
+            additionalProperties: false
+            properties:
+              externalId:
+                type: string
+                description: ID of the supplier in the external system.
+              provider:
+                type: string
+                nullable: true
+                description: The external system the ID belongs to (e.g. Netsuite, Xero).
+              source:
+                type: string
+                nullable: true
+                description: Who recorded the mapping. `native_integration` means a native ERP sync owns it and keeps it up to date; `public_api` means it was set through the API.
+            required:
+            - externalId
+        accountPayable:
+          type: object
+          description: Account payable assigned to the supplier (if exists)
+          additionalProperties: false
+          nullable: true
+          properties:
+            id:
+              type: string
+              description: Internal Spendesk ID of the account payable
+            generalAccountCode:
+              type: string
+              description: Accounting code of the account payable
+            auxiliaryAccountCode:
+              type: string
+              nullable: true
+              description: Auxiliary code of the account payable; empty string (never null) if unset
+            externalId:
+              type: string
+              nullable: true
+              description: 'ERP ID of the account payable, if available; supplier ERP IDs: externalIds'
+          required:
+          - id
+          - generalAccountCode
+        address:
+          type: object
+          description: Supplier's address
+          additionalProperties: false
+          properties:
+            line1:
+              type: string
+              nullable: true
+              description: Full street address as free text
+            line2:
+              type: string
+              nullable: true
+              description: Always null; street is in line1
+            city:
+              type: string
+              nullable: true
+              description: City
+            postalCode:
+              type: string
+              nullable: true
+              description: Postal/ZIP code
+            stateOrCounty:
+              type: string
+              nullable: true
+              description: Always null (not stored)
+            country:
+              type: string
+              nullable: true
+              description: Country as entered at supplier creation time
+          required:
+          - line1
+          - line2
+          - city
+          - postalCode
+          - stateOrCounty
+          - country
+        legalName:
+          type: string
+          nullable: true
+          description: Legal name of the supplier
+        registrationNo:
+          type: string
+          nullable: true
+          description: Tax registration number of the supplier
+        vatNo:
+          type: string
+          nullable: true
+          description: VAT number of the supplier
+        createdAt:
+          $ref: '#/components/schemas/dateTime'
+        updatedAt:
+          $ref: '#/components/schemas/dateTime'
+        createdBy:
+          type: string
+          nullable: true
+          description: Id of the user that created the supplier (If available)
+        updatedBy:
+          type: string
+          nullable: true
+          description: Id of the user that updated the supplier (If available)
+        bic:
+          type: string
+          nullable: true
+          description: Supplier's bank account BIC (for GET endpoints, backward compatibility)
+        iban:
+          type: string
+          nullable: true
+          description: Supplier's bank account IBAN (for GET endpoints, backward compatibility)
+        bankCountry:
+          type: string
+          nullable: true
+          description: Supplier's bank account ISO alpha-2 country code (for GET endpoints, backward compatibility)
+        bankDetailsUpdatedAt:
+          type: string
+          nullable: true
+          description: Date and time when bank details were last updated (ISO 8601)
+        bankDetailsUpdatedBy:
+          type: string
+          nullable: true
+          description: Id of the user who last updated the bank details
+        bankInfo:
+          type: object
+          description: Bank information for the supplier (for POST/PATCH endpoints)
+          additionalProperties: false
+          nullable: true
+          properties:
+            iban:
+              type: string
+              nullable: true
+              description: Supplier's bank account IBAN
+            bic:
+              type: string
+              nullable: true
+              description: Supplier's bank account BIC
+            bankCountry:
+              type: string
+              nullable: true
+              description: Country where the bank is located
+            accountNumber:
+              type: string
+              nullable: true
+              description: Bank account number
+            routingNumber:
+              type: string
+              nullable: true
+              description: Bank routing number (US)
+            sortCode:
+              type: string
+              nullable: true
+              description: Bank sort code (UK)
+            accountHolderName:
+              type: string
+              nullable: true
+              description: Name of the account holder
+      required:
+      - id
+      - name
+      - isArchived
+      - address
+      - legalName
+      - registrationNo
+      - vatNo
+      - createdAt
+      - updatedAt
+      title: supplier
+    supplierInfoBase:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          description: Supplier ID in Spendesk
+        name:
+          type: string
+          description: Supplier name
+        primaryEmail:
+          type: string
+          description: Primary email of the supplier.
+        companyId:
+          type: string
+          description: Company ID the supplier belongs to.
+      required:
+      - id
+      - name
+      - companyId
+      title: supplierInfoBase
+    forbidden:
+      type: object
+      description: Forbidden
+      additionalProperties: false
+      properties:
+        correlationId:
+          type: string
+        errors:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            properties:
+              code:
+                type: string
+                enum:
+                - FORBIDDEN_ERROR
+              detail:
+                type: string
+            required:
+            - code
+            - detail
+      required:
+      - errors
+      title: forbidden
+    notFound:
+      type: object
+      description: Not Found
+      additionalProperties: false
+      properties:
+        correlationId:
+          type: string
+        errors:
+          type: array
+          items:
+            additionalProperties: false
+            type: object
+            properties:
+              code:
+                type: string
+                enum:
+                - NOT_FOUND
+              detail:
+                type: string
+            required:
+            - code
+            - detail
+      required:
+      - errors
+      title: notFound
+    bulkUpdateSupplierErrorItem:
+      type: object
+      additionalProperties: false
+      properties:
+        outcome:
+          type: string
+          enum:
+          - error
+        reason:
+          type: string
+        id:
+          type: string
+        details: {}
+      required:
+      - outcome
+      - reason
+      title: bulkUpdateSupplierErrorItem
+    supplierResponse:
+      type: object
+      additionalProperties: false
+      properties:
+        meta:
+          type: object
+          unevaluatedProperties: false
+          allOf:
+          - $ref: '#/components/schemas/meta'
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/supplier'
+          description: List of suppliers matching the given criteria.
+      required:
+      - data
+      - meta
+      title: supplierResponse
+    bulkUpdateSupplierSuccessItem:
+      type: object
+      additionalProperties: false
+      properties:
+        outcome:
+          type: string
+          enum:
+          - success
+        supplier:
+          type: object
+          additionalProperties: false
+          properties:
+            id:
+              type: string
+          required:
+          - id
+      required:
+      - outcome
+      - supplier
+      title: bulkUpdateSupplierSuccessItem
+    tooLarge:
+      type: object
+      description: Payload Too Large
+      additionalProperties: false
+      properties:
+        correlationId:
+          type: string
+        errors:
+          type: array
+          items:
+            additionalProperties: false
+            type: object
+            properties:
+              code:
+                type: string
+                enum:
+                - LARGE_BODY_ERROR
+              detail:
+                type: string
+                enum:
+                - 'The request is too large for this endpoint: send a smaller body or a smaller file.'
+            required:
+            - code
+            - detail
+      required:
+      - errors
+      title: tooLarge
+    pagination:
+      type: object
+      properties:
+        page:
+          type: integer
+          default: 1
+          minimum: 1
+          description: Page number
+        pageSize:
+          type: integer
+          default: 30
+          minimum: 1
+          maximum: 30
+          description: Page size
+        total:
+          type: integer
+          minimum: 0
+          description: Total amount of records for this collection
+      required:
+      - page
+      - pageSize
+      - total
+      title: pagination
+    unsupportedMediaType:
+      type: object
+      description: Unsupported Media Type
+      additionalProperties: false
+      properties:
+        correlationId:
+          type: string
+        errors:
+          type: array
+          items:
+            additionalProperties: false
+            type: object
+            properties:
+              code:
+                type: string
+                enum:
+                - UNSUPPORTED_MEDIA_TYPE_ERROR
+              detail:
+                type: string
+                enum:
+                - 'The Content-Type of the request is not supported: send application/json, or application/x-www-form-urlencoded where the endpoint documents it.'
+            required:
+            - code
+            - detail
+      required:
+      - errors
+      title: unsupportedMediaType
+    dateTime:
+      type: string
+      format: date-time
+      description: String containing a UTC datetime expressed in [ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) format like `2023-05-12T14:06:40Z`.
+      title: dateTime
+    forbiddenControllerRoleRequired:
+      type: object
+      description: Forbidden
+      additionalProperties: false
+      properties:
+        correlationId:
+          type: string
+        errors:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            properties:
+              code:
+                type: string
+                enum:
+                - FORBIDDEN_ERROR
+                - CONTROLLER_ROLE_REQUIRED
+              detail:
+                type: string
+            required:
+            - code
+            - detail
+      required:
+      - errors
+      title: forbiddenControllerRoleRequired
+    entityUpdateResult:
+      description: Result of an individual entity update attempt
+      oneOf:
+      - type: object
+        additionalProperties: false
+        properties:
+          id:
+            type: string
+            description: ID of the entity
+          result:
+            type: string
+            enum:
+            - updated
+            description: Entity was successfully updated
+        required:
+        - id
+        - result
+      - type: object
+        additionalProperties: false
+        properties:
+          id:
+            type: string
+            description: ID of the entity
+          result:
+            type: string
+            enum:
+            - skipped
+            description: Entity was skipped
+          reason:
+            type: string
+            description: Reason why the entity was skipped
+        required:
+        - id
+        - result
+        - reason
+      - type: object
+        additionalProperties: false
+        properties:
+          id:
+            type: string
+            description: ID of the entity
+          result:
+            type: string
+            enum:
+            - failed
+            description: Entity update failed
+          reason:
+            type: string
+            description: Reason why the entity update failed
+          error:
+            $ref: '#/components/schemas/errorDetails'
+        required:
+        - id
+        - result
+        - reason
+        - error
+      title: entityUpdateResult
+    bulkCreateSupplierCreatedItem:
+      type: object
+      additionalProperties: false
+      properties:
+        outcome:
+          type: string
+          enum:
+          - created
+        supplier:
+          $ref: '#/components/schemas/supplierInfoBase'
+      required:
+      - outcome
+      - supplier
+      title: bulkCreateSupplierCreatedItem
+    supplierToUpdateSingle:
+      type: object
+      additionalProperties: false
+      properties:
+        name:
+          type: string
+          description: The name of the supplier.
+        primaryEmail:
+          type: string
+          description: The primary email of the supplier.
+        supplierDetails:
+          type: object
+          additionalProperties: false
+          properties:
+            legalName:
+              type: string
+              description: The legal name of the supplier.
+            registrationNumber:
+              type: string
+              description: The registration number of the supplier.
+            vatNumber:
+              type: string
+              description: The VAT number of the supplier.
+            address:
+              type: string
+              description: The address of the supplier.
+            city:
+              type: string
+              description: The city of the supplier.
+            zipcode:
+              type: string
+              description: The zipcode of the supplier.
+            country:
+              type: string
+              description: The country of the supplier.
+        bankInfo:
+          type: object
+          additionalProperties: false
+          properties:
+            iban:
+              type: string
+              description: The IBAN of the supplier.
+            bic:
+              type: string
+              description: The BIC of the supplier.
+            bankCountry:
+              type: string
+              description: The bank country of the supplier.
+            accountNumber:
+              type: string
+              description: The account number of the supplier.
+            routingNumber:
+              type: string
+              description: The routing number of the supplier.
+            sortCode:
+              type: string
+              description: The sort code of the supplier.
+            accountHolderName:
+              type: string
+              description: The account holder name of the supplier.
+      title: supplierToUpdateSingle
+    supplierStatusUpdateSuccessResponse:
+      description: Response for the PATCH suppliers/status endpoint
+      type: object
+      properties:
+        updatedCount:
+          type: integer
+          description: Number of successfully updated entities
+        skippedCount:
+          type: integer
+          description: Number of entities that were skipped
+        failedCount:
+          type: integer
+          description: Number of entities whose update failed
+        entityUpdateResults:
+          type: array
+          items:
+            $ref: '#/components/schemas/entityUpdateResult'
+          description: Per-entity outcome of the bulk update
+      required:
+      - updatedCount
+      - skippedCount
+      - failedCount
+      - entityUpdateResults
+      title: supplierStatusUpdateSuccessResponse
+    badRequest:
+      type: object
+      description: Bad request
+      additionalProperties: false
+      properties:
+        correlationId:
+          type: string
+        errors:
+          type: array
+          items:
+            additionalProperties: false
+            type: object
+            properties:
+              code:
+                type: string
+                enum:
+                - BAD_REQUEST_INCORRECT_OR_MISSING_FIELD
+                - RESPONSE_TOO_LARGE
+              detail:
+                type: string
+              source:
+                type: string
+            required:
+            - code
+            - detail
+            - source
+      required:
+      - errors
+      title: badRequest
+    bulkCreateSupplierErrorItem:
+      type: object
+      additionalProperties: false
+      properties:
+        outcome:
+          type: string
+          enum:
+          - error
+        reason:
+          type: string
+        id:
+          type: string
+        details: {}
+      required:
+      - outcome
+      - reason
+      title: bulkCreateSupplierErrorItem
+    bulkCreateSuppliersResponse:
+      type: object
+      additionalProperties: false
+      properties:
+        items:
+          type: array
+          items:
+            oneOf:
+            - $ref: '#/components/schemas/bulkCreateSupplierCreatedItem'
+            - $ref: '#/components/schemas/bulkCreateSupplierErrorItem'
+          description: Per-supplier outcome for each create (created or error).
+      required:
+      - items
+      title: bulkCreateSuppliersResponse
+    supplierToUpdateBulk:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          description: The ID of the supplier to update.
+        name:
+          type: string
+          description: The name of the supplier.
+        primaryEmail:
+          type: string
+          description: The primary email of the supplier.
+        supplierDetails:
+          type: object
+          additionalProperties: false
+          properties:
+            legalName:
+              type: string
+              description: The legal name of the supplier.
+            registrationNumber:
+              type: string
+              description: The registration number of the supplier.
+            vatNumber:
+              type: string
+              description: The VAT number of the supplier.
+            address:
+              type: string
+              description: The address of the supplier.
+            city:
+              type: string
+              description: The city of the supplier.
+            zipcode:
+              type: string
+              description: The zipcode of the supplier.
+            country:
+              type: string
+              description: The country of the supplier.
+        bankInfo:
+          type: object
+          additionalProperties: false
+          properties:
+            iban:
+              type: string
+              description: The IBAN of the supplier.
+            bic:
+              type: string
+              description: The BIC of the supplier.
+            bankCountry:
+              type: string
+              description: The bank country of the supplier.
+            accountNumber:
+              type: string
+              description: The account number of the supplier.
+            routingNumber:
+              type: string
+              description: The routing number of the supplier.
+            sortCode:
+              type: string
+              description: The sort code of the supplier.
+            accountHolderName:
+              type: string
+              description: The account holder name of the supplier.
+      required:
+      - id
+      title: supplierToUpdateBulk
+    errorDetails:
+      type: object
+      additionalProperties: false
+      description: Error details object
+      properties:
+        name:
+          type: string
+          description: Name of the error
+        message:
+          type: string
+          description: Error message describing the issue
+      title: errorDetails
+  securitySchemes:
+    Authentication:
+      type: oauth2
+      description: 'A company-level token acts on the company it was issued for. An organisation-level token (experimental) acts on the companies of an organisation: send the target company in the `X-Company-Id` header on every call, except on `GET /v2/companies` and on `/v2/companies/{companyId}/…` routes, which carry the company in the path. See [Organisation-level access](/reference/organisation-level-access).'
+      flows:
+        clientCredentials:
+          tokenUrl: /v1/auth/token
+          scopes:
+            analytical-field:read: Analytical Fields (Read)
+            bank-fee:read: Spending Bank Fees (Read)
+            cost-center:read: Cost Center (Read)
+            cost-center:manage: Cost Center (Manage)
+            expense-category:read: Expense Category (Read)
+            payable:read: Spending Payables (Read)
+            payable-attachment:read: Spending Payable Attachments (Read)
+            settlement:read: Spending Settlements (Read)
+            supplier:read: Suppliers (Read)
+            user:read: Users (Read)
+            experimental:user:manage: Users (Manage)
+            wallet-load:read: Spending Wallet Loads (Read)
+            wallet-summary:read: Spending Wallet Summary (Read)
+            experimental:accounting-export:read: Accounting exports (Read)
+            experimental:accounting-export:write: Accounting exports (Write)
+            experimental:accounting:update: Accounting (Update)
+            experimental:chart-of-accounts:read: Chart of Accounts (Read)
+            experimental:chart-of-accounts:write: Chart of Accounts (Write)
+            experimental:purchase-order:read: Purchase Orders (Read)
+            experimental:purchase-order:write: Purchase Orders (Write)
+            experimental:webhooks:read: Webhooks (Read)
+            experimental:webhooks:write: Webhooks (Write)
+            experimental:supplier:manage: Suppliers (Manage)
+            experimental:company:read: Companies (Read)
+            experimental:payable-search:read: Payable Search (Read)
+            experimental:payable-attachment:write: Payable Attachments (Write)
+            experimental:card:read: Cards (Read)
+            experimental:card:write: Cards (Write)
+            experimental:request:read: Requests (Read)
+            experimental:transaction:read: Transactions (Read)
+            experimental:analytical-field-v2:read: Analytical Fields v2 (Read)
+            experimental:analytical-field-v2:write: Analytical Fields v2 (Write)
+            experimental:expense-category-v2:read: Expense Category Fields v2 (Read)
+            experimental:expense-category-v2:write: Expense Category Fields v2 (Write)
+            experimental:invoice:read: Invoices (Read) - experimental
+            experimental:intake:read: Intakes (Read)
+            experimental:intake:write: Intakes (Write)
+            experimental:external-reference:read: External References (Read)
+            experimental:external-reference:write: External References (Write)
+        authorizationCode:
+          authorizationUrl: /v1/oauth2/authorize
+          tokenUrl: /v1/oauth2/token/create
+          scopes:
+            analytical-field:read: Analytical Fields (Read)
+            bank-fee:read: Spending Bank Fees (Read)
+            cost-center:read: Cost Center (Read)
+            cost-center:manage: Cost Center (Manage)
+            expense-category:read: Expense Category (Read)
+            payable:read: Spending Payables (Read)
+            payable-attachment:read: Spending Payable Attachments (Read)
+            settlement:read: Spending Settlements (Read)
+            supplier:read: Suppliers (Read)
+            user:read: Users (Read)
+            experimental:user:manage: Users (Manage)
+            wallet-load:read: Spending Wallet Loads (Read)
+            wallet-summary:read: Spending Wallet Summary (Read)
+            experimental:accounting-export:read: Accounting exports (Read)
+            experimental:accounting-export:write: Accounting exports (Write)
+            experimental:accounting:update: Accounting (Update)
+            experimental:chart-of-accounts:read: Chart of Accounts (Read)
+            experimental:chart-of-accounts:write: Chart of Accounts (Write)
+            experimental:purchase-order:read: Purchase Orders (Read)
+            experimental:purchase-order:write: Purchase Orders (Write)
+            experimental:webhooks:read: Webhooks (Read)
+            experimental:webhooks:write: Webhooks (Write)
+            experimental:supplier:manage: Suppliers (Manage)
+            experimental:company:read: Companies (Read)
+            experimental:payable-search:read: Payable Search (Read)
+            experimental:payable-attachment:write: Payable Attachments (Write)
+            experimental:card:read: Cards (Read)
+            experimental:card:write: Cards (Write)
+            experimental:request:read: Requests (Read)
+            experimental:transaction:read: Transactions (Read)
+            experimental:analytical-field-v2:read: Analytical Fields v2 (Read)
+            experimental:analytical-field-v2:write: Analytical Fields v2 (Write)
+            experimental:expense-category-v2:read: Expense Category Fields v2 (Read)
+            experimental:expense-category-v2:write: Expense Category Fields v2 (Write)
+            experimental:invoice:read: Invoices (Read) - experimental
+            experimental:intake:read: Intakes (Read)
+            experimental:intake:write: Intakes (Write)
+            experimental:external-reference:read: External References (Read)
+            experimental:external-reference:write: External References (Write)
+x-provenance:
+  method: searched
+  source: https://developer.spendesk.com/reference
+  harvested: '2026-10-14'
+  tool: harvest-readme-openapi.py
+  note: Assembled verbatim from the OpenAPI definition ReadMe embeds in each operation page of the provider's developer portal; paths and components merged by API title, nothing authored.
+  assembled_from:
+  - https://developer.spendesk.com/reference/mcp-authorization-server-metadata.md
+  - https://developer.spendesk.com/reference/mcp-protected-resource-metadata-mcp.md
+  - https://developer.spendesk.com/reference/v1-assign-creditors-to-accounts.md
+  - https://developer.spendesk.com/reference/v1-cancel-purchase-order.md
+  - https://developer.spendesk.com/reference/v1-close-purchase-order.md
+  - https://developer.spendesk.com/reference/v1-create-account.md
+  - https://developer.spendesk.com/reference/v1-create-auth-token.md
+  - https://developer.spendesk.com/reference/v1-create-cost-centers.md
+  - https://developer.spendesk.com/reference/v1-create-journal.md
+  - https://developer.spendesk.com/reference/v1-create-oauth2-token.md
+  - https://developer.spendesk.com/reference/v1-create-payable-attachment-upload.md
+  - https://developer.spendesk.com/reference/v1-create-purchase-order.md
+  - https://developer.spendesk.com/reference/v1-create-snapshot-payables.md
+  - https://developer.spendesk.com/reference/v1-create-suppliers.md
+  - https://developer.spendesk.com/reference/v1-create-webhook.md
+  - https://developer.spendesk.com/reference/v1-delete-account.md
+  - https://developer.spendesk.com/reference/v1-delete-cost-centers.md
+  - https://developer.spendesk.com/reference/v1-delete-mcp.md
+  - https://developer.spendesk.com/reference/v1-delete-webhook.md
+  - https://developer.spendesk.com/reference/v1-get-account-by-id.md
+  - https://developer.spendesk.com/reference/v1-get-accounts.md
+  - https://developer.spendesk.com/reference/v1-get-analytical-field-values.md
+  - https://developer.spendesk.com/reference/v1-get-analytical-fields.md
+  - https://developer.spendesk.com/reference/v1-get-bank-fees.md
+  - https://developer.spendesk.com/reference/v1-get-card-blocking-history.md
+  - https://developer.spendesk.com/reference/v1-get-card-order.md
+  - https://developer.spendesk.com/reference/v1-get-card.md
+  - https://developer.spendesk.com/reference/v1-get-cards.md
+  - https://developer.spendesk.com/reference/v1-get-cost-centers.md
+  - https://developer.spendesk.com/reference/v1-get-expense-categories.md
+  - https://developer.spendesk.com/reference/v1-get-external-references.md
+  - https://developer.spendesk.com/reference/v1-get-failed-transactions.md
+  - https://developer.spendesk.com/reference/v1-get-integrations-export-status.md
+  - https://developer.spendesk.com/reference/v1-get-journal-templates.md
+  - https://developer.spendesk.com/reference/v1-get-journal.md
+  - https://developer.spendesk.com/reference/v1-get-mcp.md
+  - https://developer.spendesk.com/reference/v1-get-payable-attachments.md
+  - https://developer.spendesk.com/reference/v1-get-payable-by-id.md
+  - https://developer.spendesk.com/reference/v1-get-purchase-order-document.md
+  - https://developer.spendesk.com/reference/v1-get-purchase-order.md
+  - https://developer.spendesk.com/reference/v1-get-purchase-orders.md
+  - https://developer.spendesk.com/reference/v1-get-request.md
+  - https://developer.spendesk.com/reference/v1-get-requests.md
+  - https://developer.spendesk.com/reference/v1-get-settlements.md
+  - https://developer.spendesk.com/reference/v1-get-snapshot-payables.md
+  - https://developer.spendesk.com/reference/v1-get-successful-transactions.md
+  - https://developer.spendesk.com/reference/v1-get-supplier-by-id.md
+  - https://developer.spendesk.com/reference/v1-get-suppliers.md
+  - https://developer.spendesk.com/reference/v1-get-transactions.md
+  - https://developer.spendesk.com/reference/v1-get-user-by-id.md
+  - https://developer.spendesk.com/reference/v1-get-users.md
+  - https://developer.spendesk.com/reference/v1-get-wallet-loads.md
+  - https://developer.spendesk.com/reference/v1-get-wallet-summary.md
+  - https://developer.spendesk.com/reference/v1-get-webhook-by-id.md
+  - https://developer.spendesk.com/reference/v1-get-webhook.md
+  - https://developer.spendesk.com/reference/v1-patch-accounts.md
+  - https://developer.spendesk.com/reference/v1-patch-payable-accounting-fields.md
+  - https://developer.spendesk.com/reference/v1-patch-supplier-status.md
+  - https://developer.spendesk.com/reference/v1-patch-suppliers-status.md
+  - https://developer.spendesk.com/reference/v1-post-experimental-integrations-refresh-settings.md
+  - https://developer.spendesk.com/reference/v1-post-mcp.md
+  - https://developer.spendesk.com/reference/v1-post-payable-mark-as-ready.md
+  - https://developer.spendesk.com/reference/v1-put-payables-bookkeeping-status.md
+  - https://developer.spendesk.com/reference/v1-put-settlements-state.md
+  - https://developer.spendesk.com/reference/v1-refresh-oauth2-token.md
+  - https://developer.spendesk.com/reference/v1-register-oauth2-client.md
+  - https://developer.spendesk.com/reference/v1-remove-creditors-from-accounts.md
+  - https://developer.spendesk.com/reference/v1-request-authorization.md
+  - https://developer.spendesk.com/reference/v1-search-creditor-account-assignments.md
+  - https://developer.spendesk.com/reference/v1-search-payables.md
+  - https://developer.spendesk.com/reference/v1-set-account-purpose.md
+  - https://developer.spendesk.com/reference/v1-sync-accounts.md
+  - https://developer.spendesk.com/reference/v1-update-cost-centers.md
+  - https://developer.spendesk.com/reference/v1-update-supplier.md
+  - https://developer.spendesk.com/reference/v1-update-suppliers.md
+  - https://developer.spendesk.com/reference/v1-update-webhook.md
+  - https://developer.spendesk.com/reference/v1-upsert-external-references.md
+  - https://developer.spendesk.com/reference/v2-create-analytical-field-value.md
+  - https://developer.spendesk.com/reference/v2-create-analytical-field.md
+  - https://developer.spendesk.com/reference/v2-create-expense-category-field.md
+  - https://developer.spendesk.com/reference/v2-create-expense-category.md
+  - https://developer.spendesk.com/reference/v2-create-intake-file-upload.md
+  - https://developer.spendesk.com/reference/v2-delete-analytical-field-value.md
+  - https://developer.spendesk.com/reference/v2-delete-analytical-field.md
+  - https://developer.spendesk.com/reference/v2-delete-expense-category-field.md
+  - https://developer.spendesk.com/reference/v2-delete-expense-category.md
+  - https://developer.spendesk.com/reference/v2-get-analytical-field-value.md
+  - https://developer.spendesk.com/reference/v2-get-analytical-field.md
+  - https://developer.spendesk.com/reference/v2-get-companies.md
+  - https://developer.spendesk.com/reference/v2-get-company-intake.md
+  - https://developer.spendesk.com/reference/v2-get-expense-category-field.md
+  - https://developer.spendesk.com/reference/v2-get-expense-category.md
+  - https://developer.spendesk.com/reference/v2-get-intake-file-upload-status.md
+  - https://developer.spendesk.com/reference/v2-get-invoice.md
+  - https://developer.spendesk.com/reference/v2-get-invoices-summary.md
+  - https://developer.spendesk.com/reference/v2-list-analytical-field-values.md
+  - https://developer.spendesk.com/reference/v2-list-analytical-fields.md
+  - https://developer.spendesk.com/reference/v2-list-company-intakes.md
+  - https://developer.spendesk.com/reference/v2-list-expense-categories.md
+  - https://developer.spendesk.com/reference/v2-list-expense-category-fields.md
+  - https://developer.spendesk.com/reference/v2-list-invoices.md
+  - https://developer.spendesk.com/reference/v2-post-company-intakes.md
+  - https://developer.spendesk.com/reference/v2-update-analytical-field-value.md
+  - https://developer.spendesk.com/reference/v2-update-analytical-field.md
+  - https://developer.spendesk.com/reference/v2-update-expense-category-field.md
+  - https://developer.spendesk.com/reference/v2-update-expense-category.md
+  merge:
+    pages: 106
+    deduped: 1705
+    conflicts_kept_first: 0

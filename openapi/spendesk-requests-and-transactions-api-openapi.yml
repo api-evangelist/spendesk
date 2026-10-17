@@ -1,0 +1,1812 @@
+openapi: 3.2.0
+info:
+  title: Spendesk Public Requests and transactions API
+  description: Spendesk Public API
+  version: '1.0'
+  summary: Spendesk Public API
+  contact:
+    email: support-public-api@spendesk.com
+    url: https://developer.spendesk.com/
+    name: Spendesk for Developers
+  termsOfService: https://www.spendesk.com/en/legals/terms/api-agreement
+servers:
+- url: https://public-api.spendesk.com
+  description: Production
+- url: https://public-api.demo.spendesk.com
+  description: Sandbox
+tags:
+- name: Requests and transactions
+  description: 'Experimental: spend requests, and successful and failed card transactions.'
+paths:
+  /v1/requests:
+    get:
+      operationId: v1-get-requests
+      summary: Get Requests
+      tags:
+      - Requests and transactions
+      description: '**Allowed Scopes**: _`experimental:request:read`_
+
+        Returns card requests for the authenticated company. Only these request types are listed: `single_purchase`, `subscription`, `multi_use_card`, `multi_use_card_top_up`, `multi_use_card_end_date_change` and `card_load`. Other request types, such as purchase-order, invoice, expense, mileage, per diem and travel requests, are not returned.'
+      parameters:
+      - schema:
+          type: integer
+          default: 1
+          minimum: 1
+        in: query
+        name: page
+        required: false
+        description: Page number
+      - schema:
+          type: integer
+          default: 30
+          minimum: 1
+          maximum: 30
+        in: query
+        name: pageSize
+        required: false
+        description: Page size
+      - schema:
+          type: string
+          enum:
+          - single_purchase
+          - subscription
+          - multi_use_card
+          - multi_use_card_top_up
+          - multi_use_card_end_date_change
+          - card_load
+        in: query
+        name: type
+        required: false
+        description: Filter by request type.
+      - schema:
+          type: string
+          enum:
+          - pending
+          - approved
+          - refused
+          - expired
+          - cancelled
+          - incomplete
+          - draft
+          - rejected_by_controller
+          - supplier_disputed
+        in: query
+        name: state
+        required: false
+        description: Filter by request state.
+      - schema:
+          type: string
+        in: query
+        name: requesterId
+        required: false
+        description: Filter by requester user ID.
+      - schema:
+          type: string
+        in: query
+        name: supplierId
+        required: false
+        description: Filter by supplier ID.
+      - schema:
+          type: string
+          format: date
+          pattern: ^\d{4}-\d{2}-\d{2}$
+        in: query
+        name: createdAfter
+        required: false
+        description: Return requests created on or after this date (YYYY-MM-DD, UTC).
+      - schema:
+          type: string
+          format: date
+          pattern: ^\d{4}-\d{2}-\d{2}$
+        in: query
+        name: createdBefore
+        required: false
+        description: Return requests created on or before this date (YYYY-MM-DD, UTC).
+      - schema:
+          type: number
+        in: query
+        name: minAmount
+        required: false
+        description: Filter by minimum requested amount, in major units. Compared against the request's amount converted to the company's functional currency using stored exchange rates.
+      - schema:
+          type: number
+        in: query
+        name: maxAmount
+        required: false
+        description: Filter by maximum requested amount, in major units. Compared against the request's amount converted to the company's functional currency using stored exchange rates.
+      - schema:
+          type: boolean
+          default: false
+        in: query
+        name: withApproval
+        required: false
+        description: Include the `approval` object on each returned request. Off by default because resolving the approval chain costs an extra lookup per page.
+      - schema:
+          type: string
+        in: header
+        name: X-Company-Id
+        required: false
+        description: ID of the company the request acts on. Required with an organisation-level token; not needed with a company-level token.
+      security:
+      - Authentication:
+        - experimental:request:read
+      x-roles:
+      - controller
+      - admin
+      - accountOwner
+      responses:
+        '200':
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  meta:
+                    $ref: '#/components/schemas/meta'
+                  data:
+                    description: List of requests
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        type:
+                          type: string
+                          enum:
+                          - single_purchase
+                          - subscription
+                          - multi_use_card
+                          - multi_use_card_top_up
+                          - multi_use_card_end_date_change
+                          - card_load
+                        state:
+                          type: string
+                        requesterId:
+                          type:
+                          - 'null'
+                          - string
+                        requestedAmount:
+                          type:
+                          - 'null'
+                          - number
+                          description: 'Amount declared on the request, in `currency`, as an integer with two implied decimals whatever the currency: 1250 is 12.50 EUR and 100000 is 1000 JPY. Divide by 100 to get major units. Null when the request has no amount.'
+                        currency:
+                          type:
+                          - 'null'
+                          - string
+                        supplierId:
+                          type:
+                          - 'null'
+                          - string
+                        companyId:
+                          type: string
+                        costCentreId:
+                          type:
+                          - 'null'
+                          - string
+                        description:
+                          type:
+                          - 'null'
+                          - string
+                        appUrl:
+                          type: string
+                          description: Link to this request in the Spendesk web app.
+                          example: https://app.spendesk.com/app/RRbRgeIB7X/requests/all/SMK6R-5kr
+                        createdAt:
+                          type: string
+                        approval:
+                          type: object
+                          description: Approval chain for the request. Only present when `withApproval` is enabled. `steps` is ordered and holds only the approvers this request is actually waiting on, has been approved by, or was rejected by — it is empty when the request needed no approval (for example an auto-approved request).
+                          properties:
+                            isAutoApproved:
+                              type: boolean
+                              description: Whether the request bypassed the approval flow and was approved automatically.
+                            autoApprovalReason:
+                              type:
+                              - 'null'
+                              - string
+                              description: Reason the request was auto-approved. Null when it was not auto-approved.
+                            steps:
+                              type: array
+                              items:
+                                type: object
+                                properties:
+                                  state:
+                                    type: string
+                                    enum:
+                                    - approved
+                                    - current
+                                    - upcoming
+                                    - rejected
+                                    description: '`current` is the step being waited on, `upcoming` comes after earlier steps approve, `approved`/`rejected` have been decided.'
+                                  approvers:
+                                    type: array
+                                    description: Approvers for this step. Always holds at least one approver.
+                                    items:
+                                      type: object
+                                      properties:
+                                        type:
+                                          type: string
+                                          enum:
+                                          - reportingManager
+                                          - costCenterOwner
+                                          - accountOwner
+                                          - user
+                                        userId:
+                                          type: string
+                                          description: The user the approval flow asks for.
+                                        actingUserId:
+                                          type:
+                                          - 'null'
+                                          - string
+                                          description: The delegate approving in place of `userId`. Null unless `isDelegated` is true.
+                                        isDelegated:
+                                          type: boolean
+                                      required:
+                                      - type
+                                      - userId
+                                      - actingUserId
+                                      - isDelegated
+                                  decision:
+                                    type:
+                                    - 'null'
+                                    - object
+                                    description: The decision taken on this step. Null while the step is `current` or `upcoming`.
+                                    properties:
+                                      byUserId:
+                                        type: string
+                                        description: The user who approved or rejected, which is the delegate on a delegated step.
+                                      at:
+                                        type: string
+                                      reason:
+                                        type:
+                                        - 'null'
+                                        - string
+                                        description: Reason given with the decision. Approvers are not asked for one when approving, so this is usually only set on a rejection.
+                                    required:
+                                    - byUserId
+                                    - at
+                                    - reason
+                                required:
+                                - state
+                                - approvers
+                                - decision
+                          required:
+                          - isAutoApproved
+                          - autoApprovalReason
+                          - steps
+                        multiUseCardTopUpRequestData:
+                          type:
+                          - 'null'
+                          - object
+                          properties:
+                            id:
+                              type: string
+                            companyId:
+                              type: string
+                            multiUseCardId:
+                              type: string
+                            previousAmount:
+                              type: number
+                            requestId:
+                              type: string
+                          required:
+                          - id
+                          - companyId
+                          - multiUseCardId
+                          - previousAmount
+                          - requestId
+                        multiUseCardEndDateChangeRequestData:
+                          type:
+                          - 'null'
+                          - object
+                          properties:
+                            id:
+                              type: string
+                            companyId:
+                              type: string
+                            multiUseCardId:
+                              type: string
+                            newEndDate:
+                              type: string
+                            previousEndDate:
+                              type: string
+                            requestId:
+                              type: string
+                          required:
+                          - id
+                          - companyId
+                          - multiUseCardId
+                          - newEndDate
+                          - previousEndDate
+                          - requestId
+                        cardLoadRequestData:
+                          type:
+                          - 'null'
+                          - object
+                          properties:
+                            id:
+                              type: string
+                            companyId:
+                              type: string
+                            organisationId:
+                              type: string
+                            cardId:
+                              type: string
+                            requestId:
+                              type: string
+                            byUserId:
+                              type: string
+                            amount:
+                              type: number
+                            availableAfter:
+                              type: number
+                            availableBefore:
+                              type: number
+                            description:
+                              type:
+                              - 'null'
+                              - string
+                            createdAt:
+                              type: string
+                            updatedAt:
+                              type: string
+                            deletedAt:
+                              type:
+                              - 'null'
+                              - string
+                          required:
+                          - id
+                          - companyId
+                          - organisationId
+                          - cardId
+                          - requestId
+                          - byUserId
+                          - amount
+                          - availableAfter
+                          - availableBefore
+                          - description
+                          - createdAt
+                          - updatedAt
+                          - deletedAt
+                      required:
+                      - id
+                      - type
+                      - state
+                      - requesterId
+                      - requestedAmount
+                      - currency
+                      - supplierId
+                      - companyId
+                      - costCentreId
+                      - description
+                      - appUrl
+                      - createdAt
+                required:
+                - meta
+                - data
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/badRequest'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/unauthorized'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/forbidden'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/notFound'
+        '429':
+          description: Too Many Requests
+          headers:
+            retry-after:
+              schema:
+                type: integer
+              description: Seconds to wait before retrying the request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/tooManyRequests'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/internalServerError'
+        '503':
+          description: Service Unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/serviceUnavailableError'
+  /v1/requests/{requestId}:
+    get:
+      operationId: v1-get-request
+      summary: Get a Request
+      tags:
+      - Requests and transactions
+      description: '**Allowed Scopes**: _`experimental:request:read`_
+
+        Returns a single request by ID. Only card requests are returned: `single_purchase`, `subscription`, `multi_use_card`, `multi_use_card_top_up`, `multi_use_card_end_date_change` or `card_load`. Any other request type, such as a purchase-order, invoice or expense request, returns 404.'
+      parameters:
+      - schema:
+          type: boolean
+          default: true
+        in: query
+        name: withApproval
+        required: false
+        description: Include the `approval` object on the returned request.
+      - schema:
+          type: string
+        in: path
+        name: requestId
+        required: true
+        description: The ID of the request to retrieve.
+      - schema:
+          type: string
+        in: header
+        name: X-Company-Id
+        required: false
+        description: ID of the company the request acts on. Required with an organisation-level token; not needed with a company-level token.
+      security:
+      - Authentication:
+        - experimental:request:read
+      x-roles:
+      - controller
+      - admin
+      - accountOwner
+      responses:
+        '200':
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                      type:
+                        type: string
+                        enum:
+                        - single_purchase
+                        - subscription
+                        - multi_use_card
+                        - multi_use_card_top_up
+                        - multi_use_card_end_date_change
+                        - card_load
+                      state:
+                        type: string
+                      requesterId:
+                        type:
+                        - 'null'
+                        - string
+                      requestedAmount:
+                        type:
+                        - 'null'
+                        - number
+                        description: 'Amount declared on the request, in `currency`, as an integer with two implied decimals whatever the currency: 1250 is 12.50 EUR and 100000 is 1000 JPY. Divide by 100 to get major units. Null when the request has no amount.'
+                      currency:
+                        type:
+                        - 'null'
+                        - string
+                      supplierId:
+                        type:
+                        - 'null'
+                        - string
+                      companyId:
+                        type: string
+                      costCentreId:
+                        type:
+                        - 'null'
+                        - string
+                      description:
+                        type:
+                        - 'null'
+                        - string
+                      appUrl:
+                        type: string
+                        description: Link to this request in the Spendesk web app.
+                        example: https://app.spendesk.com/app/RRbRgeIB7X/requests/all/SMK6R-5kr
+                      createdAt:
+                        type: string
+                      approval:
+                        type: object
+                        description: Approval chain for the request. Only present when `withApproval` is enabled. `steps` is ordered and holds only the approvers this request is actually waiting on, has been approved by, or was rejected by — it is empty when the request needed no approval (for example an auto-approved request).
+                        properties:
+                          isAutoApproved:
+                            type: boolean
+                            description: Whether the request bypassed the approval flow and was approved automatically.
+                          autoApprovalReason:
+                            type:
+                            - 'null'
+                            - string
+                            description: Reason the request was auto-approved. Null when it was not auto-approved.
+                          steps:
+                            type: array
+                            items:
+                              type: object
+                              properties:
+                                state:
+                                  type: string
+                                  enum:
+                                  - approved
+                                  - current
+                                  - upcoming
+                                  - rejected
+                                  description: '`current` is the step being waited on, `upcoming` comes after earlier steps approve, `approved`/`rejected` have been decided.'
+                                approvers:
+                                  type: array
+                                  description: Approvers for this step. Always holds at least one approver.
+                                  items:
+                                    type: object
+                                    properties:
+                                      type:
+                                        type: string
+                                        enum:
+                                        - reportingManager
+                                        - costCenterOwner
+                                        - accountOwner
+                                        - user
+                                      userId:
+                                        type: string
+                                        description: The user the approval flow asks for.
+                                      actingUserId:
+                                        type:
+                                        - 'null'
+                                        - string
+                                        description: The delegate approving in place of `userId`. Null unless `isDelegated` is true.
+                                      isDelegated:
+                                        type: boolean
+                                    required:
+                                    - type
+                                    - userId
+                                    - actingUserId
+                                    - isDelegated
+                                decision:
+                                  type:
+                                  - 'null'
+                                  - object
+                                  description: The decision taken on this step. Null while the step is `current` or `upcoming`.
+                                  properties:
+                                    byUserId:
+                                      type: string
+                                      description: The user who approved or rejected, which is the delegate on a delegated step.
+                                    at:
+                                      type: string
+                                    reason:
+                                      type:
+                                      - 'null'
+                                      - string
+                                      description: Reason given with the decision. Approvers are not asked for one when approving, so this is usually only set on a rejection.
+                                  required:
+                                  - byUserId
+                                  - at
+                                  - reason
+                              required:
+                              - state
+                              - approvers
+                              - decision
+                        required:
+                        - isAutoApproved
+                        - autoApprovalReason
+                        - steps
+                      multiUseCardTopUpRequestData:
+                        type:
+                        - 'null'
+                        - object
+                        properties:
+                          id:
+                            type: string
+                          companyId:
+                            type: string
+                          multiUseCardId:
+                            type: string
+                          previousAmount:
+                            type: number
+                          requestId:
+                            type: string
+                        required:
+                        - id
+                        - companyId
+                        - multiUseCardId
+                        - previousAmount
+                        - requestId
+                      multiUseCardEndDateChangeRequestData:
+                        type:
+                        - 'null'
+                        - object
+                        properties:
+                          id:
+                            type: string
+                          companyId:
+                            type: string
+                          multiUseCardId:
+                            type: string
+                          newEndDate:
+                            type: string
+                          previousEndDate:
+                            type: string
+                          requestId:
+                            type: string
+                        required:
+                        - id
+                        - companyId
+                        - multiUseCardId
+                        - newEndDate
+                        - previousEndDate
+                        - requestId
+                      cardLoadRequestData:
+                        type:
+                        - 'null'
+                        - object
+                        properties:
+                          id:
+                            type: string
+                          companyId:
+                            type: string
+                          organisationId:
+                            type: string
+                          cardId:
+                            type: string
+                          requestId:
+                            type: string
+                          byUserId:
+                            type: string
+                          amount:
+                            type: number
+                          availableAfter:
+                            type: number
+                          availableBefore:
+                            type: number
+                          description:
+                            type:
+                            - 'null'
+                            - string
+                          createdAt:
+                            type: string
+                          updatedAt:
+                            type: string
+                          deletedAt:
+                            type:
+                            - 'null'
+                            - string
+                        required:
+                        - id
+                        - companyId
+                        - organisationId
+                        - cardId
+                        - requestId
+                        - byUserId
+                        - amount
+                        - availableAfter
+                        - availableBefore
+                        - description
+                        - createdAt
+                        - updatedAt
+                        - deletedAt
+                    required:
+                    - id
+                    - type
+                    - state
+                    - requesterId
+                    - requestedAmount
+                    - currency
+                    - supplierId
+                    - companyId
+                    - costCentreId
+                    - description
+                    - appUrl
+                    - createdAt
+                required:
+                - data
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/badRequest'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/unauthorized'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/forbidden'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/notFound'
+        '429':
+          description: Too Many Requests
+          headers:
+            retry-after:
+              schema:
+                type: integer
+              description: Seconds to wait before retrying the request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/tooManyRequests'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/internalServerError'
+        '503':
+          description: Service Unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/serviceUnavailableError'
+  /v1/transactions:
+    get:
+      operationId: v1-get-transactions
+      summary: Get Transactions (Deprecated)
+      tags:
+      - Requests and transactions
+      description: '**Allowed Scopes**: _`experimental:transaction:read`_
+
+        Deprecated compatibility endpoint. Prefer `GET /v1/transactions/successful` and `GET /v1/transactions/failed`, which have distinct, more accurate response shapes.
+
+        Returns card transactions for the authenticated company. Use `status=failed` to retrieve declined transactions (last 30 days when `startDate` is omitted, even when `endDate` is set, so an `endDate` older than 30 days alone returns nothing — pass `startDate` to reach further back, there is no hard window; no pagination). Use `status=successful` to retrieve settled transactions with pagination. Omit `status` to retrieve both; `meta.pagination` reflects successful transactions only and is `null` when only failed transactions are returned.'
+      parameters:
+      - schema:
+          type: integer
+          default: 1
+          minimum: 1
+        in: query
+        name: page
+        required: false
+        description: Page number
+      - schema:
+          type: integer
+          default: 30
+          minimum: 1
+          maximum: 30
+        in: query
+        name: pageSize
+        required: false
+        description: Page size
+      - schema:
+          type: string
+          enum:
+          - failed
+          - successful
+        in: query
+        name: status
+        required: false
+        description: Filter by transaction status.
+      - schema:
+          type: string
+          format: date
+          pattern: ^\d{4}-\d{2}-\d{2}$
+        in: query
+        name: startDate
+        required: false
+        description: Return transactions on or after this date (YYYY-MM-DD).
+      - schema:
+          type: string
+          format: date
+          pattern: ^\d{4}-\d{2}-\d{2}$
+        in: query
+        name: endDate
+        required: false
+        description: Return transactions on or before this date (YYYY-MM-DD).
+      - schema:
+          type: string
+        in: query
+        name: userId
+        required: false
+        description: Filter by user ID.
+      - schema:
+          type: string
+        in: query
+        name: cardId
+        required: false
+        description: Filter by card ID.
+      - schema:
+          type: string
+        in: header
+        name: X-Company-Id
+        required: false
+        description: ID of the company the request acts on. Required with an organisation-level token; not needed with a company-level token.
+      deprecated: true
+      security:
+      - Authentication:
+        - experimental:transaction:read
+      x-roles:
+      - controller
+      - admin
+      - accountOwner
+      responses:
+        '200':
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  meta:
+                    oneOf:
+                    - $ref: '#/components/schemas/meta'
+                    - type: 'null'
+                  data:
+                    description: List of transactions
+                    type: array
+                    items:
+                      type: object
+                      description: 'Money fields are integers in the smallest unit of their currency (cents for EUR, yen for JPY): amountDeclared is in currencyDeclared; amountBilled, fxFeeAmount and cardBalanceAtTransaction are in currencyBilled.'
+                      properties:
+                        id:
+                          type: string
+                        status:
+                          type: string
+                          enum:
+                          - failed
+                          - successful
+                        amountBilled:
+                          type: number
+                        amountDeclared:
+                          type: number
+                        cardId:
+                          type:
+                          - 'null'
+                          - string
+                        createdAt:
+                          type: string
+                        currencyBilled:
+                          type: string
+                        currencyDeclared:
+                          type: string
+                        fxFeeAmount:
+                          type: number
+                        merchantName:
+                          type:
+                          - 'null'
+                          - string
+                        supplier:
+                          type:
+                          - 'null'
+                          - object
+                          properties:
+                            name:
+                              type: string
+                            url:
+                              type:
+                              - 'null'
+                              - string
+                          required:
+                          - name
+                        cardBalanceAtTransaction:
+                          type:
+                          - 'null'
+                          - number
+                        reasonCode:
+                          type:
+                          - 'null'
+                          - string
+                        requestId:
+                          type:
+                          - 'null'
+                          - string
+                        user:
+                          type:
+                          - 'null'
+                          - object
+                          properties:
+                            id:
+                              type: string
+                            fullName:
+                              type: string
+                            avatar:
+                              type:
+                              - 'null'
+                              - string
+                          required:
+                          - id
+                          - fullName
+                          - avatar
+                      required:
+                      - id
+                      - status
+                      - amountBilled
+                      - amountDeclared
+                      - cardId
+                      - createdAt
+                      - currencyBilled
+                      - currencyDeclared
+                      - fxFeeAmount
+                      - merchantName
+                required:
+                - meta
+                - data
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/badRequest'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/unauthorized'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/forbidden'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/notFound'
+        '429':
+          description: Too Many Requests
+          headers:
+            retry-after:
+              schema:
+                type: integer
+              description: Seconds to wait before retrying the request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/tooManyRequests'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/internalServerError'
+        '503':
+          description: Service Unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/serviceUnavailableError'
+  /v1/transactions/failed:
+    get:
+      operationId: v1-get-failed-transactions
+      summary: Get Failed Transactions
+      tags:
+      - Requests and transactions
+      description: '**Allowed Scopes**: _`experimental:transaction:read`_
+
+        Returns declined card transactions for the authenticated company, covering the last 30 days when `startDate` is omitted (even when `endDate` is set — an `endDate` older than 30 days without `startDate` returns nothing) — pass `startDate` to reach further back; there is no hard window. Not paginated: the full matching result set is returned in one call. For settled transactions, use `GET /v1/transactions/successful` instead; for a complete view across both statuses in a period, call both endpoints and merge the results. `merchantName` here is the raw card-network transaction descriptor — it is not directly comparable to `merchantName` on successful transactions, which is derived from the linked supplier instead. `createdAt` reflects when the declined transaction was recorded — unlike on successful transactions, where `createdAt` reflects the settlement date rather than authorization time. CURRENCY WARNING: `amountBilled` is in `currencyBilled`, the currency of the card the payment was attempted on; `amountDeclared` is in `currencyDeclared`, the transaction''s own spending currency, which varies per record — avoid summing amounts across records with different currencies.'
+      parameters:
+      - schema:
+          type: string
+          format: date
+          pattern: ^\d{4}-\d{2}-\d{2}$
+        in: query
+        name: startDate
+        required: false
+        description: Return transactions on or after this date (YYYY-MM-DD).
+      - schema:
+          type: string
+          format: date
+          pattern: ^\d{4}-\d{2}-\d{2}$
+        in: query
+        name: endDate
+        required: false
+        description: Return transactions on or before this date (YYYY-MM-DD), inclusive of the full day.
+      - schema:
+          type: string
+        in: query
+        name: userId
+        required: false
+        description: Filter by user ID.
+      - schema:
+          type: string
+        in: query
+        name: cardId
+        required: false
+        description: Filter by card ID.
+      - schema:
+          type: string
+        in: header
+        name: X-Company-Id
+        required: false
+        description: ID of the company the request acts on. Required with an organisation-level token; not needed with a company-level token.
+      security:
+      - Authentication:
+        - experimental:transaction:read
+      x-roles:
+      - controller
+      - admin
+      - accountOwner
+      responses:
+        '200':
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  meta:
+                    type: 'null'
+                  data:
+                    description: List of failed transactions
+                    type: array
+                    items:
+                      type: object
+                      description: 'Money fields are integers in the smallest unit of their currency (cents for EUR, yen for JPY): amountDeclared is in currencyDeclared; amountBilled, fxFeeAmount and cardBalanceAtTransaction are in currencyBilled.'
+                      properties:
+                        id:
+                          type: string
+                        status:
+                          type: string
+                          enum:
+                          - failed
+                        amountBilled:
+                          type: number
+                          description: In currencyBilled, the currency of the card the payment was attempted on, not the transaction's own spending currency (that is currencyDeclared).
+                        amountDeclared:
+                          type: number
+                          description: In the transaction's own declared currency (currencyDeclared), not necessarily the company's functional currency.
+                        cardId:
+                          type: string
+                        createdAt:
+                          type: string
+                          description: When the declined transaction was recorded.
+                        currencyBilled:
+                          type: string
+                        currencyDeclared:
+                          type: string
+                        fxFeeAmount:
+                          type: number
+                        merchantName:
+                          type:
+                          - 'null'
+                          - string
+                          description: The raw card-network transaction descriptor — not directly comparable to merchantName on successful transactions, which is derived from the linked supplier instead.
+                        supplier:
+                          type:
+                          - 'null'
+                          - object
+                          properties:
+                            name:
+                              type: string
+                            url:
+                              type:
+                              - 'null'
+                              - string
+                          required:
+                          - name
+                        cardBalanceAtTransaction:
+                          type:
+                          - 'null'
+                          - number
+                        reasonCode:
+                          type: string
+                        reason:
+                          type: string
+                        remediation:
+                          type: string
+                        requestId:
+                          type:
+                          - 'null'
+                          - string
+                        user:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                            fullName:
+                              type: string
+                            avatar:
+                              type:
+                              - 'null'
+                              - string
+                          required:
+                          - id
+                          - fullName
+                          - avatar
+                      required:
+                      - id
+                      - status
+                      - amountBilled
+                      - amountDeclared
+                      - cardId
+                      - createdAt
+                      - currencyBilled
+                      - currencyDeclared
+                      - fxFeeAmount
+                      - merchantName
+                      - reasonCode
+                      - reason
+                      - remediation
+                      - requestId
+                      - user
+                required:
+                - meta
+                - data
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/badRequest'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/unauthorized'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/forbidden'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/notFound'
+        '429':
+          description: Too Many Requests
+          headers:
+            retry-after:
+              schema:
+                type: integer
+              description: Seconds to wait before retrying the request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/tooManyRequests'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/internalServerError'
+        '503':
+          description: Service Unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/serviceUnavailableError'
+  /v1/transactions/successful:
+    get:
+      operationId: v1-get-successful-transactions
+      summary: Get Successful Transactions
+      tags:
+      - Requests and transactions
+      description: '**Allowed Scopes**: _`experimental:transaction:read`_
+
+        Returns successful (settled) card transactions for the authenticated company, with pagination. For declined transactions, use `GET /v1/transactions/failed` instead; for a complete view across both statuses in a period, call both endpoints and merge the results. `merchantName` here is derived from the linked supplier''s name, not a raw card-network descriptor — it is not directly comparable to `merchantName` on failed transactions. `createdAt` is the settlement (paid) date, or the payment''s creation date when it has no settlement date. `startDate`/`endDate` filter on the settlement date only, so settled payments without a settlement date are excluded from date-filtered results (they are returned only when no date filter is set) — a date-filtered list can undercount a period. CURRENCY WARNING: `amountBilled` and `fxFeeAmount` are in `currencyBilled`, the company''s Spendesk account currency — identical on every record, so they can be totalled; `amountDeclared` is in `currencyDeclared`, the merchant''s spending currency, which varies per record — avoid summing it across records with different currencies.'
+      parameters:
+      - schema:
+          type: integer
+          default: 1
+          minimum: 1
+        in: query
+        name: page
+        required: false
+        description: Page number
+      - schema:
+          type: integer
+          default: 30
+          minimum: 1
+          maximum: 30
+        in: query
+        name: pageSize
+        required: false
+        description: Page size
+      - schema:
+          type: string
+          format: date
+          pattern: ^\d{4}-\d{2}-\d{2}$
+        in: query
+        name: startDate
+        required: false
+        description: Return transactions on or after this date (YYYY-MM-DD). Filters on the payment settlement date (returned as createdAt).
+      - schema:
+          type: string
+          format: date
+          pattern: ^\d{4}-\d{2}-\d{2}$
+        in: query
+        name: endDate
+        required: false
+        description: Return transactions on or before this date (YYYY-MM-DD), inclusive of the full day. Filters on the payment settlement date (returned as createdAt).
+      - schema:
+          type: string
+        in: query
+        name: userId
+        required: false
+        description: Filter by user ID.
+      - schema:
+          type: string
+        in: query
+        name: cardId
+        required: false
+        description: Filter by card ID.
+      - schema:
+          type: string
+        in: header
+        name: X-Company-Id
+        required: false
+        description: ID of the company the request acts on. Required with an organisation-level token; not needed with a company-level token.
+      security:
+      - Authentication:
+        - experimental:transaction:read
+      x-roles:
+      - controller
+      - admin
+      - accountOwner
+      responses:
+        '200':
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  meta:
+                    $ref: '#/components/schemas/meta'
+                  data:
+                    description: List of successful transactions
+                    type: array
+                    items:
+                      type: object
+                      description: 'Money fields are integers in the smallest unit of their currency (cents for EUR, yen for JPY): amountDeclared is in currencyDeclared; amountBilled and fxFeeAmount are in currencyBilled.'
+                      properties:
+                        id:
+                          type: string
+                        status:
+                          type: string
+                          enum:
+                          - successful
+                        amountBilled:
+                          type: number
+                          description: In currencyBilled, the company's Spendesk account currency — the same on every record (normally but not always the functional currency).
+                        amountDeclared:
+                          type: number
+                          description: In the transaction's own declared currency (currencyDeclared), not necessarily the company's functional currency.
+                        cardId:
+                          type:
+                          - 'null'
+                          - string
+                        createdAt:
+                          type: string
+                          description: The settlement (paid) date, or the payment's creation date when it has no settlement date.
+                        currencyBilled:
+                          type: string
+                        currencyDeclared:
+                          type: string
+                        fxFeeAmount:
+                          type: number
+                        merchantName:
+                          type:
+                          - 'null'
+                          - string
+                          description: Derived from the linked supplier's name, not a raw card-network descriptor — not directly comparable to merchantName on failed transactions.
+                        supplier:
+                          type:
+                          - 'null'
+                          - object
+                          properties:
+                            name:
+                              type: string
+                            url:
+                              type:
+                              - 'null'
+                              - string
+                          required:
+                          - name
+                      required:
+                      - id
+                      - status
+                      - amountBilled
+                      - amountDeclared
+                      - cardId
+                      - createdAt
+                      - currencyBilled
+                      - currencyDeclared
+                      - fxFeeAmount
+                      - merchantName
+                required:
+                - meta
+                - data
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/badRequest'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/unauthorized'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/forbidden'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/notFound'
+        '429':
+          description: Too Many Requests
+          headers:
+            retry-after:
+              schema:
+                type: integer
+              description: Seconds to wait before retrying the request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/tooManyRequests'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/internalServerError'
+        '503':
+          description: Service Unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/serviceUnavailableError'
+components:
+  schemas:
+    pagination:
+      type: object
+      properties:
+        page:
+          type: integer
+          default: 1
+          minimum: 1
+          description: Page number
+        pageSize:
+          type: integer
+          default: 30
+          minimum: 1
+          maximum: 30
+          description: Page size
+        total:
+          type: integer
+          minimum: 0
+          description: Total amount of records for this collection
+      required:
+      - page
+      - pageSize
+      - total
+      title: pagination
+    unauthorized:
+      type: object
+      description: Unauthorized
+      additionalProperties: false
+      properties:
+        correlationId:
+          type: string
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              code:
+                type: string
+                enum:
+                - AUTHENTICATION_ERROR
+              detail:
+                type: string
+            required:
+            - code
+            - detail
+      required:
+      - errors
+      title: unauthorized
+    forbidden:
+      type: object
+      description: Forbidden
+      additionalProperties: false
+      properties:
+        correlationId:
+          type: string
+        errors:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            properties:
+              code:
+                type: string
+                enum:
+                - FORBIDDEN_ERROR
+              detail:
+                type: string
+            required:
+            - code
+            - detail
+      required:
+      - errors
+      title: forbidden
+    notFound:
+      type: object
+      description: Not Found
+      additionalProperties: false
+      properties:
+        correlationId:
+          type: string
+        errors:
+          type: array
+          items:
+            additionalProperties: false
+            type: object
+            properties:
+              code:
+                type: string
+                enum:
+                - NOT_FOUND
+              detail:
+                type: string
+            required:
+            - code
+            - detail
+      required:
+      - errors
+      title: notFound
+    serviceUnavailableError:
+      type: object
+      description: Service Unavailable
+      additionalProperties: false
+      properties:
+        correlationId:
+          type: string
+        errors:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            properties:
+              code:
+                type: string
+                enum:
+                - SERVICE_UNAVAILABLE_ERROR
+              detail:
+                type: string
+            required:
+            - code
+            - detail
+      required:
+      - errors
+      title: serviceUnavailableError
+    tooManyRequests:
+      type: object
+      description: Too Many Requests
+      additionalProperties: false
+      properties:
+        correlationId:
+          type: string
+        errors:
+          type: array
+          items:
+            additionalProperties: false
+            type: object
+            properties:
+              code:
+                type: string
+                enum:
+                - TOO_MANY_REQUESTS
+              detail:
+                type: string
+            required:
+            - code
+            - detail
+      required:
+      - errors
+      title: tooManyRequests
+    internalServerError:
+      type: object
+      description: Internal Server Error
+      additionalProperties: false
+      properties:
+        correlationId:
+          type: string
+        errors:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            properties:
+              code:
+                type: string
+                enum:
+                - INTERNAL_SERVER_ERROR
+              detail:
+                type: string
+                enum:
+                - Sorry, something has gone wrong at our end. If this persists please contact support.
+            required:
+            - code
+            - detail
+      required:
+      - errors
+      title: internalServerError
+    meta:
+      description: Meta object describing pagination
+      type: object
+      properties:
+        pagination:
+          type: object
+          unevaluatedProperties: false
+          allOf:
+          - $ref: '#/components/schemas/pagination'
+      required:
+      - pagination
+      title: meta
+    badRequest:
+      type: object
+      description: Bad request
+      additionalProperties: false
+      properties:
+        correlationId:
+          type: string
+        errors:
+          type: array
+          items:
+            additionalProperties: false
+            type: object
+            properties:
+              code:
+                type: string
+                enum:
+                - BAD_REQUEST_INCORRECT_OR_MISSING_FIELD
+                - RESPONSE_TOO_LARGE
+              detail:
+                type: string
+              source:
+                type: string
+            required:
+            - code
+            - detail
+            - source
+      required:
+      - errors
+      title: badRequest
+  securitySchemes:
+    Authentication:
+      type: oauth2
+      description: 'A company-level token acts on the company it was issued for. An organisation-level token (experimental) acts on the companies of an organisation: send the target company in the `X-Company-Id` header on every call, except on `GET /v2/companies` and on `/v2/companies/{companyId}/…` routes, which carry the company in the path. See [Organisation-level access](/reference/organisation-level-access).'
+      flows:
+        clientCredentials:
+          tokenUrl: /v1/auth/token
+          scopes:
+            analytical-field:read: Analytical Fields (Read)
+            bank-fee:read: Spending Bank Fees (Read)
+            cost-center:read: Cost Center (Read)
+            cost-center:manage: Cost Center (Manage)
+            expense-category:read: Expense Category (Read)
+            payable:read: Spending Payables (Read)
+            payable-attachment:read: Spending Payable Attachments (Read)
+            settlement:read: Spending Settlements (Read)
+            supplier:read: Suppliers (Read)
+            user:read: Users (Read)
+            experimental:user:manage: Users (Manage)
+            wallet-load:read: Spending Wallet Loads (Read)
+            wallet-summary:read: Spending Wallet Summary (Read)
+            experimental:accounting-export:read: Accounting exports (Read)
+            experimental:accounting-export:write: Accounting exports (Write)
+            experimental:accounting:update: Accounting (Update)
+            experimental:chart-of-accounts:read: Chart of Accounts (Read)
+            experimental:chart-of-accounts:write: Chart of Accounts (Write)
+            experimental:purchase-order:read: Purchase Orders (Read)
+            experimental:purchase-order:write: Purchase Orders (Write)
+            experimental:webhooks:read: Webhooks (Read)
+            experimental:webhooks:write: Webhooks (Write)
+            experimental:supplier:manage: Suppliers (Manage)
+            experimental:company:read: Companies (Read)
+            experimental:payable-search:read: Payable Search (Read)
+            experimental:payable-attachment:write: Payable Attachments (Write)
+            experimental:card:read: Cards (Read)
+            experimental:card:write: Cards (Write)
+            experimental:request:read: Requests (Read)
+            experimental:transaction:read: Transactions (Read)
+            experimental:analytical-field-v2:read: Analytical Fields v2 (Read)
+            experimental:analytical-field-v2:write: Analytical Fields v2 (Write)
+            experimental:expense-category-v2:read: Expense Category Fields v2 (Read)
+            experimental:expense-category-v2:write: Expense Category Fields v2 (Write)
+            experimental:invoice:read: Invoices (Read) - experimental
+            experimental:intake:read: Intakes (Read)
+            experimental:intake:write: Intakes (Write)
+            experimental:external-reference:read: External References (Read)
+            experimental:external-reference:write: External References (Write)
+        authorizationCode:
+          authorizationUrl: /v1/oauth2/authorize
+          tokenUrl: /v1/oauth2/token/create
+          scopes:
+            analytical-field:read: Analytical Fields (Read)
+            bank-fee:read: Spending Bank Fees (Read)
+            cost-center:read: Cost Center (Read)
+            cost-center:manage: Cost Center (Manage)
+            expense-category:read: Expense Category (Read)
+            payable:read: Spending Payables (Read)
+            payable-attachment:read: Spending Payable Attachments (Read)
+            settlement:read: Spending Settlements (Read)
+            supplier:read: Suppliers (Read)
+            user:read: Users (Read)
+            experimental:user:manage: Users (Manage)
+            wallet-load:read: Spending Wallet Loads (Read)
+            wallet-summary:read: Spending Wallet Summary (Read)
+            experimental:accounting-export:read: Accounting exports (Read)
+            experimental:accounting-export:write: Accounting exports (Write)
+            experimental:accounting:update: Accounting (Update)
+            experimental:chart-of-accounts:read: Chart of Accounts (Read)
+            experimental:chart-of-accounts:write: Chart of Accounts (Write)
+            experimental:purchase-order:read: Purchase Orders (Read)
+            experimental:purchase-order:write: Purchase Orders (Write)
+            experimental:webhooks:read: Webhooks (Read)
+            experimental:webhooks:write: Webhooks (Write)
+            experimental:supplier:manage: Suppliers (Manage)
+            experimental:company:read: Companies (Read)
+            experimental:payable-search:read: Payable Search (Read)
+            experimental:payable-attachment:write: Payable Attachments (Write)
+            experimental:card:read: Cards (Read)
+            experimental:card:write: Cards (Write)
+            experimental:request:read: Requests (Read)
+            experimental:transaction:read: Transactions (Read)
+            experimental:analytical-field-v2:read: Analytical Fields v2 (Read)
+            experimental:analytical-field-v2:write: Analytical Fields v2 (Write)
+            experimental:expense-category-v2:read: Expense Category Fields v2 (Read)
+            experimental:expense-category-v2:write: Expense Category Fields v2 (Write)
+            experimental:invoice:read: Invoices (Read) - experimental
+            experimental:intake:read: Intakes (Read)
+            experimental:intake:write: Intakes (Write)
+            experimental:external-reference:read: External References (Read)
+            experimental:external-reference:write: External References (Write)
+x-provenance:
+  method: searched
+  source: https://developer.spendesk.com/reference
+  harvested: '2026-10-14'
+  tool: harvest-readme-openapi.py
+  note: Assembled verbatim from the OpenAPI definition ReadMe embeds in each operation page of the provider's developer portal; paths and components merged by API title, nothing authored.
+  assembled_from:
+  - https://developer.spendesk.com/reference/mcp-authorization-server-metadata.md
+  - https://developer.spendesk.com/reference/mcp-protected-resource-metadata-mcp.md
+  - https://developer.spendesk.com/reference/v1-assign-creditors-to-accounts.md
+  - https://developer.spendesk.com/reference/v1-cancel-purchase-order.md
+  - https://developer.spendesk.com/reference/v1-close-purchase-order.md
+  - https://developer.spendesk.com/reference/v1-create-account.md
+  - https://developer.spendesk.com/reference/v1-create-auth-token.md
+  - https://developer.spendesk.com/reference/v1-create-cost-centers.md
+  - https://developer.spendesk.com/reference/v1-create-journal.md
+  - https://developer.spendesk.com/reference/v1-create-oauth2-token.md
+  - https://developer.spendesk.com/reference/v1-create-payable-attachment-upload.md
+  - https://developer.spendesk.com/reference/v1-create-purchase-order.md
+  - https://developer.spendesk.com/reference/v1-create-snapshot-payables.md
+  - https://developer.spendesk.com/reference/v1-create-suppliers.md
+  - https://developer.spendesk.com/reference/v1-create-webhook.md
+  - https://developer.spendesk.com/reference/v1-delete-account.md
+  - https://developer.spendesk.com/reference/v1-delete-cost-centers.md
+  - https://developer.spendesk.com/reference/v1-delete-mcp.md
+  - https://developer.spendesk.com/reference/v1-delete-webhook.md
+  - https://developer.spendesk.com/reference/v1-get-account-by-id.md
+  - https://developer.spendesk.com/reference/v1-get-accounts.md
+  - https://developer.spendesk.com/reference/v1-get-analytical-field-values.md
+  - https://developer.spendesk.com/reference/v1-get-analytical-fields.md
+  - https://developer.spendesk.com/reference/v1-get-bank-fees.md
+  - https://developer.spendesk.com/reference/v1-get-card-blocking-history.md
+  - https://developer.spendesk.com/reference/v1-get-card-order.md
+  - https://developer.spendesk.com/reference/v1-get-card.md
+  - https://developer.spendesk.com/reference/v1-get-cards.md
+  - https://developer.spendesk.com/reference/v1-get-cost-centers.md
+  - https://developer.spendesk.com/reference/v1-get-expense-categories.md
+  - https://developer.spendesk.com/reference/v1-get-external-references.md
+  - https://developer.spendesk.com/reference/v1-get-failed-transactions.md
+  - https://developer.spendesk.com/reference/v1-get-integrations-export-status.md
+  - https://developer.spendesk.com/reference/v1-get-journal-templates.md
+  - https://developer.spendesk.com/reference/v1-get-journal.md
+  - https://developer.spendesk.com/reference/v1-get-mcp.md
+  - https://developer.spendesk.com/reference/v1-get-payable-attachments.md
+  - https://developer.spendesk.com/reference/v1-get-payable-by-id.md
+  - https://developer.spendesk.com/reference/v1-get-purchase-order-document.md
+  - https://developer.spendesk.com/reference/v1-get-purchase-order.md
+  - https://developer.spendesk.com/reference/v1-get-purchase-orders.md
+  - https://developer.spendesk.com/reference/v1-get-request.md
+  - https://developer.spendesk.com/reference/v1-get-requests.md
+  - https://developer.spendesk.com/reference/v1-get-settlements.md
+  - https://developer.spendesk.com/reference/v1-get-snapshot-payables.md
+  - https://developer.spendesk.com/reference/v1-get-successful-transactions.md
+  - https://developer.spendesk.com/reference/v1-get-supplier-by-id.md
+  - https://developer.spendesk.com/reference/v1-get-suppliers.md
+  - https://developer.spendesk.com/reference/v1-get-transactions.md
+  - https://developer.spendesk.com/reference/v1-get-user-by-id.md
+  - https://developer.spendesk.com/reference/v1-get-users.md
+  - https://developer.spendesk.com/reference/v1-get-wallet-loads.md
+  - https://developer.spendesk.com/reference/v1-get-wallet-summary.md
+  - https://developer.spendesk.com/reference/v1-get-webhook-by-id.md
+  - https://developer.spendesk.com/reference/v1-get-webhook.md
+  - https://developer.spendesk.com/reference/v1-patch-accounts.md
+  - https://developer.spendesk.com/reference/v1-patch-payable-accounting-fields.md
+  - https://developer.spendesk.com/reference/v1-patch-supplier-status.md
+  - https://developer.spendesk.com/reference/v1-patch-suppliers-status.md
+  - https://developer.spendesk.com/reference/v1-post-experimental-integrations-refresh-settings.md
+  - https://developer.spendesk.com/reference/v1-post-mcp.md
+  - https://developer.spendesk.com/reference/v1-post-payable-mark-as-ready.md
+  - https://developer.spendesk.com/reference/v1-put-payables-bookkeeping-status.md
+  - https://developer.spendesk.com/reference/v1-put-settlements-state.md
+  - https://developer.spendesk.com/reference/v1-refresh-oauth2-token.md
+  - https://developer.spendesk.com/reference/v1-register-oauth2-client.md
+  - https://developer.spendesk.com/reference/v1-remove-creditors-from-accounts.md
+  - https://developer.spendesk.com/reference/v1-request-authorization.md
+  - https://developer.spendesk.com/reference/v1-search-creditor-account-assignments.md
+  - https://developer.spendesk.com/reference/v1-search-payables.md
+  - https://developer.spendesk.com/reference/v1-set-account-purpose.md
+  - https://developer.spendesk.com/reference/v1-sync-accounts.md
+  - https://developer.spendesk.com/reference/v1-update-cost-centers.md
+  - https://developer.spendesk.com/reference/v1-update-supplier.md
+  - https://developer.spendesk.com/reference/v1-update-suppliers.md
+  - https://developer.spendesk.com/reference/v1-update-webhook.md
+  - https://developer.spendesk.com/reference/v1-upsert-external-references.md
+  - https://developer.spendesk.com/reference/v2-create-analytical-field-value.md
+  - https://developer.spendesk.com/reference/v2-create-analytical-field.md
+  - https://developer.spendesk.com/reference/v2-create-expense-category-field.md
+  - https://developer.spendesk.com/reference/v2-create-expense-category.md
+  - https://developer.spendesk.com/reference/v2-create-intake-file-upload.md
+  - https://developer.spendesk.com/reference/v2-delete-analytical-field-value.md
+  - https://developer.spendesk.com/reference/v2-delete-analytical-field.md
+  - https://developer.spendesk.com/reference/v2-delete-expense-category-field.md
+  - https://developer.spendesk.com/reference/v2-delete-expense-category.md
+  - https://developer.spendesk.com/reference/v2-get-analytical-field-value.md
+  - https://developer.spendesk.com/reference/v2-get-analytical-field.md
+  - https://developer.spendesk.com/reference/v2-get-companies.md
+  - https://developer.spendesk.com/reference/v2-get-company-intake.md
+  - https://developer.spendesk.com/reference/v2-get-expense-category-field.md
+  - https://developer.spendesk.com/reference/v2-get-expense-category.md
+  - https://developer.spendesk.com/reference/v2-get-intake-file-upload-status.md
+  - https://developer.spendesk.com/reference/v2-get-invoice.md
+  - https://developer.spendesk.com/reference/v2-get-invoices-summary.md
+  - https://developer.spendesk.com/reference/v2-list-analytical-field-values.md
+  - https://developer.spendesk.com/reference/v2-list-analytical-fields.md
+  - https://developer.spendesk.com/reference/v2-list-company-intakes.md
+  - https://developer.spendesk.com/reference/v2-list-expense-categories.md
+  - https://developer.spendesk.com/reference/v2-list-expense-category-fields.md
+  - https://developer.spendesk.com/reference/v2-list-invoices.md
+  - https://developer.spendesk.com/reference/v2-post-company-intakes.md
+  - https://developer.spendesk.com/reference/v2-update-analytical-field-value.md
+  - https://developer.spendesk.com/reference/v2-update-analytical-field.md
+  - https://developer.spendesk.com/reference/v2-update-expense-category-field.md
+  - https://developer.spendesk.com/reference/v2-update-expense-category.md
+  merge:
+    pages: 106
+    deduped: 1705
+    conflicts_kept_first: 0

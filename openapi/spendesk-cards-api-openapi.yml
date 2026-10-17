@@ -1,0 +1,1386 @@
+openapi: 3.2.0
+info:
+  title: Spendesk Public Cards API
+  description: Spendesk Public API
+  version: '1.0'
+  summary: Spendesk Public API
+  contact:
+    email: support-public-api@spendesk.com
+    url: https://developer.spendesk.com/
+    name: Spendesk for Developers
+  termsOfService: https://www.spendesk.com/en/legals/terms/api-agreement
+servers:
+- url: https://public-api.spendesk.com
+  description: Production
+- url: https://public-api.demo.spendesk.com
+  description: Sandbox
+tags:
+- name: Cards
+  description: 'Experimental: cards, their blocking history, and the order of a physical card.'
+paths:
+  /v1/cards:
+    get:
+      operationId: v1-get-cards
+      summary: Get Cards
+      tags:
+      - Cards
+      description: '**Allowed Scopes**: _`experimental:card:read`_
+
+
+        Returns cards for the authenticated company. Lost, stolen, damaged, expired and cancelled cards are not listed.'
+      parameters:
+      - schema:
+          type: integer
+          default: 1
+          minimum: 1
+        in: query
+        name: page
+        required: false
+        description: Page number
+      - schema:
+          type: integer
+          default: 30
+          minimum: 1
+          maximum: 30
+        in: query
+        name: pageSize
+        required: false
+        description: Page size
+      - schema:
+          type: string
+          enum:
+          - single_purchase
+          - subscription
+          - physical
+          - multi_use
+        in: query
+        name: type
+        required: false
+        description: Filter by card type.
+      - schema:
+          type: string
+        in: query
+        name: status
+        required: false
+        description: 'Filter by card status label, case-sensitive: `Active`, `Blocked`, `New`, `Ready`, `Pre-activated`, `Hidden`, `Unknown` or `Aborted`. The legacy raw code (for example `ACT` or `BLO`) also matches. Lost, stolen, damaged, expired and cancelled cards are never listed, so filtering on those statuses returns no cards.'
+      - schema:
+          type: string
+        in: query
+        name: userId
+        required: false
+        description: Filter by card owner user ID.
+      - schema:
+          type: string
+          format: date
+          pattern: ^\d{4}-\d{2}-\d{2}$
+        in: query
+        name: createdAfter
+        required: false
+        description: Return cards created on or after this date (YYYY-MM-DD, UTC).
+      - schema:
+          type: string
+          format: date
+          pattern: ^\d{4}-\d{2}-\d{2}$
+        in: query
+        name: createdBefore
+        required: false
+        description: Return cards created on or before this date (YYYY-MM-DD, UTC).
+      - schema:
+          type: string
+        in: header
+        name: X-Company-Id
+        required: false
+        description: ID of the company the request acts on. Required with an organisation-level token; not needed with a company-level token.
+      security:
+      - Authentication:
+        - experimental:card:read
+      x-roles:
+      - controller
+      - admin
+      - accountOwner
+      responses:
+        '200':
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  meta:
+                    $ref: '#/components/schemas/meta'
+                  data:
+                    description: List of cards
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        type:
+                          type: string
+                        status:
+                          type: string
+                          description: 'Card status label: `Active`, `Blocked`, `New`, `Ready`, `Pre-activated`, `Hidden`, `Unknown`, `Aborted`, `Lost`, `Stolen`, `Damaged`, `Expired` or `Cancelled`. A status code with no label is returned as the raw code, so treat unknown values as possible.'
+                        lastFourDigits:
+                          type:
+                          - 'null'
+                          - string
+                        expiryDate:
+                          type:
+                          - 'null'
+                          - string
+                          description: Expiry date printed on the card, set by the card provider. For multi-use cards this is NOT the date the card stops working — use multiUseCardExpiryDate instead.
+                        multiUseCardExpiryDate:
+                          type: string
+                          description: 'Expiration date of a multi-use card (ISO 8601 datetime): the end date chosen by the requester when the card was requested. Choosing an end date is mandatory when requesting a multi-use card, so this is set on every card of type multi_use; it is absent on all other card types. For multi-use cards it is the single source of truth for expiration — the date the card actually stops being usable — and always takes precedence over expiryDate.'
+                        currency:
+                          type: string
+                        availableBalance:
+                          type: number
+                          description: What the card can spend right now, in `currency`, as a decimal in major units (12.5 means 12.50), not minor units.
+                        spendingLimit:
+                          type:
+                          - 'null'
+                          - number
+                          description: The card's monthly budget, in `currency`, as a decimal in major units (12.5 means 12.50), not minor units. Null when no monthly budget is set.
+                        owner:
+                          type:
+                          - 'null'
+                          - object
+                          properties:
+                            id:
+                              type: string
+                            label:
+                              type: string
+                          required:
+                          - id
+                          - label
+                        company:
+                          type:
+                          - 'null'
+                          - object
+                          properties:
+                            id:
+                              type: string
+                            label:
+                              type: string
+                          required:
+                          - id
+                          - label
+                        supplier:
+                          type:
+                          - 'null'
+                          - object
+                          properties:
+                            id:
+                              type: string
+                            label:
+                              type: string
+                          required:
+                          - id
+                          - label
+                        costCenter:
+                          type:
+                          - 'null'
+                          - object
+                          properties:
+                            id:
+                              type: string
+                            label:
+                              type: string
+                          required:
+                          - id
+                          - label
+                        request:
+                          type:
+                          - 'null'
+                          - object
+                          properties:
+                            id:
+                              type: string
+                            label:
+                              type: string
+                            amount:
+                              type: number
+                            currency:
+                              type: string
+                          required:
+                          - id
+                          - label
+                          - amount
+                          - currency
+                          description: 'The originating request behind this virtual card: id, label, and the amount/currency the requester declared when creating it. amount and currency are in the requester''s chosen (declared) currency, which may differ from the card''s top-level currency and availableBalance — those are always in the company''s currency. amount is a decimal in major units (12.5 means 12.50), not minor units. Null when the card has no linked request or when the request lookup failed — the two are not distinguished, and a failed lookup also nulls supplier and costCenter.'
+                        recurrence:
+                          type:
+                          - 'null'
+                          - string
+                          enum:
+                          - MONTHLY
+                          - YEARLY
+                          - WEEKLY
+                          - QUARTERLY
+                          - null
+                          description: Payment recurrence of the subscription, normally null for non-subscription cards. MONTHLY is also the fallback when the recurrence could not be resolved (no linked request, no interval on it, or a failed lookup), so it is not a confirmed cadence.
+                        createdAt:
+                          type: string
+                        lastSuccessfulPaymentTime:
+                          type:
+                          - 'null'
+                          - string
+                          description: 'Timestamp of the last settled card payment. Explicit null means confirmed: the card has never had one. The field being absent from the response instead means the lookup temporarily failed and the status is unknown — do not treat a missing field as null.'
+                        cardOrder:
+                          type:
+                          - 'null'
+                          - object
+                          properties:
+                            id:
+                              type: string
+                            cardId:
+                              type: string
+                            state:
+                              type: string
+                              enum:
+                              - to_pickup
+                              - to_ship
+                              - shipped
+                            city:
+                              type:
+                              - 'null'
+                              - string
+                            country:
+                              type:
+                              - 'null'
+                              - string
+                            trackingLink:
+                              type:
+                              - 'null'
+                              - string
+                            shippedAt:
+                              type:
+                              - 'null'
+                              - string
+                            receivedAt:
+                              type:
+                              - 'null'
+                              - string
+                            createdAt:
+                              type: string
+                            consideredAsLost:
+                              type: boolean
+                              description: 'Computed at read time, not stored: true when receivedAt is null and the order was placed more than 30 days ago. receivedAt is not reliably recorded, so this is only a possible delivery-delay signal while the card is still Pre-activated; ignore it once the card is Active, Blocked or Ready. Not the card''s own Lost status — never report the card as lost or the shipment as delayed from it; read the card''s status for that.'
+                            estimatedReceivedAt:
+                              type:
+                              - 'null'
+                              - string
+                          required:
+                          - id
+                          - cardId
+                          - state
+                          - createdAt
+                          - consideredAsLost
+                          description: 'Physical card order/shipping info: state, city/country (not the full address), trackingLink, dates, consideredAsLost, estimatedReceivedAt. Only populated for physical cards while pre-activated (status Pre-activated); null or absent otherwise — this does not mean the order info no longer exists after activation, see GET /v1/cards/:cardId/order for the status-independent lookup.'
+                        blockingReason:
+                          type:
+                          - 'null'
+                          - object
+                          properties:
+                            initiator:
+                              type: string
+                              enum:
+                              - user
+                              - support
+                              - scheduledDeactivation
+                              - automatic
+                              - controlRule
+                              - internal
+                            userId:
+                              type:
+                              - 'null'
+                              - string
+                            firstName:
+                              type:
+                              - 'null'
+                              - string
+                            lastName:
+                              type:
+                              - 'null'
+                              - string
+                            createdAt:
+                              type: string
+                          required:
+                          - initiator
+                          - createdAt
+                          description: 'The single highest-priority reason this card is blocked — a card can hold several blocking reasons at once, so clearing this one may leave it blocked; do not present it as the only reason or as a complete unblocking instruction. Who/what has it blocked: user (a teammate — see userId/firstName/lastName), support (Spendesk support, identity never disclosed), controlRule (a company-configured spending control rule — could require a receipt, description, supplier, cost center, or custom fields depending on the company''s rules; which rule and requirement is unmet is not exposed here), scheduledDeactivation (a recurring deactivation schedule configured for this physical card — reactivates automatically per that schedule), automatic (an automated process, no further detail exposed), or internal (an internal reason with no disclosable detail — contact the Spendesk support team for more information). Only populated while status is Blocked; null or absent otherwise. Use GET /v1/cards/:cardId/blocking-history for every reason on the card, active and past.'
+                        subscriptionBudget:
+                          type:
+                          - 'null'
+                          - object
+                          properties:
+                            currency:
+                              type: string
+                            budgetAmount:
+                              type: number
+                            availableAmount:
+                              type: number
+                            spentAmount:
+                              type: number
+                            spentPercent:
+                              type: number
+                          required:
+                          - currency
+                          - budgetAmount
+                          - availableAmount
+                          - spentAmount
+                          - spentPercent
+                          description: 'The subscription''s remaining budget as shown on the card in the product: budgetAmount (the declared budget), spentAmount (current billing period spend only, capped at budgetAmount), availableAmount (what is left of this period''s budget; 0 when at or over budget), and spentPercent (rounded whole number 0–100; 100 can also mean just under budget). When the declared currency differs from the company''s and the period''s spend in the company currency, FX fees included, exceeds the budget, spentAmount, availableAmount and spentPercent are all 0, which means over budget, not unused. Use the card''s transactions for actual spend. Amounts are in the subscription''s own declared currency (the currency field here), which may differ from the card''s top-level currency and availableBalance — those are always in the company''s currency. All amounts are decimals in major units (12.5 means 12.50), not minor units. Only populated for subscription cards; null or absent otherwise.'
+                      required:
+                      - id
+                      - type
+                      - status
+                      - currency
+                      - availableBalance
+                      - createdAt
+                required:
+                - meta
+                - data
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/badRequest'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/unauthorized'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/forbidden'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/notFound'
+        '429':
+          description: Too Many Requests
+          headers:
+            retry-after:
+              schema:
+                type: integer
+              description: Seconds to wait before retrying the request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/tooManyRequests'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/internalServerError'
+        '503':
+          description: Service Unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/serviceUnavailableError'
+  /v1/cards/{cardId}:
+    get:
+      operationId: v1-get-card
+      summary: Get a Card
+      tags:
+      - Cards
+      description: '**Allowed Scopes**: _`experimental:card:read`_
+
+
+        Returns a single card by ID.'
+      parameters:
+      - schema:
+          type: string
+        in: path
+        name: cardId
+        required: true
+        description: The ID of the card to retrieve.
+      - schema:
+          type: string
+        in: header
+        name: X-Company-Id
+        required: false
+        description: ID of the company the request acts on. Required with an organisation-level token; not needed with a company-level token.
+      security:
+      - Authentication:
+        - experimental:card:read
+      x-roles:
+      - controller
+      - admin
+      - accountOwner
+      responses:
+        '200':
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                      type:
+                        type: string
+                      status:
+                        type: string
+                        description: 'Card status label: `Active`, `Blocked`, `New`, `Ready`, `Pre-activated`, `Hidden`, `Unknown`, `Aborted`, `Lost`, `Stolen`, `Damaged`, `Expired` or `Cancelled`. A status code with no label is returned as the raw code, so treat unknown values as possible.'
+                      lastFourDigits:
+                        type:
+                        - 'null'
+                        - string
+                      expiryDate:
+                        type:
+                        - 'null'
+                        - string
+                        description: Expiry date printed on the card, set by the card provider. For multi-use cards this is NOT the date the card stops working — use multiUseCardExpiryDate instead.
+                      multiUseCardExpiryDate:
+                        type: string
+                        description: 'Expiration date of a multi-use card (ISO 8601 datetime): the end date chosen by the requester when the card was requested. Choosing an end date is mandatory when requesting a multi-use card, so this is set on every card of type multi_use; it is absent on all other card types. For multi-use cards it is the single source of truth for expiration — the date the card actually stops being usable — and always takes precedence over expiryDate.'
+                      currency:
+                        type: string
+                      availableBalance:
+                        type: number
+                        description: What the card can spend right now, in `currency`, as a decimal in major units (12.5 means 12.50), not minor units.
+                      spendingLimit:
+                        type:
+                        - 'null'
+                        - number
+                        description: The card's monthly budget, in `currency`, as a decimal in major units (12.5 means 12.50), not minor units. Null when no monthly budget is set.
+                      owner:
+                        type:
+                        - 'null'
+                        - object
+                        properties:
+                          id:
+                            type: string
+                          label:
+                            type: string
+                        required:
+                        - id
+                        - label
+                      company:
+                        type:
+                        - 'null'
+                        - object
+                        properties:
+                          id:
+                            type: string
+                          label:
+                            type: string
+                        required:
+                        - id
+                        - label
+                      supplier:
+                        type:
+                        - 'null'
+                        - object
+                        properties:
+                          id:
+                            type: string
+                          label:
+                            type: string
+                        required:
+                        - id
+                        - label
+                      costCenter:
+                        type:
+                        - 'null'
+                        - object
+                        properties:
+                          id:
+                            type: string
+                          label:
+                            type: string
+                        required:
+                        - id
+                        - label
+                      request:
+                        type:
+                        - 'null'
+                        - object
+                        properties:
+                          id:
+                            type: string
+                          label:
+                            type: string
+                          amount:
+                            type: number
+                          currency:
+                            type: string
+                        required:
+                        - id
+                        - label
+                        - amount
+                        - currency
+                        description: 'The originating request behind this virtual card: id, label, and the amount/currency the requester declared when creating it. amount and currency are in the requester''s chosen (declared) currency, which may differ from the card''s top-level currency and availableBalance — those are always in the company''s currency. amount is a decimal in major units (12.5 means 12.50), not minor units. Null when the card has no linked request or when the request lookup failed — the two are not distinguished, and a failed lookup also nulls supplier and costCenter.'
+                      recurrence:
+                        type:
+                        - 'null'
+                        - string
+                        enum:
+                        - MONTHLY
+                        - YEARLY
+                        - WEEKLY
+                        - QUARTERLY
+                        - null
+                        description: Payment recurrence of the subscription, normally null for non-subscription cards. MONTHLY is also the fallback when the recurrence could not be resolved (no linked request, no interval on it, or a failed lookup), so it is not a confirmed cadence.
+                      createdAt:
+                        type: string
+                      lastSuccessfulPaymentTime:
+                        type:
+                        - 'null'
+                        - string
+                        description: 'Timestamp of the last settled card payment. Explicit null means confirmed: the card has never had one. The field being absent from the response instead means the lookup temporarily failed and the status is unknown — do not treat a missing field as null.'
+                      cardOrder:
+                        type:
+                        - 'null'
+                        - object
+                        properties:
+                          id:
+                            type: string
+                          cardId:
+                            type: string
+                          state:
+                            type: string
+                            enum:
+                            - to_pickup
+                            - to_ship
+                            - shipped
+                          city:
+                            type:
+                            - 'null'
+                            - string
+                          country:
+                            type:
+                            - 'null'
+                            - string
+                          trackingLink:
+                            type:
+                            - 'null'
+                            - string
+                          shippedAt:
+                            type:
+                            - 'null'
+                            - string
+                          receivedAt:
+                            type:
+                            - 'null'
+                            - string
+                          createdAt:
+                            type: string
+                          consideredAsLost:
+                            type: boolean
+                            description: 'Computed at read time, not stored: true when receivedAt is null and the order was placed more than 30 days ago. receivedAt is not reliably recorded, so this is only a possible delivery-delay signal while the card is still Pre-activated; ignore it once the card is Active, Blocked or Ready. Not the card''s own Lost status — never report the card as lost or the shipment as delayed from it; read the card''s status for that.'
+                          estimatedReceivedAt:
+                            type:
+                            - 'null'
+                            - string
+                        required:
+                        - id
+                        - cardId
+                        - state
+                        - createdAt
+                        - consideredAsLost
+                        description: 'Physical card order/shipping info: state, city/country (not the full address), trackingLink, dates, consideredAsLost, estimatedReceivedAt. Only populated for physical cards while pre-activated (status Pre-activated); null or absent otherwise — this does not mean the order info no longer exists after activation, see GET /v1/cards/:cardId/order for the status-independent lookup.'
+                      blockingReason:
+                        type:
+                        - 'null'
+                        - object
+                        properties:
+                          initiator:
+                            type: string
+                            enum:
+                            - user
+                            - support
+                            - scheduledDeactivation
+                            - automatic
+                            - controlRule
+                            - internal
+                          userId:
+                            type:
+                            - 'null'
+                            - string
+                          firstName:
+                            type:
+                            - 'null'
+                            - string
+                          lastName:
+                            type:
+                            - 'null'
+                            - string
+                          createdAt:
+                            type: string
+                        required:
+                        - initiator
+                        - createdAt
+                        description: 'The single highest-priority reason this card is blocked — a card can hold several blocking reasons at once, so clearing this one may leave it blocked; do not present it as the only reason or as a complete unblocking instruction. Who/what has it blocked: user (a teammate — see userId/firstName/lastName), support (Spendesk support, identity never disclosed), controlRule (a company-configured spending control rule — could require a receipt, description, supplier, cost center, or custom fields depending on the company''s rules; which rule and requirement is unmet is not exposed here), scheduledDeactivation (a recurring deactivation schedule configured for this physical card — reactivates automatically per that schedule), automatic (an automated process, no further detail exposed), or internal (an internal reason with no disclosable detail — contact the Spendesk support team for more information). Only populated while status is Blocked; null or absent otherwise. Use GET /v1/cards/:cardId/blocking-history for every reason on the card, active and past.'
+                      subscriptionBudget:
+                        type:
+                        - 'null'
+                        - object
+                        properties:
+                          currency:
+                            type: string
+                          budgetAmount:
+                            type: number
+                          availableAmount:
+                            type: number
+                          spentAmount:
+                            type: number
+                          spentPercent:
+                            type: number
+                        required:
+                        - currency
+                        - budgetAmount
+                        - availableAmount
+                        - spentAmount
+                        - spentPercent
+                        description: 'The subscription''s remaining budget as shown on the card in the product: budgetAmount (the declared budget), spentAmount (current billing period spend only, capped at budgetAmount), availableAmount (what is left of this period''s budget; 0 when at or over budget), and spentPercent (rounded whole number 0–100; 100 can also mean just under budget). When the declared currency differs from the company''s and the period''s spend in the company currency, FX fees included, exceeds the budget, spentAmount, availableAmount and spentPercent are all 0, which means over budget, not unused. Use the card''s transactions for actual spend. Amounts are in the subscription''s own declared currency (the currency field here), which may differ from the card''s top-level currency and availableBalance — those are always in the company''s currency. All amounts are decimals in major units (12.5 means 12.50), not minor units. Only populated for subscription cards; null or absent otherwise.'
+                    required:
+                    - id
+                    - type
+                    - status
+                    - currency
+                    - availableBalance
+                    - createdAt
+                required:
+                - data
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/badRequest'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/unauthorized'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/forbidden'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/notFound'
+        '429':
+          description: Too Many Requests
+          headers:
+            retry-after:
+              schema:
+                type: integer
+              description: Seconds to wait before retrying the request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/tooManyRequests'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/internalServerError'
+        '503':
+          description: Service Unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/serviceUnavailableError'
+  /v1/cards/{cardId}/blocking-history:
+    get:
+      operationId: v1-get-card-blocking-history
+      summary: Get a Card Blocking History
+      tags:
+      - Cards
+      description: '**Allowed Scopes**: _`experimental:card:read`_
+
+
+        Returns the full block/unblock history for a card, regardless of its current status — every reason on the card, active and past, not just the current one. `endedAt` null means the reason is still active; several entries can carry a null `endedAt` at the same time, because a card can be blocked for several reasons at once. An empty history is a normal 200 with an empty array, not a 404.'
+      parameters:
+      - schema:
+          type: string
+        in: path
+        name: cardId
+        required: true
+        description: The ID of the card.
+      - schema:
+          type: string
+        in: header
+        name: X-Company-Id
+        required: false
+        description: ID of the company the request acts on. Required with an organisation-level token; not needed with a company-level token.
+      security:
+      - Authentication:
+        - experimental:card:read
+      x-roles:
+      - controller
+      - admin
+      - accountOwner
+      responses:
+        '200':
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        initiator:
+                          type: string
+                          enum:
+                          - user
+                          - support
+                          - scheduledDeactivation
+                          - automatic
+                          - controlRule
+                          - internal
+                        blockerId:
+                          type:
+                          - 'null'
+                          - string
+                        createdAt:
+                          type: string
+                        endedAt:
+                          type:
+                          - 'null'
+                          - string
+                      required:
+                      - id
+                      - initiator
+                      - blockerId
+                      - createdAt
+                      - endedAt
+                required:
+                - data
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/badRequest'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/unauthorized'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/forbidden'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/notFound'
+        '429':
+          description: Too Many Requests
+          headers:
+            retry-after:
+              schema:
+                type: integer
+              description: Seconds to wait before retrying the request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/tooManyRequests'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/internalServerError'
+        '503':
+          description: Service Unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/serviceUnavailableError'
+  /v1/cards/{cardId}/order:
+    get:
+      operationId: v1-get-card-order
+      summary: Get a Card Order
+      tags:
+      - Cards
+      description: '**Allowed Scopes**: _`experimental:card:read`_
+
+
+        Returns physical card order/shipping info for a card, regardless of its current status. 404 when no order is on file (always the case for a virtual card), but also when the card does not exist, belongs to another company, or is not visible to the caller.'
+      parameters:
+      - schema:
+          type: string
+        in: path
+        name: cardId
+        required: true
+        description: The ID of the card.
+      - schema:
+          type: string
+        in: header
+        name: X-Company-Id
+        required: false
+        description: ID of the company the request acts on. Required with an organisation-level token; not needed with a company-level token.
+      security:
+      - Authentication:
+        - experimental:card:read
+      x-roles:
+      - controller
+      - admin
+      - accountOwner
+      responses:
+        '200':
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                      cardId:
+                        type: string
+                      state:
+                        type: string
+                        enum:
+                        - to_pickup
+                        - to_ship
+                        - shipped
+                      city:
+                        type:
+                        - 'null'
+                        - string
+                      country:
+                        type:
+                        - 'null'
+                        - string
+                      trackingLink:
+                        type:
+                        - 'null'
+                        - string
+                      shippedAt:
+                        type:
+                        - 'null'
+                        - string
+                      receivedAt:
+                        type:
+                        - 'null'
+                        - string
+                      createdAt:
+                        type: string
+                      consideredAsLost:
+                        type: boolean
+                        description: 'Computed at read time, not stored: true when receivedAt is null and the order was placed more than 30 days ago. receivedAt is not reliably recorded, so this is only a possible delivery-delay signal while the card is still Pre-activated; ignore it once the card is Active, Blocked or Ready. Not the card''s own Lost status — never report the card as lost or the shipment as delayed from it; read the card''s status for that.'
+                      estimatedReceivedAt:
+                        type:
+                        - 'null'
+                        - string
+                    required:
+                    - id
+                    - cardId
+                    - state
+                    - createdAt
+                    - consideredAsLost
+                required:
+                - data
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/badRequest'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/unauthorized'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/forbidden'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/notFound'
+        '429':
+          description: Too Many Requests
+          headers:
+            retry-after:
+              schema:
+                type: integer
+              description: Seconds to wait before retrying the request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/tooManyRequests'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/internalServerError'
+        '503':
+          description: Service Unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/serviceUnavailableError'
+components:
+  schemas:
+    pagination:
+      type: object
+      properties:
+        page:
+          type: integer
+          default: 1
+          minimum: 1
+          description: Page number
+        pageSize:
+          type: integer
+          default: 30
+          minimum: 1
+          maximum: 30
+          description: Page size
+        total:
+          type: integer
+          minimum: 0
+          description: Total amount of records for this collection
+      required:
+      - page
+      - pageSize
+      - total
+      title: pagination
+    unauthorized:
+      type: object
+      description: Unauthorized
+      additionalProperties: false
+      properties:
+        correlationId:
+          type: string
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              code:
+                type: string
+                enum:
+                - AUTHENTICATION_ERROR
+              detail:
+                type: string
+            required:
+            - code
+            - detail
+      required:
+      - errors
+      title: unauthorized
+    forbidden:
+      type: object
+      description: Forbidden
+      additionalProperties: false
+      properties:
+        correlationId:
+          type: string
+        errors:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            properties:
+              code:
+                type: string
+                enum:
+                - FORBIDDEN_ERROR
+              detail:
+                type: string
+            required:
+            - code
+            - detail
+      required:
+      - errors
+      title: forbidden
+    notFound:
+      type: object
+      description: Not Found
+      additionalProperties: false
+      properties:
+        correlationId:
+          type: string
+        errors:
+          type: array
+          items:
+            additionalProperties: false
+            type: object
+            properties:
+              code:
+                type: string
+                enum:
+                - NOT_FOUND
+              detail:
+                type: string
+            required:
+            - code
+            - detail
+      required:
+      - errors
+      title: notFound
+    serviceUnavailableError:
+      type: object
+      description: Service Unavailable
+      additionalProperties: false
+      properties:
+        correlationId:
+          type: string
+        errors:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            properties:
+              code:
+                type: string
+                enum:
+                - SERVICE_UNAVAILABLE_ERROR
+              detail:
+                type: string
+            required:
+            - code
+            - detail
+      required:
+      - errors
+      title: serviceUnavailableError
+    tooManyRequests:
+      type: object
+      description: Too Many Requests
+      additionalProperties: false
+      properties:
+        correlationId:
+          type: string
+        errors:
+          type: array
+          items:
+            additionalProperties: false
+            type: object
+            properties:
+              code:
+                type: string
+                enum:
+                - TOO_MANY_REQUESTS
+              detail:
+                type: string
+            required:
+            - code
+            - detail
+      required:
+      - errors
+      title: tooManyRequests
+    internalServerError:
+      type: object
+      description: Internal Server Error
+      additionalProperties: false
+      properties:
+        correlationId:
+          type: string
+        errors:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            properties:
+              code:
+                type: string
+                enum:
+                - INTERNAL_SERVER_ERROR
+              detail:
+                type: string
+                enum:
+                - Sorry, something has gone wrong at our end. If this persists please contact support.
+            required:
+            - code
+            - detail
+      required:
+      - errors
+      title: internalServerError
+    meta:
+      description: Meta object describing pagination
+      type: object
+      properties:
+        pagination:
+          type: object
+          unevaluatedProperties: false
+          allOf:
+          - $ref: '#/components/schemas/pagination'
+      required:
+      - pagination
+      title: meta
+    badRequest:
+      type: object
+      description: Bad request
+      additionalProperties: false
+      properties:
+        correlationId:
+          type: string
+        errors:
+          type: array
+          items:
+            additionalProperties: false
+            type: object
+            properties:
+              code:
+                type: string
+                enum:
+                - BAD_REQUEST_INCORRECT_OR_MISSING_FIELD
+                - RESPONSE_TOO_LARGE
+              detail:
+                type: string
+              source:
+                type: string
+            required:
+            - code
+            - detail
+            - source
+      required:
+      - errors
+      title: badRequest
+  securitySchemes:
+    Authentication:
+      type: oauth2
+      description: 'A company-level token acts on the company it was issued for. An organisation-level token (experimental) acts on the companies of an organisation: send the target company in the `X-Company-Id` header on every call, except on `GET /v2/companies` and on `/v2/companies/{companyId}/…` routes, which carry the company in the path. See [Organisation-level access](/reference/organisation-level-access).'
+      flows:
+        clientCredentials:
+          tokenUrl: /v1/auth/token
+          scopes:
+            analytical-field:read: Analytical Fields (Read)
+            bank-fee:read: Spending Bank Fees (Read)
+            cost-center:read: Cost Center (Read)
+            cost-center:manage: Cost Center (Manage)
+            expense-category:read: Expense Category (Read)
+            payable:read: Spending Payables (Read)
+            payable-attachment:read: Spending Payable Attachments (Read)
+            settlement:read: Spending Settlements (Read)
+            supplier:read: Suppliers (Read)
+            user:read: Users (Read)
+            experimental:user:manage: Users (Manage)
+            wallet-load:read: Spending Wallet Loads (Read)
+            wallet-summary:read: Spending Wallet Summary (Read)
+            experimental:accounting-export:read: Accounting exports (Read)
+            experimental:accounting-export:write: Accounting exports (Write)
+            experimental:accounting:update: Accounting (Update)
+            experimental:chart-of-accounts:read: Chart of Accounts (Read)
+            experimental:chart-of-accounts:write: Chart of Accounts (Write)
+            experimental:purchase-order:read: Purchase Orders (Read)
+            experimental:purchase-order:write: Purchase Orders (Write)
+            experimental:webhooks:read: Webhooks (Read)
+            experimental:webhooks:write: Webhooks (Write)
+            experimental:supplier:manage: Suppliers (Manage)
+            experimental:company:read: Companies (Read)
+            experimental:payable-search:read: Payable Search (Read)
+            experimental:payable-attachment:write: Payable Attachments (Write)
+            experimental:card:read: Cards (Read)
+            experimental:card:write: Cards (Write)
+            experimental:request:read: Requests (Read)
+            experimental:transaction:read: Transactions (Read)
+            experimental:analytical-field-v2:read: Analytical Fields v2 (Read)
+            experimental:analytical-field-v2:write: Analytical Fields v2 (Write)
+            experimental:expense-category-v2:read: Expense Category Fields v2 (Read)
+            experimental:expense-category-v2:write: Expense Category Fields v2 (Write)
+            experimental:invoice:read: Invoices (Read) - experimental
+            experimental:intake:read: Intakes (Read)
+            experimental:intake:write: Intakes (Write)
+            experimental:external-reference:read: External References (Read)
+            experimental:external-reference:write: External References (Write)
+        authorizationCode:
+          authorizationUrl: /v1/oauth2/authorize
+          tokenUrl: /v1/oauth2/token/create
+          scopes:
+            analytical-field:read: Analytical Fields (Read)
+            bank-fee:read: Spending Bank Fees (Read)
+            cost-center:read: Cost Center (Read)
+            cost-center:manage: Cost Center (Manage)
+            expense-category:read: Expense Category (Read)
+            payable:read: Spending Payables (Read)
+            payable-attachment:read: Spending Payable Attachments (Read)
+            settlement:read: Spending Settlements (Read)
+            supplier:read: Suppliers (Read)
+            user:read: Users (Read)
+            experimental:user:manage: Users (Manage)
+            wallet-load:read: Spending Wallet Loads (Read)
+            wallet-summary:read: Spending Wallet Summary (Read)
+            experimental:accounting-export:read: Accounting exports (Read)
+            experimental:accounting-export:write: Accounting exports (Write)
+            experimental:accounting:update: Accounting (Update)
+            experimental:chart-of-accounts:read: Chart of Accounts (Read)
+            experimental:chart-of-accounts:write: Chart of Accounts (Write)
+            experimental:purchase-order:read: Purchase Orders (Read)
+            experimental:purchase-order:write: Purchase Orders (Write)
+            experimental:webhooks:read: Webhooks (Read)
+            experimental:webhooks:write: Webhooks (Write)
+            experimental:supplier:manage: Suppliers (Manage)
+            experimental:company:read: Companies (Read)
+            experimental:payable-search:read: Payable Search (Read)
+            experimental:payable-attachment:write: Payable Attachments (Write)
+            experimental:card:read: Cards (Read)
+            experimental:card:write: Cards (Write)
+            experimental:request:read: Requests (Read)
+            experimental:transaction:read: Transactions (Read)
+            experimental:analytical-field-v2:read: Analytical Fields v2 (Read)
+            experimental:analytical-field-v2:write: Analytical Fields v2 (Write)
+            experimental:expense-category-v2:read: Expense Category Fields v2 (Read)
+            experimental:expense-category-v2:write: Expense Category Fields v2 (Write)
+            experimental:invoice:read: Invoices (Read) - experimental
+            experimental:intake:read: Intakes (Read)
+            experimental:intake:write: Intakes (Write)
+            experimental:external-reference:read: External References (Read)
+            experimental:external-reference:write: External References (Write)
+x-provenance:
+  method: searched
+  source: https://developer.spendesk.com/reference
+  harvested: '2026-10-14'
+  tool: harvest-readme-openapi.py
+  note: Assembled verbatim from the OpenAPI definition ReadMe embeds in each operation page of the provider's developer portal; paths and components merged by API title, nothing authored.
+  assembled_from:
+  - https://developer.spendesk.com/reference/mcp-authorization-server-metadata.md
+  - https://developer.spendesk.com/reference/mcp-protected-resource-metadata-mcp.md
+  - https://developer.spendesk.com/reference/v1-assign-creditors-to-accounts.md
+  - https://developer.spendesk.com/reference/v1-cancel-purchase-order.md
+  - https://developer.spendesk.com/reference/v1-close-purchase-order.md
+  - https://developer.spendesk.com/reference/v1-create-account.md
+  - https://developer.spendesk.com/reference/v1-create-auth-token.md
+  - https://developer.spendesk.com/reference/v1-create-cost-centers.md
+  - https://developer.spendesk.com/reference/v1-create-journal.md
+  - https://developer.spendesk.com/reference/v1-create-oauth2-token.md
+  - https://developer.spendesk.com/reference/v1-create-payable-attachment-upload.md
+  - https://developer.spendesk.com/reference/v1-create-purchase-order.md
+  - https://developer.spendesk.com/reference/v1-create-snapshot-payables.md
+  - https://developer.spendesk.com/reference/v1-create-suppliers.md
+  - https://developer.spendesk.com/reference/v1-create-webhook.md
+  - https://developer.spendesk.com/reference/v1-delete-account.md
+  - https://developer.spendesk.com/reference/v1-delete-cost-centers.md
+  - https://developer.spendesk.com/reference/v1-delete-mcp.md
+  - https://developer.spendesk.com/reference/v1-delete-webhook.md
+  - https://developer.spendesk.com/reference/v1-get-account-by-id.md
+  - https://developer.spendesk.com/reference/v1-get-accounts.md
+  - https://developer.spendesk.com/reference/v1-get-analytical-field-values.md
+  - https://developer.spendesk.com/reference/v1-get-analytical-fields.md
+  - https://developer.spendesk.com/reference/v1-get-bank-fees.md
+  - https://developer.spendesk.com/reference/v1-get-card-blocking-history.md
+  - https://developer.spendesk.com/reference/v1-get-card-order.md
+  - https://developer.spendesk.com/reference/v1-get-card.md
+  - https://developer.spendesk.com/reference/v1-get-cards.md
+  - https://developer.spendesk.com/reference/v1-get-cost-centers.md
+  - https://developer.spendesk.com/reference/v1-get-expense-categories.md
+  - https://developer.spendesk.com/reference/v1-get-external-references.md
+  - https://developer.spendesk.com/reference/v1-get-failed-transactions.md
+  - https://developer.spendesk.com/reference/v1-get-integrations-export-status.md
+  - https://developer.spendesk.com/reference/v1-get-journal-templates.md
+  - https://developer.spendesk.com/reference/v1-get-journal.md
+  - https://developer.spendesk.com/reference/v1-get-mcp.md
+  - https://developer.spendesk.com/reference/v1-get-payable-attachments.md
+  - https://developer.spendesk.com/reference/v1-get-payable-by-id.md
+  - https://developer.spendesk.com/reference/v1-get-purchase-order-document.md
+  - https://developer.spendesk.com/reference/v1-get-purchase-order.md
+  - https://developer.spendesk.com/reference/v1-get-purchase-orders.md
+  - https://developer.spendesk.com/reference/v1-get-request.md
+  - https://developer.spendesk.com/reference/v1-get-requests.md
+  - https://developer.spendesk.com/reference/v1-get-settlements.md
+  - https://developer.spendesk.com/reference/v1-get-snapshot-payables.md
+  - https://developer.spendesk.com/reference/v1-get-successful-transactions.md
+  - https://developer.spendesk.com/reference/v1-get-supplier-by-id.md
+  - https://developer.spendesk.com/reference/v1-get-suppliers.md
+  - https://developer.spendesk.com/reference/v1-get-transactions.md
+  - https://developer.spendesk.com/reference/v1-get-user-by-id.md
+  - https://developer.spendesk.com/reference/v1-get-users.md
+  - https://developer.spendesk.com/reference/v1-get-wallet-loads.md
+  - https://developer.spendesk.com/reference/v1-get-wallet-summary.md
+  - https://developer.spendesk.com/reference/v1-get-webhook-by-id.md
+  - https://developer.spendesk.com/reference/v1-get-webhook.md
+  - https://developer.spendesk.com/reference/v1-patch-accounts.md
+  - https://developer.spendesk.com/reference/v1-patch-payable-accounting-fields.md
+  - https://developer.spendesk.com/reference/v1-patch-supplier-status.md
+  - https://developer.spendesk.com/reference/v1-patch-suppliers-status.md
+  - https://developer.spendesk.com/reference/v1-post-experimental-integrations-refresh-settings.md
+  - https://developer.spendesk.com/reference/v1-post-mcp.md
+  - https://developer.spendesk.com/reference/v1-post-payable-mark-as-ready.md
+  - https://developer.spendesk.com/reference/v1-put-payables-bookkeeping-status.md
+  - https://developer.spendesk.com/reference/v1-put-settlements-state.md
+  - https://developer.spendesk.com/reference/v1-refresh-oauth2-token.md
+  - https://developer.spendesk.com/reference/v1-register-oauth2-client.md
+  - https://developer.spendesk.com/reference/v1-remove-creditors-from-accounts.md
+  - https://developer.spendesk.com/reference/v1-request-authorization.md
+  - https://developer.spendesk.com/reference/v1-search-creditor-account-assignments.md
+  - https://developer.spendesk.com/reference/v1-search-payables.md
+  - https://developer.spendesk.com/reference/v1-set-account-purpose.md
+  - https://developer.spendesk.com/reference/v1-sync-accounts.md
+  - https://developer.spendesk.com/reference/v1-update-cost-centers.md
+  - https://developer.spendesk.com/reference/v1-update-supplier.md
+  - https://developer.spendesk.com/reference/v1-update-suppliers.md
+  - https://developer.spendesk.com/reference/v1-update-webhook.md
+  - https://developer.spendesk.com/reference/v1-upsert-external-references.md
+  - https://developer.spendesk.com/reference/v2-create-analytical-field-value.md
+  - https://developer.spendesk.com/reference/v2-create-analytical-field.md
+  - https://developer.spendesk.com/reference/v2-create-expense-category-field.md
+  - https://developer.spendesk.com/reference/v2-create-expense-category.md
+  - https://developer.spendesk.com/reference/v2-create-intake-file-upload.md
+  - https://developer.spendesk.com/reference/v2-delete-analytical-field-value.md
+  - https://developer.spendesk.com/reference/v2-delete-analytical-field.md
+  - https://developer.spendesk.com/reference/v2-delete-expense-category-field.md
+  - https://developer.spendesk.com/reference/v2-delete-expense-category.md
+  - https://developer.spendesk.com/reference/v2-get-analytical-field-value.md
+  - https://developer.spendesk.com/reference/v2-get-analytical-field.md
+  - https://developer.spendesk.com/reference/v2-get-companies.md
+  - https://developer.spendesk.com/reference/v2-get-company-intake.md
+  - https://developer.spendesk.com/reference/v2-get-expense-category-field.md
+  - https://developer.spendesk.com/reference/v2-get-expense-category.md
+  - https://developer.spendesk.com/reference/v2-get-intake-file-upload-status.md
+  - https://developer.spendesk.com/reference/v2-get-invoice.md
+  - https://developer.spendesk.com/reference/v2-get-invoices-summary.md
+  - https://developer.spendesk.com/reference/v2-list-analytical-field-values.md
+  - https://developer.spendesk.com/reference/v2-list-analytical-fields.md
+  - https://developer.spendesk.com/reference/v2-list-company-intakes.md
+  - https://developer.spendesk.com/reference/v2-list-expense-categories.md
+  - https://developer.spendesk.com/reference/v2-list-expense-category-fields.md
+  - https://developer.spendesk.com/reference/v2-list-invoices.md
+  - https://developer.spendesk.com/reference/v2-post-company-intakes.md
+  - https://developer.spendesk.com/reference/v2-update-analytical-field-value.md
+  - https://developer.spendesk.com/reference/v2-update-analytical-field.md
+  - https://developer.spendesk.com/reference/v2-update-expense-category-field.md
+  - https://developer.spendesk.com/reference/v2-update-expense-category.md
+  merge:
+    pages: 106
+    deduped: 1705
+    conflicts_kept_first: 0
