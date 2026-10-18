@@ -14,6 +14,7 @@ checked:
 - https://www.streamlinedsalestax.org/certified-service-providers/certified-service-providers-list
 - https://zapier.com/apps/spendesk/integrations
 - okta/integrations/okta-integration-edges.yml
+- slack/integrations/slack-integration-edges.yml
 summary: null
 marketplace_apps: []
 edges:
@@ -122,4 +123,21 @@ edges:
     detected: '2026-10-15'
   detected_by: sweep-einvoicing-tax.py
   first_seen: '2026-10-15'
+- partner_name: Slack (own)
+  partner: slack
+  partner_match: mirror
+  mirror_match: domain
+  type: marketplace
+  relationship: platform-app
+  direction: third-party
+  channel: partner-built
+  marketplace: own
+  evidence: https://slack.com/marketplace/AB6H117M1-spendesk
+  mirror_of: slack/integrations/slack-integration-edges.yml
+  apps:
+  - Spendesk
+  listing_count: 1
+  detected: '2026-10-18'
+  detected_by: mirror-platform-listings.py
+  category: Slack app
 templates: []
