@@ -160,6 +160,8 @@ apis:
   humanURL: https://developer.spendesk.com/
   baseURL: https://api.spendesk.com
   tags:
+  - Accounting Exports
+  tags_raw:
   - Accounting exports
   properties:
   - type: OpenAPI
@@ -300,6 +302,8 @@ apis:
   humanURL: https://developer.spendesk.com/
   baseURL: https://api.spendesk.com
   tags:
+  - Chart of Accounts
+  tags_raw:
   - Chart of accounts
   properties:
   - type: OpenAPI
@@ -370,6 +374,8 @@ apis:
   humanURL: https://developer.spendesk.com/
   baseURL: https://api.spendesk.com
   tags:
+  - Expense Categories
+  tags_raw:
   - Expense categories
   properties:
   - type: OpenAPI
@@ -406,6 +412,8 @@ apis:
   humanURL: https://developer.spendesk.com/
   baseURL: https://api.spendesk.com
   tags:
+  - External References
+  tags_raw:
   - External references
   properties:
   - type: OpenAPI
@@ -548,6 +556,8 @@ apis:
   humanURL: https://developer.spendesk.com/
   baseURL: https://api.spendesk.com
   tags:
+  - Purchase Orders
+  tags_raw:
   - Purchase orders
   properties:
   - type: OpenAPI
@@ -718,6 +728,8 @@ apis:
   humanURL: https://developer.spendesk.com/
   baseURL: https://api.spendesk.com
   tags:
+  - User
+  tags_raw:
   - Users
   properties:
   - type: OpenAPI
@@ -754,6 +766,8 @@ apis:
   humanURL: https://developer.spendesk.com/
   baseURL: https://api.spendesk.com
   tags:
+  - Webhook
+  tags_raw:
   - Webhooks
   properties:
   - type: OpenAPI
